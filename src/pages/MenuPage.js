@@ -1,17 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../AuthContext';
 import './MenuPage.css';
 
-function MenuPage({ 
-  cart: propCart, 
-  setCart: setPropCart, 
-  authStatus: propAuthStatus, 
-  setAuthStatus: setPropAuthStatus,
-  userAddress: propUserAddress,
-  setUserAddress: setPropUserAddress 
-}) {
+function MenuPage() {
+  const { cart, setCart, authStatus, setAuthStatus, userAddress, setUserAddress, hasChosenGuest, setHasChosenGuest } = useContext(AuthContext);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [cart, setCart] = useState([]);
   const navigate = useNavigate();
   const [filtersOpen, setFiltersOpen] = useState({});
   const [categoriesOpen, setCategoriesOpen] = useState({});
@@ -20,7 +14,7 @@ function MenuPage({
   const overlayRef = useRef(null);
   const [showDetailPopup, setShowDetailPopup] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
-  
+
   const [ward, setWard] = useState('');
   const [district, setDistrict] = useState('');
   const [houseNumber, setHouseNumber] = useState('');
@@ -40,7 +34,6 @@ function MenuPage({
   const streets = ['Street 1', 'Street 2', 'Street 3', 'Street 4', 'Street 5'];
 
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [userAddress, setUserAddress] = useState(null);
   const [tempItemToAdd, setTempItemToAdd] = useState(null);
   const [showSignInForm, setShowSignInForm] = useState(false);
   const [showCreateAccountForm, setShowCreateAccountForm] = useState(false);
@@ -50,31 +43,19 @@ function MenuPage({
   const [lastName, setLastName] = useState('');
   const [contactMobile, setContactMobile] = useState('');
 
-  // Đồng bộ state với props
+  // Show auth modal on page load if not signed in and hasn't chosen guest
   useEffect(() => {
-    if (propCart && propCart.length > 0) setCart(propCart);
-  }, [propCart]);
-  
-  useEffect(() => {
-    if (propUserAddress) setUserAddress(propUserAddress);
-  }, [propUserAddress]);
-  
-  useEffect(() => {
-    if (cart !== propCart && setPropCart) setPropCart(cart);
-  }, [cart, setPropCart, propCart]);
-  
-  useEffect(() => {
-    if (userAddress !== propUserAddress && setPropUserAddress) setPropUserAddress(userAddress);
-  }, [userAddress, setPropUserAddress, propUserAddress]);
+    if (authStatus !== 'signedIn' && !hasChosenGuest) {
+      setShowAuthModal(true);
+    }
+  }, [authStatus, hasChosenGuest]);
 
-  // Theo dõi propAuthStatus để điều hướng
+  // Removed prop syncing useEffect since we're using context
   useEffect(() => {
-    console.log('propAuthStatus updated:', propAuthStatus);
-    if (propAuthStatus === 'signedIn') {
-      console.log('Navigating to /account');
+    if (authStatus === 'signedIn') {
       navigate('/account');
     }
-  }, [propAuthStatus, navigate]);
+  }, [authStatus, navigate]);
 
   const recipeDetails = {
     "RCP-001": { name: "Pecan Crusted Salmon", calories: "488", protein: "54.4", fat: "22.4", fiber: "3.4", carb: "18.6", description: "Savor the delightful crunch of Pecan Crusted Salmon, where tender, flaky salmon fillets are coated with a nutty pecan crust. The rich, buttery pecans perfectly complement the salmon's natural flavors, while a hint of seasoning adds depth. Baked to golden perfection, this dish offers a satisfying balance of protein and healthy fats, making it a wholesome yet indulgent meal for any occasion." },
@@ -114,14 +95,14 @@ function MenuPage({
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
   };
-  
+
   const toggleFilter = (filterId) => {
     setFiltersOpen(prev => ({
       ...prev,
       [filterId]: !prev[filterId]
     }));
   };
-  
+
   const toggleCategory = (categoryId) => {
     setCategoriesOpen(prev => ({
       ...prev,
@@ -140,7 +121,7 @@ function MenuPage({
     setSelectedRecipe(recipeId);
     setShowDetailPopup(true);
   };
-  
+
   const closeDetailPopup = () => {
     setShowDetailPopup(false);
     setSelectedRecipe(null);
@@ -148,7 +129,7 @@ function MenuPage({
 
   const handleAccountClick = (e) => {
     e.preventDefault();
-    if (propAuthStatus === 'signedIn') {
+    if (authStatus === 'signedIn') {
       navigate('/account');
     } else {
       setShowAuthModal(true);
@@ -232,18 +213,14 @@ function MenuPage({
   ];
 
   const addToCart = (item) => {
-    if (propAuthStatus === 'guest') {
-      setTempItemToAdd(item);
-      setShowAuthModal(true);
+    // No need for auth check here since popup is shown on page load
+    const existingItemIndex = cart.findIndex(cartItem => cartItem.id === item.id);
+    if (existingItemIndex !== -1) {
+      const updatedCart = [...cart];
+      updatedCart[existingItemIndex].quantity += 1;
+      setCart(updatedCart);
     } else {
-      const existingItemIndex = cart.findIndex(cartItem => cartItem.id === item.id);
-      if (existingItemIndex !== -1) {
-        const updatedCart = [...cart];
-        updatedCart[existingItemIndex].quantity += 1;
-        setCart(updatedCart);
-      } else {
-        setCart([...cart, { ...item, quantity: 1, note: '' }]);
-      }
+      setCart([...cart, { ...item, quantity: 1, note: '' }]);
     }
   };
 
@@ -286,14 +263,16 @@ function MenuPage({
   };
 
   const handleNavSignInClick = () => {
-    if (propAuthStatus !== 'signedIn') {
+    if (authStatus !== 'signedIn') {
       setShowAuthModal(true);
     }
   };
 
   const handleContinueAsGuest = () => {
     setShowAuthModal(false);
-    setPropAuthStatus('guest');
+    setAuthStatus('guest');
+    setHasChosenGuest(true); // Prevent future popups
+    localStorage.setItem('authStatus', 'guest');
     if (tempItemToAdd) {
       const existingItemIndex = cart.findIndex(cartItem => cartItem.id === tempItemToAdd.id);
       if (existingItemIndex !== -1) {
@@ -309,7 +288,8 @@ function MenuPage({
 
   const handleSignInSubmit = (e) => {
     e.preventDefault();
-    setPropAuthStatus('signedIn');
+    setAuthStatus('signedIn');
+    setHasChosenGuest(true); // Prevent future popups
     localStorage.setItem('authStatus', 'signedIn');
     setShowSignInForm(false);
     setUserEmail('');
@@ -318,7 +298,8 @@ function MenuPage({
 
   const handleCreateAccountSubmit = (e) => {
     e.preventDefault();
-    setPropAuthStatus('signedIn');
+    setAuthStatus('signedIn');
+    setHasChosenGuest(true); // Prevent future popups
     localStorage.setItem('authStatus', 'signedIn');
     setShowCreateAccountForm(false);
     const newAddress = {
@@ -342,7 +323,7 @@ function MenuPage({
       alert("Your cart is empty");
       return;
     }
-    if (propAuthStatus === 'guest') {
+    if (authStatus === 'guest') {
       navigate('/delivery');
     } else {
       navigate('/checkout');
@@ -405,217 +386,179 @@ function MenuPage({
                     Show more
                   </div>
                 )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
-  const calculateTotal = () => {
-    return cart.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2);
-  };
-
-  return (
-    <div className="menu-page">
-      <div className="navbar menu-navbar">
-        <div className={`menu-icon ${menuOpen ? 'open' : ''}`} onClick={toggleMenu}>
-          <div className="bar"></div>
-          <div className="bar"></div>
-          <div className="bar"></div>
-        </div>
-        <div className="mobile-logo">
-          <img src="/assets/logo.png" alt="Logo" className="logo" />
-        </div>
-        <div
-          className={`overlay ${menuOpen ? 'active' : ''}`}
-          ref={overlayRef}
-          onClick={toggleMenu}
-        ></div>
-        <div className={`nav-links ${menuOpen ? 'active' : ''}`} ref={navRef}>
-          <div className="close-btn" onClick={toggleMenu}>✕</div>
-          <a href="#">Menu</a>
-          <a href="#">Discount</a>
-          <img src="/assets/logo.png" alt="Logo" className="logo" />
-          <span className="nav-link" onClick={handleAccountClick} style={{ cursor: 'pointer' }}>
-            Account
-          </span>
-          <a href="#">Support</a>
-        </div>
-      </div>
-
-      <div className="user-nav">
-        <div className="user-nav-container">
-          <div className="user-nav-left">
-            <span className="user-icon">👤</span>
-            {propAuthStatus === 'signedIn' ? (
-              <span className="user-nav-item">User</span>
-            ) : (
-              <span className="user-nav-item" onClick={handleNavSignInClick}>Sign In</span>
-            )}
-            <span className="separator">|</span>
-            <span className="user-nav-item">Guest Order</span>
-            <span className="separator">|</span>
-            <span className="user-nav-item">Track Your Order</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="menu-container">
-        <div className="sidebar">
-          <h3>Menu</h3>
-          <div className="filters">
-            {filters.map(filter => (
-              <div className="filter" key={filter.id}>
-                {renderFilterOptions(filter)}
-              </div>
-            ))}
-          </div>
-        </div>
-        
-        <div className="menu-content">
-          {categories.map(category => {
-            const isCategoryOpen = categoriesOpen[category.id] !== false;
-            return (
-              <div className="category" key={category.id}>
-                <div 
-                  className="category-header"
-                  onClick={() => toggleCategory(category.id)}
-                >
-                  <h3>{category.name}</h3>
-                  <span className={`toggle-icon ${isCategoryOpen ? 'open' : 'closed'}`}>▼</span>
                 </div>
-                {isCategoryOpen && renderCategoryItems(category.items)}
               </div>
             );
           })}
         </div>
-        
-        <div className="cart-section">
-          <h3>My Order</h3>
-          <div className="cart-items">
-            {cart.length > 0 ? (
-              cart.map((item, index) => (
-                <div className="cart-item" key={index}>
-                  <div className="cart-item-content">
-                    <div className="cart-item-image">
-                      <img src={item.image} alt={item.name} />
-                    </div>
-                    <div className="cart-item-details">
-                      <div className="cart-item-header">
-                        <h4>{item.name}</h4>
-                        <div className="item-quantity-controls">
-                          <span className="quantity-btn" onClick={() => decreaseQuantity(index)}>-</span>
-                          <span className="quantity">{item.quantity}</span>
-                          <span className="quantity-btn" onClick={() => increaseQuantity(index)}>+</span>
-                          <span className="remove-btn" onClick={() => removeFromCart(index)}>🗑️</span>
-                        </div>
+      );
+    };
+  
+    const calculateTotal = () => {
+      return cart.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2);
+    };
+  
+    return (
+      <div className="menu-page">
+        <div className="navbar menu-navbar">
+          <div className={`menu-icon ${menuOpen ? 'open' : ''}`} onClick={toggleMenu}>
+            <div className="bar"></div>
+            <div className="bar"></div>
+            <div className="bar"></div>
+          </div>
+          <div className="mobile-logo">
+            <img src="/assets/logo.png" alt="Logo" className="logo" />
+          </div>
+          <div
+            className={`overlay ${menuOpen ? 'active' : ''}`}
+            ref={overlayRef}
+            onClick={toggleMenu}
+          ></div>
+          <div className={`nav-links ${menuOpen ? 'active' : ''}`} ref={navRef}>
+            <div className="close-btn" onClick={toggleMenu}>✕</div>
+            <a href="#">Menu</a>
+            <a href="#">Discount</a>
+            <img src="/assets/logo.png" alt="Logo" className="logo" />
+            <span className="nav-link" onClick={handleAccountClick} style={{ cursor: 'pointer' }}>
+              Account
+            </span>
+            <a href="#">Support</a>
+          </div>
+        </div>
+  
+        <div className="user-nav">
+          <div className="user-nav-container">
+            <div className="user-nav-left">
+              <span className="user-icon">👤</span>
+              {authStatus === 'signedIn' ? (
+                <span className="user-nav-item">User</span>
+              ) : (
+                <span className="user-nav-item" onClick={handleNavSignInClick}>Sign In</span>
+              )}
+              <span className="separator">|</span>
+              <span className="user-nav-item">Guest Order</span>
+              <span className="separator">|</span>
+              <span className="user-nav-item">Track Your Order</span>
+            </div>
+          </div>
+        </div>
+  
+        <div className="menu-container">
+          <div className="sidebar">
+            <h3>Menu</h3>
+            <div className="filters">
+              {filters.map(filter => (
+                <div className="filter" key={filter.id}>
+                  {renderFilterOptions(filter)}
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <div className="menu-content">
+            {categories.map(category => {
+              const isCategoryOpen = categoriesOpen[category.id] !== false;
+              return (
+                <div className="category" key={category.id}>
+                  <div 
+                    className="category-header"
+                    onClick={() => toggleCategory(category.id)}
+                  >
+                    <h3>{category.name}</h3>
+                    <span className={`toggle-icon ${isCategoryOpen ? 'open' : 'closed'}`}>▼</span>
+                  </div>
+                  {isCategoryOpen && renderCategoryItems(category.items)}
+                </div>
+              );
+            })}
+          </div>
+          
+          <div className="cart-section">
+            <h3>My Order</h3>
+            <div className="cart-items">
+              {cart.length > 0 ? (
+                cart.map((item, index) => (
+                  <div className="cart-item" key={index}>
+                    <div className="cart-item-content">
+                      <div className="cart-item-image">
+                        <img src={item.image} alt={item.name} />
                       </div>
-                      <div className="cart-item-footer">
-                        <div className="note-section">
-                          <div className="note-label">Note:</div>
-                          <input 
-                            type="text" 
-                            className="note-input" 
-                            placeholder="Note something for store" 
-                            value={item.note || ''}
-                            onChange={(e) => updateNote(index, e.target.value)}
-                          />
+                      <div className="cart-item-details">
+                        <div className="cart-item-header">
+                          <h4>{item.name}</h4>
+                          <div className="item-quantity-controls">
+                            <span className="quantity-btn" onClick={() => decreaseQuantity(index)}>-</span>
+                            <span className="quantity">{item.quantity}</span>
+                            <span className="quantity-btn" onClick={() => increaseQuantity(index)}>+</span>
+                            <span className="remove-btn" onClick={() => removeFromCart(index)}>🗑️</span>
+                          </div>
                         </div>
-                        <div className="cart-item-price">{item.price.toFixed(2)}$</div>
+                        <div className="cart-item-footer">
+                          <div className="note-section">
+                            <div className="note-label">Note:</div>
+                            <input 
+                              type="text" 
+                              className="note-input" 
+                              placeholder="Note something for store" 
+                              value={item.note || ''}
+                              onChange={(e) => updateNote(index, e.target.value)}
+                            />
+                          </div>
+                          <div className="cart-item-price">{item.price.toFixed(2)}$</div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))
-            ) : (
-              <div className="empty-cart">Your cart is empty</div>
+                ))
+              ) : (
+                <div className="empty-cart">Your cart is empty</div>
+              )}
+            </div>
+            {cart.length > 0 && (
+              <div className="cart-total">
+                <span>Total:</span>
+                <span>${calculateTotal()}</span>
+              </div>
             )}
+            <button 
+              className="checkout-btn" 
+              onClick={handleCheckout}
+              disabled={cart.length === 0}
+            >
+              Check Out
+            </button>
           </div>
-          {cart.length > 0 && (
-            <div className="cart-total">
-              <span>Total:</span>
-              <span>${calculateTotal()}</span>
-            </div>
-          )}
-          <button 
-            className="checkout-btn" 
-            onClick={handleCheckout}
-            disabled={cart.length === 0}
-          >
-            Check Out
-          </button>
         </div>
-      </div>
-      
-      {showAuthModal && (
-        <div className="auth-modal-overlay">
-          <div className="auth-modal">
-            <h3>Sign in to Greedible and start Green today</h3>
-            <div className="auth-options">
-              <button className="auth-option-btn sign-in-btn" onClick={handleSignIn}>
-                SIGN IN
-              </button>
-              <div className="auth-separator"></div>
-              <button className="auth-option-btn create-account-btn" onClick={handleCreateAccount}>
-                CREATE AN ACCOUNT
-                <span className="account-time">in less than 2 minutes</span>
-                <span className="account-benefits">To enjoy member benefits</span>
-              </button>
-              <div className="auth-separator"></div>
-              <button className="auth-option-btn guest-btn" onClick={handleContinueAsGuest}>
-                CONTINUE AS GUEST
-              </button>
+        
+        {showAuthModal && (
+          <div className="auth-modal-overlay">
+            <div className="auth-modal">
+              <h3>Sign in to Greedible and start Green today</h3>
+              <div className="auth-options">
+                <button className="auth-option-btn sign-in-btn" onClick={handleSignIn}>
+                  SIGN IN
+                </button>
+                <div className="auth-separator"></div>
+                <button className="auth-option-btn create-account-btn" onClick={handleCreateAccount}>
+                  CREATE AN ACCOUNT
+                  <span className="account-time">in less than 2 minutes</span>
+                  <span className="account-benefits">To enjoy member benefits</span>
+                </button>
+                <div className="auth-separator"></div>
+                <button className="auth-option-btn guest-btn" onClick={handleContinueAsGuest}>
+                  CONTINUE AS GUEST
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-
-      {showSignInForm && (
-        <div className="auth-modal-overlay">
-          <div className="auth-form-modal">
-            <h3>Sign In</h3>
-            <button className="close-modal-btn" onClick={() => setShowSignInForm(false)}>✕</button>
-            <form onSubmit={handleSignInSubmit}>
-              <div className="form-group">
-                <label>Email</label>
-                <input 
-                  type="email" 
-                  value={userEmail} 
-                  onChange={(e) => setUserEmail(e.target.value)} 
-                  required 
-                />
-              </div>
-              <div className="form-group">
-                <label>Password</label>
-                <input 
-                  type="password" 
-                  value={userPassword} 
-                  onChange={(e) => setUserPassword(e.target.value)} 
-                  required 
-                />
-              </div>
-              <div className="form-options">
-                <div className="remember-me">
-                  <input type="checkbox" id="remember" />
-                  <label htmlFor="remember">Remember me</label>
-                </div>
-                <a href="#" className="forgot-password">Forgot password?</a>
-              </div>
-              <button type="submit" className="form-submit-btn">SIGN IN</button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {showCreateAccountForm && (
-        <div className="auth-modal-overlay">
-          <div className="auth-form-modal register-form">
-            <h3>Create New Account</h3>
-            <button className="close-modal-btn" onClick={() => setShowCreateAccountForm(false)}>✕</button>
-            <form onSubmit={handleCreateAccountSubmit}>
-              <div className="form-section">
+        )}
+  
+        {showSignInForm && (
+          <div className="auth-modal-overlay">
+            <div className="auth-form-modal">
+              <h3>Sign In</h3>
+              <button className="close-modal-btn" onClick={() => setShowSignInForm(false)}>✕</button>
+              <form onSubmit={handleSignInSubmit}>
                 <div className="form-group">
                   <label>Email</label>
                   <input 
@@ -634,220 +577,258 @@ function MenuPage({
                     required 
                   />
                 </div>
-              </div>
-              <div className="form-section">
-                <h4>About you</h4>
-                <div className="form-group">
-                  <label>First Name</label>
-                  <input 
-                    type="text" 
-                    value={firstName} 
-                    onChange={(e) => setFirstName(e.target.value)} 
-                    required 
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Last Name</label>
-                  <input 
-                    type="text" 
-                    value={lastName} 
-                    onChange={(e) => setLastName(e.target.value)} 
-                    required 
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Contact Mobile</label>
-                  <input 
-                    type="tel" 
-                    value={contactMobile} 
-                    onChange={(e) => setContactMobile(e.target.value)} 
-                    required 
-                  />
-                </div>
-              </div>
-              <div className="form-section" style={{maxHeight: '300px', overflowY: 'auto'}}>
-                <h4>Your Address</h4>
-                <div className="delivery-row">
-                  <div className="delivery-field">
-                    <label>*Ward:</label>
-                    <div className="custom-select">
-                      <div 
-                        className="select-header" 
-                        onClick={() => setWardDropdownOpen(!wardDropdownOpen)}
-                      >
-                        {ward || "We only deliver to the wards in this list"}
-                        <span className="dropdown-arrow">▼</span>
-                      </div>
-                      {wardDropdownOpen && (
-                        <div className="select-options">
-                          {wards.map((item, index) => (
-                            <div 
-                              key={index} 
-                              className="select-option" 
-                              onClick={() => {
-                                setWard(item);
-                                setWardDropdownOpen(false);
-                              }}
-                            >
-                              {item}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                <div className="form-options">
+                  <div className="remember-me">
+                    <input type="checkbox" id="remember" />
+                    <label htmlFor="remember">Remember me</label>
                   </div>
-                  <div className="delivery-field">
-                    <label>*District:</label>
-                    <div className="custom-select">
-                      <div 
-                        className="select-header" 
-                        onClick={() => setDistrictDropdownOpen(!districtDropdownOpen)}
-                      >
-                        {district || "We only deliver to the districts in this list"}
-                        <span className="dropdown-arrow">▼</span>
-                      </div>
-                      {districtDropdownOpen && (
-                        <div className="select-options">
-                          {districts.map((item, index) => (
-                            <div 
-                              key={index} 
-                              className="select-option" 
-                              onClick={() => {
-                                setDistrict(item);
-                                setDistrictDropdownOpen(false);
-                              }}
-                            >
-                              {item}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  <a href="#" className="forgot-password">Forgot password?</a>
                 </div>
-                <div className="delivery-row">
-                  <div className="delivery-field">
-                    <label>*Street:</label>
-                    <div className="custom-select">
-                      <div 
-                        className="select-header" 
-                        onClick={() => setStreetDropdownOpen(!streetDropdownOpen)}
-                      >
-                        {street || "We only deliver to the streets in this list"}
-                        <span className="dropdown-arrow">▼</span>
-                      </div>
-                      {streetDropdownOpen && (
-                        <div className="select-options">
-                          {streets.map((item, index) => (
-                            <div 
-                              key={index} 
-                              className="select-option" 
-                              onClick={() => {
-                                setStreet(item);
-                                setStreetDropdownOpen(false);
-                              }}
-                            >
-                              {item}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="delivery-field">
-                    <label>*House/Street Number:</label>
-                    <input 
-                      type="text" 
-                      value={houseNumber}
-                      onChange={(e) => setHouseNumber(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="delivery-field single-row">
-                  <label>Building Name:</label>
-                  <input 
-                    type="text" 
-                    value={buildingName}
-                    onChange={(e) => setBuildingName(e.target.value)}
-                  />
-                </div>
-                <div className="delivery-row three-column">
-                  <div className="delivery-field">
-                    <label>Block:</label>
-                    <input 
-                      type="text" 
-                      value={block}
-                      onChange={(e) => setBlock(e.target.value)}
-                    />
-                  </div>
-                  <div className="delivery-field">
-                    <label>Floor / Level:</label>
-                    <input 
-                      type="text" 
-                      value={floor}
-                      onChange={(e) => setFloor(e.target.value)}
-                    />
-                  </div>
-                  <div className="delivery-field">
-                    <label>Room Number / Company Name:</label>
-                    <input 
-                      type="text" 
-                      value={roomNumber}
-                      onChange={(e) => setRoomNumber(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div className="delivery-field single-row">
-                  <label>Delivery Instruction to Rider:</label>
-                  <textarea 
-                    value={deliveryInstructions}
-                    onChange={(e) => setDeliveryInstructions(e.target.value)}
-                    rows={3}
-                  />
-                </div>
-              </div>
-              <button type="submit" className="form-submit-btn">Confirm</button>
-            </form>
+                <button type="submit" className="form-submit-btn">SIGN IN</button>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
-
-      {showDetailPopup && selectedRecipe && recipeDetails[selectedRecipe] && (
-        <div className="detail-popup-overlay" onClick={closeDetailPopup}>
-          <div className="detail-popup" onClick={(e) => e.stopPropagation()}>
-            <button className="close-popup-btn" onClick={closeDetailPopup}>✕</button>
-            <div className="detail-popup-content">
-              <div className="detail-popup-image">
-                <img 
-                  src={`/assets/${selectedRecipe}.jpg`}
-                  alt={recipeDetails[selectedRecipe].name}
-                  onError={(e) => {
-                    if (e.target.src.includes('.jpg')) {
-                      e.target.src = `/assets/${selectedRecipe}.webp`;
-                    }
-                  }}
-                />
-              </div>
-              <div className="detail-popup-info">
-                <h3>{recipeDetails[selectedRecipe].name}</h3>
-                <p className="detail-description">
-                  {recipeDetails[selectedRecipe].description}
-                </p>
-                <ul className="nutrition-list">
-                  <li><strong>Calories:</strong> {recipeDetails[selectedRecipe].calories}</li>
-                  <li><strong>Protein:</strong> {recipeDetails[selectedRecipe].protein}g</li>
-                  <li><strong>Fat:</strong> {recipeDetails[selectedRecipe].fat}g</li>
-                  <li><strong>Fiber:</strong> {recipeDetails[selectedRecipe].fiber}g</li>
-                  <li><strong>Carb:</strong> {recipeDetails[selectedRecipe].carb}g</li>
-                </ul>
+        )}
+  
+        {showCreateAccountForm && (
+          <div className="auth-modal-overlay">
+            <div className="auth-form-modal register-form">
+              <h3>Create New Account</h3>
+              <button className="close-modal-btn" onClick={() => setShowCreateAccountForm(false)}>✕</button>
+              <form onSubmit={handleCreateAccountSubmit}>
+                <div className="form-section">
+                  <div className="form-group">
+                    <label>Email</label>
+                    <input 
+                      type="email" 
+                      value={userEmail} 
+                      onChange={(e) => setUserEmail(e.target.value)} 
+                      required 
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Password</label>
+                    <input 
+                      type="password" 
+                      value={userPassword} 
+                      onChange={(e) => setUserPassword(e.target.value)} 
+                      required 
+                    />
+                  </div>
+                </div>
+                <div className="form-section">
+                  <h4>About you</h4>
+                  <div className="form-group">
+                    <label>First Name</label>
+                    <input 
+                      type="text" 
+                      value={firstName} 
+                      onChange={(e) => setFirstName(e.target.value)} 
+                      required 
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Last Name</label>
+                    <input 
+                      type="text" 
+                      value={lastName} 
+                      onChange={(e) => setLastName(e.target.value)} 
+                      required 
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Contact Mobile</label>
+                    <input 
+                      type="tel" 
+                      value={contactMobile} 
+                      onChange={(e) => setContactMobile(e.target.value)} 
+                      required 
+                    />
+                  </div>
+                </div>
+                <div className="form-section" style={{maxHeight: '300px', overflowY: 'auto'}}>
+                  <h4>Your Address</h4>
+                  <div className="delivery-row">
+                    <div className="delivery-field">
+                      <label>*Ward:</label>
+                      <div className="custom-select">
+                        <div 
+                          className="select-header" 
+                          onClick={() => setWardDropdownOpen(!wardDropdownOpen)}
+                        >
+                          {ward || "We only deliver to the wards in this list"}
+                          <span className="dropdown-arrow">▼</span>
+                        </div>
+                        {wardDropdownOpen && (
+                          <div className="select-options">
+                            {wards.map((item, index) => (
+                              <div 
+                                key={index} 
+                                className="select-option" 
+                                onClick={() => {
+                                  setWard(item);
+                                  setWardDropdownOpen(false);
+                                }}
+                              >
+                                {item}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="delivery-field">
+                      <label>*District:</label>
+                      <div className="custom-select">
+                        <div 
+                          className="select-header" 
+                          onClick={() => setDistrictDropdownOpen(!districtDropdownOpen)}
+                        >
+                          {district || "We only deliver to the districts in this list"}
+                          <span className="dropdown-arrow">▼</span>
+                        </div>
+                        {districtDropdownOpen && (
+                          <div className="select-options">
+                            {districts.map((item, index) => (
+                              <div 
+                                key={index} 
+                                className="select-option" 
+                                onClick={() => {
+                                  setDistrict(item);
+                                  setDistrictDropdownOpen(false);
+                                }}
+                              >
+                                {item}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="delivery-row">
+                    <div className="delivery-field">
+                      <label>*Street:</label>
+                      <div className="custom-select">
+                        <div 
+                          className="select-header" 
+                          onClick={() => setStreetDropdownOpen(!streetDropdownOpen)}
+                        >
+                          {street || "We only deliver to the streets in this list"}
+                          <span className="dropdown-arrow">▼</span>
+                        </div>
+                        {streetDropdownOpen && (
+                          <div className="select-options">
+                            {streets.map((item, index) => (
+                              <div 
+                                key={index} 
+                                className="select-option" 
+                                onClick={() => {
+                                  setStreet(item);
+                                  setStreetDropdownOpen(false);
+                                }}
+                              >
+                                {item}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="delivery-field">
+                      <label>*House/Street Number:</label>
+                      <input 
+                        type="text" 
+                        value={houseNumber}
+                        onChange={(e) => setHouseNumber(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="delivery-field single-row">
+                    <label>Building Name:</label>
+                    <input 
+                      type="text" 
+                      value={buildingName}
+                      onChange={(e) => setBuildingName(e.target.value)}
+                    />
+                  </div>
+                  <div className="delivery-row three-column">
+                    <div className="delivery-field">
+                      <label>Block:</label>
+                      <input 
+                        type="text" 
+                        value={block}
+                        onChange={(e) => setBlock(e.target.value)}
+                      />
+                    </div>
+                    <div className="delivery-field">
+                      <label>Floor / Level:</label>
+                      <input 
+                        type="text" 
+                        value={floor}
+                        onChange={(e) => setFloor(e.target.value)}
+                      />
+                    </div>
+                    <div className="delivery-field">
+                      <label>Room Number / Company Name:</label>
+                      <input 
+                        type="text" 
+                        value={roomNumber}
+                        onChange={(e) => setRoomNumber(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="delivery-field single-row">
+                    <label>Delivery Instruction to Rider:</label>
+                    <textarea 
+                      value={deliveryInstructions}
+                      onChange={(e) => setDeliveryInstructions(e.target.value)}
+                      rows={3}
+                    />
+                  </div>
+                </div>
+                <button type="submit" className="form-submit-btn">Confirm</button>
+              </form>
+            </div>
+          </div>
+        )}
+  
+        {showDetailPopup && selectedRecipe && recipeDetails[selectedRecipe] && (
+          <div className="detail-popup-overlay" onClick={closeDetailPopup}>
+            <div className="detail-popup" onClick={(e) => e.stopPropagation()}>
+              <button className="close-popup-btn" onClick={closeDetailPopup}>✕</button>
+              <div className="detail-popup-content">
+                <div className="detail-popup-image">
+                  <img 
+                    src={`/assets/${selectedRecipe}.jpg`}
+                    alt={recipeDetails[selectedRecipe].name}
+                    onError={(e) => {
+                      if (e.target.src.includes('.jpg')) {
+                        e.target.src = `/assets/${selectedRecipe}.webp`;
+                      }
+                    }}
+                  />
+                </div>
+                <div className="detail-popup-info">
+                  <h3>{recipeDetails[selectedRecipe].name}</h3>
+                  <p className="detail-description">
+                    {recipeDetails[selectedRecipe].description}
+                  </p>
+                  <ul className="nutrition-list">
+                    <li><strong>Calories:</strong> {recipeDetails[selectedRecipe].calories}</li>
+                    <li><strong>Protein:</strong> {recipeDetails[selectedRecipe].protein}g</li>
+                    <li><strong>Fat:</strong> {recipeDetails[selectedRecipe].fat}g</li>
+                    <li><strong>Fiber:</strong> {recipeDetails[selectedRecipe].fiber}g</li>
+                    <li><strong>Carb:</strong> {recipeDetails[selectedRecipe].carb}g</li>
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-export default MenuPage;
+        )}
+      </div>
+    );
+  }
+  
+  export default MenuPage;

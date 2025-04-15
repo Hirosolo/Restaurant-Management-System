@@ -1,61 +1,30 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import Landingpage from './../../pages/Landingpage.js';
-import MenuPage from './../../pages/MenuPage.js';
-import Delivery from './../../pages/Delivery.js';
-import Checkout from './../../pages/Checkout.js';
-import Account from './../../pages/Account.js';
+import { AuthContext } from '../../AuthContext';
+import Landingpage from './../../pages/Landingpage';
+import MenuPage from './../../pages/MenuPage';
+import Delivery from './../../pages/Delivery';
+import Checkout from './../../pages/Checkout';
+import Account from './../../pages/Account';
 
-const AppRoutes = ({
-  cart,
-  setCart,
-  userAddress,
-  setUserAddress,
-  authStatus,
-  setAuthStatus,
-}) => {
+const AppRoutes = () => {
+  const { cart, userAddress, authStatus } = useContext(AuthContext);
+
   return (
     <Routes>
       <Route path="/" element={<Landingpage />} />
-      <Route
-        path="/menu"
-        element={
-          <MenuPage
-            cart={cart}
-            setCart={setCart}
-            authStatus={authStatus}
-            setAuthStatus={setAuthStatus}
-            userAddress={userAddress}
-            setUserAddress={setUserAddress}
-          />
-        }
-      />
+      <Route path="/menu" element={<MenuPage />} />
       <Route
         path="/delivery"
         element={
-          cart.length > 0 ? (
-            <Delivery
-              cart={cart}
-              setCart={setCart}
-              userAddress={userAddress}
-              setUserAddress={setUserAddress}
-              authStatus={authStatus}
-            />
-          ) : (
-            <Navigate to="/menu" replace />
-          )
+          cart.length > 0 ? <Delivery /> : <Navigate to="/menu" replace />
         }
       />
       <Route
         path="/checkout"
         element={
           userAddress ? (
-            <Checkout
-              cart={cart}
-              setCart={setCart}
-              userAddress={userAddress}
-              authStatus={authStatus}
-            />
+            <Checkout />
           ) : (
             <Navigate to="/delivery" replace />
           )
@@ -65,12 +34,7 @@ const AppRoutes = ({
         path="/account"
         element={
           authStatus === 'signedIn' ? (
-            <Account
-              authStatus={authStatus}
-              setAuthStatus={setAuthStatus}
-              userAddress={userAddress}
-              setUserAddress={setUserAddress}
-            />
+            <Account />
           ) : (
             <Navigate to="/menu" replace />
           )
