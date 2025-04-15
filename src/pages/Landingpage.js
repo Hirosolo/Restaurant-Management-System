@@ -40,7 +40,7 @@ function Landingpage() {
             <a href="#">About us</a>
             <Link to="/menu" onClick={toggleMenu}>Menu</Link>
             <img src="/assets/logo.png" alt="Logo" className="logo" />
-            <a href="#">Delivery</a>
+            <a href="#">Delivery</a> 
             <a href="#">Support</a>
           </div>
         </div>
@@ -63,7 +63,7 @@ function Landingpage() {
                 This group includes hearty dishes packed with protein like salmon, chicken, shrimp, meatballs, and burgers. These are full-portion meals meant to satisfy hunger and provide essential nutrients—perfect as the centerpiece of any lunch or dinner.
                 </div>
               </div>
-              <button className="order-btn">Order now</button>
+              <button className="order-btn" onclick={toggleMenu}>Order now</button>
             </div>
           </div>
 
