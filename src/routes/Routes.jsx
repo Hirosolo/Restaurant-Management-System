@@ -1,11 +1,11 @@
 import React, { useContext } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { AuthContext } from '../../AuthContext';
-import Landingpage from './../../pages/Landingpage';
-import MenuPage from './../../pages/MenuPage';
-import Delivery from './../../pages/Delivery';
-import Checkout from './../../pages/Checkout';
-import Account from './../../pages/Account';
+import { AuthContext } from '../AuthContext';
+import Landingpage from '../pages/Landingpage';
+import MenuPage from '../pages/MenuPage';
+import Delivery from '../pages/Delivery';
+import Checkout from '../pages/Checkout';
+import Account from '../pages/Account';
 
 const AppRoutes = () => {
   const { cart, userAddress, authStatus } = useContext(AuthContext);

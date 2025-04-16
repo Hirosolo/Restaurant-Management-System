@@ -50,12 +50,7 @@ function MenuPage() {
     }
   }, [authStatus, hasChosenGuest]);
 
-  // Removed prop syncing useEffect since we're using context
-  useEffect(() => {
-    if (authStatus === 'signedIn') {
-      navigate('/account');
-    }
-  }, [authStatus, navigate]);
+
 
   const recipeDetails = {
     "RCP-001": { name: "Pecan Crusted Salmon", calories: "488", protein: "54.4", fat: "22.4", fiber: "3.4", carb: "18.6", description: "Savor the delightful crunch of Pecan Crusted Salmon, where tender, flaky salmon fillets are coated with a nutty pecan crust. The rich, buttery pecans perfectly complement the salmon's natural flavors, while a hint of seasoning adds depth. Baked to golden perfection, this dish offers a satisfying balance of protein and healthy fats, making it a wholesome yet indulgent meal for any occasion." },
