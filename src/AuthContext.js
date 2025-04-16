@@ -8,7 +8,7 @@ export const AuthProvider = ({ children }) => {
   const [authStatus, setAuthStatus] = useState(() => {
     return localStorage.getItem('authStatus') || 'guest';
   });
-  const [hasChosenGuest, setHasChosenGuest] = useState(false); // Track if user has chosen guest mode
+  const [hasChosenGuest, setHasChosenGuest] = useState(false);
 
   // Sync authStatus with localStorage
   useEffect(() => {
@@ -32,12 +32,29 @@ export const AuthProvider = ({ children }) => {
     }
   }, [cart, authStatus]);
 
-  // Load cart from localStorage on mount
+  // Load cart from localStorage on mount for guests
   useEffect(() => {
     if (authStatus === 'guest') {
       const savedCart = localStorage.getItem('guestCart');
       if (savedCart) {
         setCart(JSON.parse(savedCart));
+      }
+    }
+  }, [authStatus]);
+
+  // Persist userAddress in localStorage for signed-in users
+  useEffect(() => {
+    if (authStatus === 'signedIn' && userAddress) {
+      localStorage.setItem('userAddress', JSON.stringify(userAddress));
+    }
+  }, [userAddress, authStatus]);
+
+  // Load userAddress from localStorage on mount for signed-in users
+  useEffect(() => {
+    if (authStatus === 'signedIn') {
+      const savedAddress = localStorage.getItem('userAddress');
+      if (savedAddress) {
+        setUserAddress(JSON.parse(savedAddress));
       }
     }
   }, [authStatus]);
