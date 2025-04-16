@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../AuthContext';
+import { AuthProvider } from '../AuthContext';
 import './Checkout.css';
 
 function Checkout() {
-  const { cart, setCart, userAddress, authStatus, hasChosenGuest, setHasChosenGuest, setAuthStatus } = useContext(AuthContext);
+  const { cart, setCart, userAddress, setUserAddress, authStatus, hasChosenGuest, setHasChosenGuest, setAuthStatus } = useContext(AuthContext);
   const [menuOpen, setMenuOpen] = useState(false);
   const navRef = useRef(null);
   const overlayRef = useRef(null);
@@ -49,10 +50,68 @@ function Checkout() {
     return (parseFloat(calculateSubtotal()) + deliveryCharge).toFixed(2);
   };
 
-  const handlePayment = () => {
-    alert('Order placed successfully!');
-    setCart([]);
-    navigate('/menu');
+  const handlePayment = async () => {
+    if (!contactNumber) {
+      alert('Please enter your contact number.');
+      return;
+    }
+
+    if (authStatus !== 'signedIn') {
+      alert('Please sign in to place an order.');
+      setShowAuthModal(true);
+      return;
+    }
+
+    // Prepare the order data
+    const orderData = {
+      cart,
+      contactNumber,
+      deliveryAddress: userAddress,
+      notes,
+    };
+
+    try {
+      // Send the order to the backend
+      const token = localStorage.getItem('token'); // Assuming the JWT token is stored in localStorage after sign-in
+      const response = await fetch('http://localhost:5000/api/order/place', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to place order');
+      }
+
+      // Request permission for notifications
+      if (Notification.permission !== 'granted') {
+        await Notification.requestPermission();
+      }
+
+      // Show browser notification
+      if (Notification.permission === 'granted') {
+        new Notification('Order Confirmation', {
+          body: `Your order (ID: ${result.orderId}) has been placed successfully!`,
+          icon: '/assets/logo.png', // Optional: use your app's logo
+        });
+      } else {
+        alert('Order placed successfully! Order ID: ' + result.orderId);
+      }
+
+      // Clear the cart and navigate
+      setCart([]);
+      setNotes([]);
+      setContactNumber('');
+      navigate('/menu');
+    } catch (error) {
+      console.error('Error placing order:', error);
+      alert('Failed to place order: ' + error.message);
+    }
   };
 
   const formatAddress = () => {
@@ -88,24 +147,97 @@ function Checkout() {
     localStorage.setItem('authStatus', 'guest');
   };
 
-  const handleSignInSubmit = (e) => {
+  const handleSignInSubmit = async (e) => {
     e.preventDefault();
-    setAuthStatus('signedIn');
-    setHasChosenGuest(true);
-    localStorage.setItem('authStatus', 'signedIn');
-    setShowSignInForm(false);
-    setUserEmail('');
-    setUserPassword('');
+    try {
+      const response = await fetch('http://localhost:5000/api/customer/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: userEmail, password: userPassword }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to sign in');
+      }
+
+      // Store the token
+      localStorage.setItem('token', result.token);
+
+      // Fetch user address
+      const addressResponse = await fetch('http://localhost:5000/api/customer/address', {
+        headers: {
+          'Authorization': `Bearer ${result.token}`,
+        },
+      });
+
+      const addressResult = await addressResponse.json();
+
+      if (addressResponse.ok) {
+        setUserAddress(addressResult);
+      }
+
+      setAuthStatus('signedIn');
+      setHasChosenGuest(true);
+      localStorage.setItem('authStatus', 'signedIn');
+      setShowSignInForm(false);
+      setUserEmail('');
+      setUserPassword('');
+    } catch (error) {
+      console.error('Error signing in:', error);
+      alert('Failed to sign in: ' + error.message);
+    }
   };
 
-  const handleCreateAccountSubmit = (e) => {
+  const handleCreateAccountSubmit = async (e) => {
     e.preventDefault();
-    setAuthStatus('signedIn');
-    setHasChosenGuest(true);
-    localStorage.setItem('authStatus', 'signedIn');
-    setShowCreateAccountForm(false);
+    try {
+      const response = await fetch('http://localhost:5000/api/customer/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          email: userEmail,
+          password: userPassword,
+          phone: contactMobile,
+          ward: userAddress?.ward,
+          district: userAddress?.district,
+          street: userAddress?.street,
+          house_number: userAddress?.houseNumber,
+          building_name: userAddress?.buildingName,
+          block: userAddress?.block,
+          floor: userAddress?.floor,
+          room_number: userAddress?.roomNumber,
+          delivery_instructions: userAddress?.deliveryInstructions,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to create account');
+      }
+
+      // Store the token
+      localStorage.setItem('token', result.token);
+
+      setAuthStatus('signedIn');
+      setHasChosenGuest(true);
+      localStorage.setItem('authStatus', 'signedIn');
+      setShowCreateAccountForm(false);
+    } catch (error) {
+      console.error('Error creating account:', error);
+      alert('Failed to create account: ' + error.message);
+    }
   };
 
+  // Rest of the JSX remains unchanged
   return (
     <div className="checkout-page">
       <div className="navbar menu-navbar">
