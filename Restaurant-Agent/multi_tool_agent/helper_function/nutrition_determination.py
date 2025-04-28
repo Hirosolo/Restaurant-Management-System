@@ -1,0 +1,5 @@
+def protein_determination(protein): return "low" if protein < 30 else "moderate" if protein < 50 else "high"
+def calories_determination(calories): return "low" if calories < 400 else "moderate" if calories < 500 else "high"
+def fat_determination(fat): return "low" if fat < 15 else "moderate" if fat < 25 else "high"
+def fiber_determination(fiber): return "low" if fiber < 2 else "moderate" if fiber < 5 else "high"
+def carbohydrate_determination(carbs): return "low" if carbs < 15 else "moderate" if carbs < 40 else "high"
