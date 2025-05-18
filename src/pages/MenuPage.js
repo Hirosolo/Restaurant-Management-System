@@ -48,6 +48,282 @@ function MenuPage() {
 
   const [imageFormats, setImageFormats] = useState({});
 
+  // New state variables for recipe creation
+  const [showNewRecipeModal, setShowNewRecipeModal] = useState(false);
+  const [showManageMealsModal, setShowManageMealsModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [editingRecipe, setEditingRecipe] = useState(null);
+  const [ingredients, setIngredients] = useState([]);
+  const [selectedIngredients, setSelectedIngredients] = useState([]);
+  const [newRecipe, setNewRecipe] = useState({
+    rcp_name: '',
+    cost: 0,
+    calories: 0,
+    protein: 0,
+    fat: 0,
+    carbohydrate: 0,
+    fiber: 0,
+    price: 0,
+    saturated_fat: 0,
+    sugar: 0,
+    vitamin_a: 0,
+    vitamin_c: 0,
+    calcium: 0,
+    iron: 0,
+    vitamin_d: 0,
+    magnesium: 0,
+    potassium: 0,
+    vitamin_b6: 0,
+    vitamin_b12: 0,
+    category: '',
+    description: ''
+  });
+
+  // Add filteredRecipes computation
+  const filteredRecipes = Object.entries(recipeDetails).filter(([id, recipe]) => {
+    if (!recipe) return false;
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      (recipe.name?.toLowerCase() || '').includes(searchLower) ||
+      (recipe.description?.toLowerCase() || '').includes(searchLower) ||
+      (recipe.category?.toLowerCase() || '').includes(searchLower)
+    );
+  });
+
+  // Add handleEditRecipe function
+  const handleEditRecipe = async (recipe) => {
+    try {
+      console.log('Starting to edit recipe:', recipe);
+      
+      // Ensure we have a valid recipe ID
+      const recipeId = parseInt(recipe.id);
+      if (isNaN(recipeId)) {
+        throw new Error(`Invalid recipe ID: ${recipe.id}`);
+      }
+      
+      console.log('Recipe ID for editing:', recipeId);
+      setEditingRecipe(recipe);
+      
+      // Set the recipe form data
+      setNewRecipe({
+        rcp_name: recipe.name,
+        cost: recipe.cost || 0,
+        calories: recipe.calories || 0,
+        protein: recipe.protein || 0,
+        fat: recipe.fat || 0,
+        carbohydrate: recipe.carbohydrate || 0,
+        fiber: recipe.fiber || 0,
+        price: recipe.price || 0,
+        saturated_fat: recipe.saturated_fat || 0,
+        sugar: recipe.sugar || 0,
+        vitamin_a: recipe.vitamin_a || 0,
+        vitamin_c: recipe.vitamin_c || 0,
+        calcium: recipe.calcium || 0,
+        iron: recipe.iron || 0,
+        vitamin_d: recipe.vitamin_d || 0,
+        magnesium: recipe.magnesium || 0,
+        potassium: recipe.potassium || 0,
+        vitamin_b6: recipe.vitamin_b6 || 0,
+        vitamin_b12: recipe.vitamin_b12 || 0,
+        category: recipe.category || '',
+        description: recipe.description || ''
+      });
+
+      // Fetch recipe ingredients
+      console.log('Fetching ingredients for recipe ID:', recipeId);
+      const response = await fetch(`http://localhost:5000/api/menu/recipes/${recipeId}/ingredients`);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Server response:', errorData);
+        throw new Error(errorData.message || `Failed to fetch recipe ingredients: ${response.status} ${response.statusText}`);
+      }
+
+      const ingredients = await response.json();
+      console.log('Raw ingredients data from server:', ingredients);
+      
+      if (!Array.isArray(ingredients)) {
+        console.error('Invalid ingredients data:', ingredients);
+        throw new Error('Invalid ingredients data received from server');
+      }
+
+      // Set the selected ingredients
+      const formattedIngredients = ingredients.map(ing => ({
+        ing_id: ing.ing_id,
+        ing_name: ing.ing_name,
+        weight: ing.weight
+      }));
+      console.log('Formatted ingredients:', formattedIngredients);
+      
+      setSelectedIngredients(formattedIngredients);
+      setShowManageMealsModal(false);
+      setShowNewRecipeModal(true);
+    } catch (error) {
+      console.error('Error in handleEditRecipe:', error);
+      alert(`Failed to load recipe details: ${error.message}`);
+    }
+  };
+
+  // Add handleDeleteRecipe function
+  const handleDeleteRecipe = async (recipeId) => {
+    if (window.confirm('Are you sure you want to delete this recipe?')) {
+      try {
+        // Ensure recipeId is a number
+        const id = parseInt(recipeId);
+        if (isNaN(id)) {
+          throw new Error('Invalid recipe ID');
+        }
+
+        console.log('Attempting to delete recipe with ID:', id);
+        console.log('Current recipe details:', recipeDetails);
+        console.log('Recipe to delete:', recipeDetails[id]);
+        
+        if (!recipeDetails[id]) {
+          // Try to find the recipe with a different ID format
+          const alternativeId = id.toString().padStart(3, '0');
+          console.log('Trying alternative ID format:', alternativeId);
+          
+          if (!recipeDetails[alternativeId]) {
+            throw new Error(`Recipe with ID ${id} not found in current data`);
+          }
+          
+          // Use the alternative ID
+          id = alternativeId;
+        }
+
+        const response = await fetch(`http://localhost:5000/api/menu/recipes/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.message || `Failed to delete recipe: ${response.status} ${response.statusText}`);
+        }
+
+        // Update the recipe details state by removing the deleted recipe
+        const updatedRecipeDetails = { ...recipeDetails };
+        delete updatedRecipeDetails[id];
+        setRecipeDetails(updatedRecipeDetails);
+
+        // Update categories
+        const updatedCategories = categories.map(category => ({
+          ...category,
+          items: category.items.filter(item => item.id !== id)
+        })).filter(category => category.items.length > 0);
+        setCategories(updatedCategories);
+
+        alert('Recipe deleted successfully');
+      } catch (error) {
+        console.error('Error deleting recipe:', error);
+        alert(error.message || 'Failed to delete recipe. Please try again.');
+      }
+    }
+  };
+
+  // Recipe creation functions
+  const handleNewRecipeSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      // Validate required fields
+      if (!newRecipe.rcp_name || !newRecipe.category || !newRecipe.description) {
+        alert('Please fill in all required fields (Recipe Name, Category, and Description)');
+        return;
+      }
+
+      if (selectedIngredients.length === 0) {
+        alert('Please add at least one ingredient to the recipe');
+        return;
+      }
+
+      // Validate ingredient weights
+      const invalidIngredient = selectedIngredients.find(ing => !ing.weight || ing.weight <= 0);
+      if (invalidIngredient) {
+        alert(`Please enter a valid weight for ingredient: ${invalidIngredient.ing_name}`);
+        return;
+      }
+
+      const url = editingRecipe 
+        ? `http://localhost:5000/api/menu/recipes/${editingRecipe.id}`
+        : 'http://localhost:5000/api/menu/recipes';
+
+      const response = await fetch(url, {
+        method: editingRecipe ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          recipe: newRecipe,
+          ingredients: selectedIngredients
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || `Failed to ${editingRecipe ? 'update' : 'create'} recipe`);
+      }
+
+      // Refresh recipe list
+      const updatedResponse = await fetch('http://localhost:5000/api/menu/recipes');
+      if (!updatedResponse.ok) {
+        throw new Error('Failed to refresh recipe list');
+      }
+      const updatedData = await updatedResponse.json();
+      setRecipeDetails(updatedData);
+      
+      // Close modal and reset form
+      setShowNewRecipeModal(false);
+      setEditingRecipe(null);
+      setNewRecipe({
+        rcp_name: '',
+        cost: 0,
+        calories: 0,
+        protein: 0,
+        fat: 0,
+        carbohydrate: 0,
+        fiber: 0,
+        price: 0,
+        saturated_fat: 0,
+        sugar: 0,
+        vitamin_a: 0,
+        vitamin_c: 0,
+        calcium: 0,
+        iron: 0,
+        vitamin_d: 0,
+        magnesium: 0,
+        potassium: 0,
+        vitamin_b6: 0,
+        vitamin_b12: 0,
+        category: '',
+        description: ''
+      });
+      setSelectedIngredients([]);
+      alert(`Recipe ${editingRecipe ? 'updated' : 'created'} successfully!`);
+    } catch (error) {
+      console.error('Error saving recipe:', error);
+      alert(error.message || `Failed to ${editingRecipe ? 'update' : 'create'} recipe. Please try again.`);
+    }
+  };
+
+  const addIngredient = (ingredient) => {
+    setSelectedIngredients([...selectedIngredients, { ...ingredient, weight: 0 }]);
+  };
+
+  const removeIngredient = (index) => {
+    const newIngredients = [...selectedIngredients];
+    newIngredients.splice(index, 1);
+    setSelectedIngredients(newIngredients);
+  };
+
+  const updateIngredientWeight = (index, weight) => {
+    const newIngredients = [...selectedIngredients];
+    newIngredients[index].weight = parseFloat(weight);
+    setSelectedIngredients(newIngredients);
+  };
+
   // Show auth modal on page load if not signed in and hasn't chosen guest
   useEffect(() => {
     if (authStatus !== 'signedIn' && !hasChosenGuest) {
@@ -61,9 +337,10 @@ function MenuPage() {
     const fetchRecipeDetails = async () => {
       if (isLoading) {
         try {
+          console.log('Fetching recipe details...');
           const response = await fetch('http://localhost:5000/api/menu/recipes');
           if (!response.ok) {
-            throw new Error('Failed to fetch recipe details');
+            throw new Error(`Failed to fetch recipe details: ${response.status} ${response.statusText}`);
           }
           const data = await response.json();
           
@@ -74,6 +351,7 @@ function MenuPage() {
             // Organize recipes into categories
             const categoryMap = {};
             Object.entries(data).forEach(([recipeId, recipe]) => {
+              console.log('Processing recipe:', { recipeId, recipe }); // Debug log
               const category = recipe.category || 'Uncategorized';
               if (!categoryMap[category]) {
                 categoryMap[category] = {
@@ -85,7 +363,7 @@ function MenuPage() {
               // Format the recipe ID to match the file naming pattern (RCP-001, RCP-002, etc.)
               const formattedId = `RCP-${String(recipeId).padStart(3, '0')}`;
               const imageUrl = `/assets/${formattedId}.jpg`; // Start with jpg
-              console.log('Constructed image URL:', imageUrl); // Debug log
+              console.log('Adding recipe to category:', { category, recipeId, recipe }); // Debug log
               categoryMap[category].items.push({
                 id: recipeId,
                 name: recipe.name,
@@ -97,6 +375,7 @@ function MenuPage() {
 
             // Convert category map to array and sort by category name
             const categoryList = Object.values(categoryMap).sort((a, b) => a.name.localeCompare(b.name));
+            console.log('Final category list:', categoryList); // Debug log
             setCategories(categoryList);
             setIsLoading(false);
           }
@@ -116,6 +395,31 @@ function MenuPage() {
       isMounted = false;
     };
   }, []); // Empty dependency array since we only want to fetch once on mount
+
+  // Fetch ingredients from API
+  useEffect(() => {
+    const fetchIngredients = async () => {
+      try {
+        console.log('Fetching ingredients...');
+        const response = await fetch('http://localhost:5000/api/menu/ingredients');
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch ingredients: ${response.status} ${response.statusText}`);
+        }
+        const data = await response.json();
+        console.log('Fetched ingredients:', data);
+        if (!Array.isArray(data)) {
+          console.error('Ingredients data is not an array:', data);
+          return;
+        }
+        setIngredients(data);
+      } catch (error) {
+        console.error('Error fetching ingredients:', error);
+      }
+    };
+
+    fetchIngredients();
+  }, []);
 
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
@@ -420,6 +724,20 @@ function MenuPage() {
         <div className="menu-container">
           <div className="sidebar">
             <h3>Menu</h3>
+            <div className="recipe-buttons">
+              <button 
+                className="add-recipe-btn"
+                onClick={() => setShowNewRecipeModal(true)}
+              >
+                Add New Recipe
+              </button>
+              <button 
+                className="manage-meals-btn"
+                onClick={() => setShowManageMealsModal(true)}
+              >
+                Manage Meals
+              </button>
+            </div>
             <div className="filters">
               {filters.map(filter => (
                 <div className="filter" key={filter.id}>
@@ -793,6 +1111,289 @@ function MenuPage() {
                     <li><strong>Carb:</strong> {recipeDetails[selectedRecipe].carb}g</li>
                   </ul>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* New Recipe Modal */}
+        {showNewRecipeModal && (
+          <div className="modal-overlay">
+            <div className="modal-content recipe-form">
+              <button className="close-modal-btn" onClick={() => {
+                setShowNewRecipeModal(false);
+                setEditingRecipe(null);
+                setNewRecipe({
+                  rcp_name: '',
+                  cost: 0,
+                  calories: 0,
+                  protein: 0,
+                  fat: 0,
+                  carbohydrate: 0,
+                  fiber: 0,
+                  price: 0,
+                  saturated_fat: 0,
+                  sugar: 0,
+                  vitamin_a: 0,
+                  vitamin_c: 0,
+                  calcium: 0,
+                  iron: 0,
+                  vitamin_d: 0,
+                  magnesium: 0,
+                  potassium: 0,
+                  vitamin_b6: 0,
+                  vitamin_b12: 0,
+                  category: '',
+                  description: ''
+                });
+                setSelectedIngredients([]);
+              }}>✕</button>
+              <h2>{editingRecipe ? 'Edit Recipe' : 'Create New Recipe'}</h2>
+              <form onSubmit={handleNewRecipeSubmit}>
+                <div className="form-section">
+                  <h3>Basic Information</h3>
+                  <div className="form-group">
+                    <label>Recipe Name:</label>
+                    <input
+                      type="text"
+                      value={newRecipe.rcp_name}
+                      onChange={(e) => setNewRecipe({...newRecipe, rcp_name: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Category:</label>
+                    <input
+                      type="text"
+                      value={newRecipe.category}
+                      onChange={(e) => setNewRecipe({...newRecipe, category: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Description:</label>
+                    <textarea
+                      value={newRecipe.description}
+                      onChange={(e) => setNewRecipe({...newRecipe, description: e.target.value})}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="form-section">
+                  <h3>Nutritional Information</h3>
+                  <div className="nutrition-grid">
+                    <div className="form-group">
+                      <label>Calories:</label>
+                      <input
+                        type="number"
+                        value={newRecipe.calories}
+                        onChange={(e) => setNewRecipe({...newRecipe, calories: parseFloat(e.target.value)})}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Protein (g):</label>
+                      <input
+                        type="number"
+                        value={newRecipe.protein}
+                        onChange={(e) => setNewRecipe({...newRecipe, protein: parseFloat(e.target.value)})}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Fat (g):</label>
+                      <input
+                        type="number"
+                        value={newRecipe.fat}
+                        onChange={(e) => setNewRecipe({...newRecipe, fat: parseFloat(e.target.value)})}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Carbohydrates (g):</label>
+                      <input
+                        type="number"
+                        value={newRecipe.carbohydrate}
+                        onChange={(e) => setNewRecipe({...newRecipe, carbohydrate: parseFloat(e.target.value)})}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Fiber (g):</label>
+                      <input
+                        type="number"
+                        value={newRecipe.fiber}
+                        onChange={(e) => setNewRecipe({...newRecipe, fiber: parseFloat(e.target.value)})}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Price ($):</label>
+                      <input
+                        type="number"
+                        value={newRecipe.price}
+                        onChange={(e) => setNewRecipe({...newRecipe, price: parseFloat(e.target.value)})}
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="form-section">
+                  <h3>Ingredients</h3>
+                  <div className="ingredient-search">
+                    <input
+                      type="text"
+                      placeholder="Search ingredients..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="ingredient-search-input"
+                    />
+                    {searchQuery && (
+                      <div className="ingredient-dropdown">
+                        {ingredients
+                          .filter(ing => 
+                            !selectedIngredients.some(selected => selected.ing_id === ing.ing_id) &&
+                            ing.ing_name.toLowerCase().includes(searchQuery.toLowerCase())
+                          )
+                          .map(ing => (
+                            <div
+                              key={ing.ing_id}
+                              className="ingredient-option"
+                              onClick={() => {
+                                setSelectedIngredients([
+                                  ...selectedIngredients,
+                                  {
+                                    ing_id: ing.ing_id,
+                                    ing_name: ing.ing_name,
+                                    weight: 0
+                                  }
+                                ]);
+                                setSearchQuery('');
+                              }}
+                            >
+                              {ing.ing_name}
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="ingredients-table">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>ID</th>
+                          <th>Ingredient Name</th>
+                          <th>Quantity (g)</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedIngredients.map((ingredient, index) => (
+                          <tr key={index}>
+                            <td>
+                              <input
+                                type="number"
+                                value={ingredient.ing_id}
+                                readOnly
+                                className="readonly-input"
+                              />
+                            </td>
+                            <td>
+                              <input
+                                type="text"
+                                value={ingredient.ing_name}
+                                readOnly
+                                className="readonly-input"
+                              />
+                            </td>
+                            <td>
+                              <input
+                                type="number"
+                                value={ingredient.weight}
+                                onChange={(e) => updateIngredientWeight(index, e.target.value)}
+                                placeholder="Weight"
+                                required
+                                min="0"
+                                step="0.1"
+                              />
+                            </td>
+                            <td>
+                              <button 
+                                type="button" 
+                                onClick={() => removeIngredient(index)}
+                                className="remove-btn"
+                              >
+                                Remove
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <button type="submit" className="submit-btn">
+                  {editingRecipe ? 'Confirm Edit' : 'Create Recipe'}
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Manage Meals Modal */}
+        {showManageMealsModal && (
+          <div className="modal-overlay">
+            <div className="modal-content manage-meals-modal">
+              <button className="close-modal-btn" onClick={() => setShowManageMealsModal(false)}>✕</button>
+              <h2>Manage Meals</h2>
+              
+              <div className="search-bar">
+                <input
+                  type="text"
+                  placeholder="Search meals..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+
+              <div className="meals-list">
+                {filteredRecipes.map(([id, recipe]) => {
+                  console.log('Rendering recipe:', { id, recipe }); // Debug log
+                  return (
+                    <div key={id} className="meal-item">
+                      <div className="meal-info">
+                        <h3>{recipe.name}</h3>
+                        <p>{recipe.description}</p>
+                        <div className="meal-details">
+                          <span>Calories: {recipe.calories}</span>
+                          <span>Protein: {recipe.protein}g</span>
+                          <span>Fat: {recipe.fat}g</span>
+                        </div>
+                      </div>
+                      <div className="meal-actions">
+                        <button 
+                          className="edit-btn"
+                          onClick={() => handleEditRecipe({ id, ...recipe })}
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          className="delete-btn"
+                          onClick={() => {
+                            console.log('Delete button clicked for recipe:', { id, recipe }); // Debug log
+                            handleDeleteRecipe(id);
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
