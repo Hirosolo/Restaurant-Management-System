@@ -1,0 +1,39 @@
+.accountSidebar {
+  width: 200px;
+  min-width: 200px;
+  background-color: #e7e7e7;
+  padding: 20px 0;
+  border-radius: 4px;
+  margin-right: 20px;
+  
+}
+
+.sidebarItem {
+  padding: 12px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.3s;
+}
+
+.sidebarItem:hover {
+  background-color: #d7d7d7;
+}
+
+.sidebarItem.active {
+  background-color: #d7d7d7;
+  font-weight: 600;
+}
+
+.sidebarItem.logout {
+  margin-top: 30px;
+  color: #f44336;
+}
+
+@media (max-width: 768px) {
+  .accountSidebar {
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: 20px;
+  }
+}

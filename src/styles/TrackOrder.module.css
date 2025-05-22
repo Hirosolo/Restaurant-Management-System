@@ -1,0 +1,83 @@
+.accountSection {
+  margin-bottom: 30px;
+}
+
+.accountSection h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.trackOrderContainer {
+  background-color: #e7e7e7;
+  padding: 20px;
+  border-radius: 4px;
+}
+
+.orderInfo {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.orderInfo span {
+  font-weight: 600;
+  margin-right: 5px;
+}
+
+.orderStatus {
+  margin-top: 30px;
+}
+
+.statusLabel {
+  background-color: #4CAF50;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.statusTimeline {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  margin-top: 30px;
+}
+
+.timelineLine {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #ddd;
+  z-index: 1;
+}
+
+.timelineStep {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  flex: 1;
+}
+
+.timelineDate {
+  font-size: 12px;
+  margin-bottom: 15px;
+}
+
+.timelineDot {
+  width: 20px;
+  height: 20px;
+  background-color: #ddd;
+  border-radius: 50%;
+  margin: 0 auto;
+}
+
+.timelineStep.completed .timelineDot {
+  background-color: #4CAF50;
+}

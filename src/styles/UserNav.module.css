@@ -1,0 +1,49 @@
+.userNavContainer {
+  display: flex;
+  justify-content: flex-end; /* Thay đổi từ flex-start để đẩy nội dung sang phải */
+  padding: 5px 20px; /* Giảm padding */
+  background-color: transparent;
+}
+
+.userNavLinks {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.userNavLink {
+  color: #333;
+  text-decoration: none;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+/* Thêm dấu | giữa các link - giữ lại để giống hình mẫu */
+.userNavLink:not(:last-child)::after {
+  content: '|';
+  position: absolute;
+  right: -10px;
+  color: #777;
+}
+
+.userIcon {
+  font-size: 16px;
+  margin-right: 5px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .userNavContainer {
+    padding: 5px 10px;
+  }
+  
+  .userNavLinks {
+    gap: 10px;
+  }
+  
+  .userNavLink {
+    font-size: 12px;
+  }
+}

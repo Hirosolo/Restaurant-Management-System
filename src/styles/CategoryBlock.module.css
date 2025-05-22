@@ -1,0 +1,45 @@
+/* CategoryBlock.module.css */
+.categoryBlock {
+  margin-bottom: 20px;
+}
+
+.categoryHeader {
+  background-color: #f3f0e5; /* Màu beige nhạt */
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.categoryTitle {
+  font-size: 22px;
+  font-weight: bold;
+  margin: 0;
+  color: #000;
+}
+
+.toggleIcon {
+  font-size: 16px;
+  color: #555;
+}
+
+.productsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  padding: 20px;
+  background-color: white;
+}
+.menuItemsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* Thiết lập 2 cột */
+  gap: 15px;
+  padding: 15px;
+}
+@media (max-width: 768px) {
+  .productsGrid {
+    grid-template-columns: 1fr;
+  }
+  
+}
