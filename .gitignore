@@ -29,7 +29,6 @@ node_modules/
 build/
 
 # MySQL database files
-*.sql
 *.db
 
 # Logs
