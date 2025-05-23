@@ -76,10 +76,11 @@ function MenuPage({
   // Theo dõi propAuthStatus để điều hướng
   useEffect(() => {
     console.log('propAuthStatus updated:', propAuthStatus);
-    if (propAuthStatus === 'signedIn') {
-      console.log('Navigating to /account');
-      navigate('/account');
-    }
+    // Remove automatic navigation to account page
+    // if (propAuthStatus === 'signedIn') {
+    //   console.log('Navigating to /account');
+    //   navigate('/account');
+    // }
   }, [propAuthStatus, navigate]);
 
   // Fetch recipes when component mounts
@@ -172,7 +173,7 @@ function MenuPage({
   ];
 
   const addToCart = (item) => {
-    if (propAuthStatus === 'guest') {
+    if (propAuthStatus !== 'signedIn') {
       setTempItemToAdd(item);
       setShowAuthModal(true);
     } else {
@@ -247,13 +248,58 @@ function MenuPage({
     }
   };
 
-  const handleSignInSubmit = (e) => {
+  const handleSignInSubmit = async (e) => {
     e.preventDefault();
-    setPropAuthStatus('signedIn');
-    localStorage.setItem('authStatus', 'signedIn');
-    setShowSignInForm(false);
-    setUserEmail('');
-    setUserPassword('');
+    console.log('Starting sign in process...', { email: userEmail });
+    try {
+      console.log('Making API request to sign in...');
+      const response = await fetch('http://localhost:3001/api/users/signin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: userEmail,
+          password: userPassword
+        })
+      });
+
+      console.log('Received response from server:', response.status);
+      const data = await response.json();
+      console.log('Response data:', data);
+
+      if (!response.ok) {
+        console.error('Sign in failed:', data.message);
+        throw new Error(data.message || 'Sign in failed');
+      }
+
+      console.log('Sign in successful, updating user state...');
+      // If sign in successful
+      setPropAuthStatus('signedIn');
+      localStorage.setItem('authStatus', 'signedIn');
+      localStorage.setItem('userData', JSON.stringify(data.user));
+      setShowSignInForm(false);
+      setUserEmail('');
+      setUserPassword('');
+
+      // If there was a temporary item to add to cart
+      if (tempItemToAdd) {
+        console.log('Adding temporary item to cart:', tempItemToAdd);
+        const existingItemIndex = cart.findIndex(cartItem => cartItem.id === tempItemToAdd.id);
+        if (existingItemIndex !== -1) {
+          const updatedCart = [...cart];
+          updatedCart[existingItemIndex].quantity += 1;
+          setCart(updatedCart);
+        } else {
+          setCart([...cart, { ...tempItemToAdd, quantity: 1, note: '' }]);
+        }
+        setTempItemToAdd(null);
+      }
+      console.log('Sign in process completed successfully');
+    } catch (error) {
+      console.error('Sign in error:', error);
+      alert(error.message || 'Failed to sign in. Please try again.');
+    }
   };
 
   const handleCreateAccountSubmit = (e) => {
