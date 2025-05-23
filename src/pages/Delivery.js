@@ -1,10 +1,8 @@
-import React, { useState, useRef, useEffect, useContext } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AuthContext } from '../AuthContext';
 import './Delivery.css';
 
-function Delivery() {
-  const { cart, setCart, userAddress, setUserAddress, authStatus } = useContext(AuthContext);
+function Delivery({ cart, setCart, userAddress, setUserAddress }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const navRef = useRef(null);
   const overlayRef = useRef(null);
@@ -26,66 +24,21 @@ function Delivery() {
   const [districtDropdownOpen, setDistrictDropdownOpen] = useState(false);
   const [streetDropdownOpen, setStreetDropdownOpen] = useState(false);
 
+  // Sample data for dropdowns
   const wards = ['Ward 1', 'Ward 2', 'Ward 3', 'Ward 4', 'Ward 5'];
   const districts = ['District 1', 'District 2', 'District 3', 'District 4', 'District 5'];
   const streets = ['Street 1', 'Street 2', 'Street 3', 'Street 4', 'Street 5'];
 
-  // Fetch address for logged-in users
-  useEffect(() => {
-    if (authStatus === 'signedIn') {
-      const fetchAddress = async () => {
-        try {
-          const token = localStorage.getItem('token'); // Assuming JWT token is stored in localStorage
-          const response = await fetch('http://localhost:5000/api/customer/address', {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-          });
-          if (response.ok) {
-            const data = await response.json();
-            setWard(data.ward || '');
-            setDistrict(data.district || '');
-            setStreet(data.street || '');
-            setHouseNumber(data.house_number || '');
-            setBuildingName(data.building_name || '');
-            setBlock(data.block || '');
-            setFloor(data.floor || '');
-            setRoomNumber(data.room_number || '');
-            setDeliveryInstructions(data.delivery_instructions || '');
-          } else {
-            console.error('Failed to fetch address');
-          }
-        } catch (error) {
-          console.error('Error fetching address:', error);
-        }
-      };
-      fetchAddress();
-    }
-  }, [authStatus]);
-
-  // If userAddress exists (e.g., from guest input), prefill the form
-  useEffect(() => {
-    if (userAddress) {
-      setWard(userAddress.ward || '');
-      setDistrict(userAddress.district || '');
-      setStreet(userAddress.street || '');
-      setHouseNumber(userAddress.houseNumber || '');
-      setBuildingName(userAddress.buildingName || '');
-      setBlock(userAddress.block || '');
-      setFloor(userAddress.floor || '');
-      setRoomNumber(userAddress.roomNumber || '');
-      setDeliveryInstructions(userAddress.deliveryInstructions || '');
-    }
-  }, [userAddress]);
-
+  // Toggle menu
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
   };
 
+  // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
     
+    // Save address information
     const addressInfo = {
       ward,
       district,
@@ -99,11 +52,14 @@ function Delivery() {
     };
     
     setUserAddress(addressInfo);
+    
+    // Navigate to checkout page
     navigate('/checkout');
   };
 
   return (
     <div className="delivery-page">
+      {/* Header with class menu-navbar */}
       <div className="navbar menu-navbar">
         <div className={`menu-icon ${menuOpen ? 'open' : ''}`} onClick={toggleMenu}>
           <div className="bar"></div>
@@ -113,11 +69,13 @@ function Delivery() {
         <div className="mobile-logo">
           <img src="/assets/logo.png" alt="Logo" className="logo" />
         </div>
+
         <div
           className={`overlay ${menuOpen ? 'active' : ''}`}
           ref={overlayRef}
           onClick={toggleMenu}
         ></div>
+
         <div
           className={`nav-links ${menuOpen ? 'active' : ''}`}
           ref={navRef}
@@ -131,6 +89,7 @@ function Delivery() {
         </div>
       </div>
 
+      {/* User navigation bar */}
       <div className="user-nav">
         <div className="user-nav-container">
           <div className="user-nav-left">
@@ -144,8 +103,10 @@ function Delivery() {
         </div>
       </div>
 
+      {/* Delivery Form Container */}
       <div className="delivery-container">
         <h2>DELIVERY ADDRESS</h2>
+        
         <form onSubmit={handleSubmit}>
           <div className="delivery-form">
             <div className="delivery-row">
@@ -177,6 +138,7 @@ function Delivery() {
                   )}
                 </div>
               </div>
+              
               <div className="delivery-field">
                 <label>*District:</label>
                 <div className="custom-select">
@@ -206,6 +168,7 @@ function Delivery() {
                 </div>
               </div>
             </div>
+            
             <div className="delivery-row">
               <div className="delivery-field">
                 <label>*Street:</label>
@@ -235,6 +198,7 @@ function Delivery() {
                   )}
                 </div>
               </div>
+              
               <div className="delivery-field">
                 <label>*House/Street Number:</label>
                 <input 
@@ -245,6 +209,7 @@ function Delivery() {
                 />
               </div>
             </div>
+            
             <div className="delivery-field single-row">
               <label>Building Name:</label>
               <input 
@@ -253,6 +218,7 @@ function Delivery() {
                 onChange={(e) => setBuildingName(e.target.value)}
               />
             </div>
+            
             <div className="delivery-row three-column">
               <div className="delivery-field">
                 <label>Block:</label>
@@ -262,6 +228,7 @@ function Delivery() {
                   onChange={(e) => setBlock(e.target.value)}
                 />
               </div>
+              
               <div className="delivery-field">
                 <label>Floor / Level:</label>
                 <input 
@@ -270,6 +237,7 @@ function Delivery() {
                   onChange={(e) => setFloor(e.target.value)}
                 />
               </div>
+              
               <div className="delivery-field">
                 <label>Room Number / Company Name:</label>
                 <input 
@@ -279,6 +247,7 @@ function Delivery() {
                 />
               </div>
             </div>
+            
             <div className="delivery-field single-row">
               <label>Delivery Instruction to Rider:</label>
               <textarea 
@@ -288,6 +257,7 @@ function Delivery() {
               />
             </div>
           </div>
+          
           <button type="submit" className="confirm-address-btn">
             CONFIRM DELIVERY ADDRESS
           </button>

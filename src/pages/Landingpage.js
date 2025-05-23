@@ -17,7 +17,7 @@ function Landingpage() {
       <div className="container">
         {/* Navbar */}
         <div className="navbar">
-          <div className={`menu-icon ${menuOpen ? 'open' : ''}`} onClick={toggleMenu}>
+        <div className={`menu-icon ${menuOpen ? 'open' : ''}`} onClick={toggleMenu}>
             <div className="bar"></div>
             <div className="bar"></div>
             <div className="bar"></div>
@@ -40,7 +40,7 @@ function Landingpage() {
             <a href="#">About us</a>
             <Link to="/menu" onClick={toggleMenu}>Menu</Link>
             <img src="/assets/logo.png" alt="Logo" className="logo" />
-            <Link to="/delivery" onClick={toggleMenu}>Delivery</Link>
+            <a href="#">Delivery</a>
             <a href="#">Support</a>
           </div>
         </div>
@@ -52,6 +52,7 @@ function Landingpage() {
 
         {/* Menu Sections */}
         <div className="menu-section">
+
           {/* --- Main Meals --- */}
           <div className="menu-item main-meals">
             <img src="/assets/RCP-001.jpg" alt="Main Meals" className="menu-image" />
@@ -59,12 +60,10 @@ function Landingpage() {
               <div>
                 <div className="menu-title">Main Meals</div>
                 <div className="menu-description">
-                  This group includes hearty dishes packed with protein like salmon, chicken, shrimp, meatballs, and burgers. These are full-portion meals meant to satisfy hunger and provide essential nutrients—perfect as the centerpiece of any lunch or dinner.
+                This group includes hearty dishes packed with protein like salmon, chicken, shrimp, meatballs, and burgers. These are full-portion meals meant to satisfy hunger and provide essential nutrients—perfect as the centerpiece of any lunch or dinner.
                 </div>
               </div>
-              <Link to="/menu">
-                <button className="order-btn">Order now</button>
-              </Link>
+              <button className="order-btn">Order now</button>
             </div>
           </div>
 
@@ -74,29 +73,26 @@ function Landingpage() {
               <div>
                 <div className="menu-title">Salads</div>
                 <div className="menu-description">
-                  These refreshing salads combine fresh greens with protein sources like smoked salmon, grilled chicken, or tofu. Light yet nutritious, they're ideal for a healthy meal or a quick, energizing lunch.
+                These refreshing salads combine fresh greens with protein sources like smoked salmon, grilled chicken, or tofu. Light yet nutritious, they're ideal for a healthy meal or a quick, energizing lunch.
                 </div>
               </div>
-              <Link to="/menu">
-                <button className="order-btn">Order now</button>
-              </Link>
+              <button className="order-btn">Order now</button>
             </div>
             <img src="/assets/RCP-009.jpg" alt="Salads" className="menu-image" />
           </div>
 
           {/* --- Pasta & Noodles --- */}
           <div className="menu-item pasta-noodles">
-            <img src="/assets/RCP-021.jpg" alt="Pasta&Noodles" className="menu-image" />
+          <img src="/assets/RCP-021.jpg" alt="Pasta&Noodles" className="menu-image" />
             <div className="menu-details">
+             
               <div>
                 <div className="menu-title">Pasta & Noodles</div>
                 <div className="menu-description">
-                  A variety of pasta dishes featuring everything from light tomato sauces to rich creamy shrimp sauces. These meals are comforting, flavorful, and inspired by Italian cuisine—great for those craving something savory and satisfying.
+                A variety of pasta dishes featuring everything from light tomato sauces to rich creamy shrimp sauces. These meals are comforting, flavorful, and inspired by Italian cuisine—great for those craving something savory and satisfying.
                 </div>
               </div>
-              <Link to="/menu">
-                <button className="order-btn">Order now</button>
-              </Link>
+              <button className="order-btn">Order now</button>
             </div>
           </div>
 
@@ -106,29 +102,25 @@ function Landingpage() {
               <div>
                 <div className="menu-title">Rice Dishes</div>
                 <div className="menu-description">
-                  Including fried rice with shrimp or tofu, these meals are influenced by Asian cuisine and are quick, filling options. Perfect for an easy, well-rounded meal at lunch or dinner.
+                Including fried rice with shrimp or tofu, these meals are influenced by Asian cuisine and are quick, filling options. Perfect for an easy, well-rounded meal at lunch or dinner.
                 </div>
               </div>
-              <Link to="/menu">
-                <button className="order-btn">Order now</button>
-              </Link>
+              <button className="order-btn">Order now</button>
             </div>
             <img src="/assets/RCP-022.webp" alt="Rice Dishes" className="menu-image" />
           </div>
 
           {/* --- Soups --- */}
           <div className="menu-item soups">
-            <img src="/assets/RCP-031.jpg" alt="Soups" className="menu-image" />
+          <img src="/assets/RCP-031.jpg" alt="Soups" className="menu-image" />
             <div className="menu-details">
               <div>
                 <div className="menu-title">Soups</div>
                 <div className="menu-description">
-                  Warm and light, this group features classics like bean soup, carrot soup, and tomato soup. They're great as appetizers or for a comforting, nutritious light meal on chilly days.
+                Warm and light, this group features classics like bean soup, carrot soup, and tomato soup. They're great as appetizers or for a comforting, nutritious light meal on chilly days.
                 </div>
               </div>
-              <Link to="/menu">
-                <button className="order-btn">Order now</button>
-              </Link>
+              <button className="order-btn">Order now</button>
             </div>
           </div>
 
@@ -138,12 +130,10 @@ function Landingpage() {
               <div>
                 <div className="menu-title">Side Dishes</div>
                 <div className="menu-description">
-                  These lighter items, like lettuce wraps, pan-seared scallops, and garlic butter salmon, are typically served alongside main meals to enhance flavor or as tasty small bites.
+                These lighter items, like lettuce wraps, pan-seared scallops, and garlic butter salmon, are typically served alongside main meals to enhance flavor or as tasty small bites.
                 </div>
               </div>
-              <Link to="/menu">
-                <button className="order-btn">Order now</button>
-              </Link>
+              <button className="order-btn">Order now</button>
             </div>
             <img src="/assets/RCP-027.jpg" alt="Side Dishes" className="menu-image" />
           </div>
@@ -155,10 +145,10 @@ function Landingpage() {
           <div className="logo-section">
             <img src="./assets/message.png" alt="Greedible Message" className="green-logo" />
           </div>
-        </div>
-      </div>
+          </div>
+          </div>
 
-      <Footer />
+          <Footer />
     </div>
   );
 }
