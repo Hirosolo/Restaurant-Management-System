@@ -1,0 +1,107 @@
+.footer {
+  background-color: #e67e22; /* Màu cam */
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
+  color: white;
+  flex-wrap: wrap;
+}
+
+.footerLeft {
+  display: flex;
+  flex-direction: column;
+  margin-right: 20px;
+}
+
+.contactText {
+  font-size: 24px;
+  font-weight: bold;
+  color: #006666; /* Màu xanh lá đậm */
+  margin-bottom: 15px;
+}
+
+.socialLinks {
+  display: flex;
+  gap: 15px;
+}
+
+.socialLink {
+  display: flex;
+  align-items: center;
+  color: white;
+  text-decoration: none;
+}
+
+.socialIcon {
+  width: 40px;
+  height: 40px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background-color: white;
+  padding: 5px;
+}
+
+.footerRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.updateInfo {
+  font-size: 24px;
+  font-weight: bold;
+  color: #006666; /* Màu xanh lá đậm */
+  margin-bottom: 5px;
+}
+
+.aboutText {
+  margin-bottom: 15px;
+}
+
+.newsletter {
+  display: flex;
+  gap: 10px;
+}
+
+.emailInput {
+  padding: 10px;
+  border: none;
+  border-radius: 4px;
+  min-width: 200px;
+}
+
+.signupBtn {
+  background-color: #4CAF50; /* Màu xanh lá */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.signupBtn:hover {
+  background-color: #45a049;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .footer {
+    flex-direction: column;
+  }
+  
+  .footerLeft, .footerRight {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+  
+  .newsletter {
+    width: 100%;
+    flex-direction: column;
+  }
+  
+  .emailInput {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+}

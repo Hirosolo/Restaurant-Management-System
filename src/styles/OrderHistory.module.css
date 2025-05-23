@@ -1,0 +1,115 @@
+.accountSection {
+  margin-bottom: 30px;
+}
+
+.accountSection h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.orderHistoryList {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.orderItem {
+  display: flex;
+  background-color: #e7e7e7;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.orderImage {
+  width: 120px;
+  min-width: 120px;
+  height: 120px;
+  overflow: hidden;
+}
+
+.orderImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.orderDetails {
+  padding: 15px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.orderDetails h4 {
+  margin: 0 0 5px 0;
+  font-size: 16px;
+}
+
+.orderDetails p {
+  margin: 0 0 5px 0;
+  font-size: 14px;
+  color: #555;
+}
+
+.orderId {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 14px;
+  color: #555;
+}
+
+.orderHeart {
+  position: absolute;
+  top: 40px;
+  right: 10px;
+}
+
+.favoriteHeartOutline {
+  font-size: 20px;
+  color: #999;
+  cursor: pointer;
+}
+
+.favoriteHeart {
+  font-size: 20px;
+  color: #f44336;
+  cursor: pointer;
+}
+
+.orderActions {
+  display: flex;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.reorderBtn, .ratingBtn {
+  padding: 8px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+}
+
+.reorderBtn {
+  background-color: #DF6D14;
+  color: white;
+}
+
+.ratingBtn {
+  background-color: transparent;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.reorderBtn:hover {
+  background-color: #c45a0f;
+}
+
+.ratingBtn:hover {
+  background-color: #e0e0e0;
+}
