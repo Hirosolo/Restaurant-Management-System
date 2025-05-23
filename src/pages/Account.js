@@ -114,7 +114,10 @@ function Account({
   
   // Sync state with props
   useEffect(() => {
-    if (propAuthStatus) setAuthStatus(propAuthStatus);
+    if (propAuthStatus) {
+      console.log('Account: propAuthStatus updated:', propAuthStatus);
+      setAuthStatus(propAuthStatus);
+    }
   }, [propAuthStatus]);
   
   useEffect(() => {
@@ -122,19 +125,17 @@ function Account({
   }, [propUserAddress]);
   
   useEffect(() => {
-    if (authStatus !== propAuthStatus && setPropAuthStatus) setPropAuthStatus(authStatus);
-  }, [authStatus, setPropAuthStatus, propAuthStatus]);
-  
-  useEffect(() => {
     if (userAddress !== propUserAddress && setPropUserAddress) setPropUserAddress(userAddress);
   }, [userAddress, setPropUserAddress, propUserAddress]);
   
   // Check auth status on component mount and redirect if not signed in
   useEffect(() => {
-    if (authStatus !== 'signedIn') {
+    console.log('Account: Checking auth status:', { authStatus, propAuthStatus });
+    if (propAuthStatus !== 'signedIn') {
+      console.log('Account: Not signed in, redirecting to home');
       navigate('/');
     }
-  }, [authStatus, navigate]);
+  }, [propAuthStatus, navigate]);
   
   const handleLogout = () => {
     setAuthStatus('guest');
