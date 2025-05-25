@@ -1,0 +1,12 @@
+/* Thiết lập nội dung menu */
+.menuContent {
+  flex: 1;
+  padding: 10px; /* Giảm padding */
+  background-color: white; /* Thay đổi nền từ red thành white để phù hợp với hình mẫu */
+}
+
+@media screen and (max-width: 768px) {
+  .menuContent {
+    padding: 10px; /* Giảm padding */
+  }
+}

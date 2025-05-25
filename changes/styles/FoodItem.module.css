@@ -1,0 +1,97 @@
+/* FoodItem.module.css hoặc FoodItem.css */
+.foodItem {
+  display: flex;
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  height: 110px;
+  margin-bottom: 15px;
+  padding: 0;
+}
+
+.leftSection {
+  width: 90px;
+  height: 110px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.foodImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.rightSection {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  position: relative;
+}
+
+.foodName {
+  font-size: 13px;
+  font-weight: bold;
+  margin: 0 0 5px 0;
+  color: #000;
+  font-family: 'Bubblegum Sans', cursive;
+}
+
+.rating {
+  display: flex;
+  margin-bottom: 8px;
+}
+
+.starFilled {
+  color: #DF6D14;
+  font-size: 14px;
+}
+
+.priceRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  margin-bottom: 5px;
+}
+
+.price {
+  font-size: 16px;
+  font-weight: bold;
+  color: #000;
+}
+
+.addButton {
+  background-color: #DF6D14;
+  color: white;
+  border: none;
+  border-radius: 15px;
+  padding: 5px 12px;
+  font-size: 11x;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-family: 'Bubblegum Sans', cursive;
+}
+
+.addButton:hover {
+  background-color: #c45a0f;
+}
+
+.showMoreButton {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 12px;
+  cursor: pointer;
+  text-align: right;
+  padding: 0;
+  font-family: 'Bubblegum Sans', cursive;
+  margin-left: auto;
+}
+
+.showMoreButton:hover {
+  text-decoration: underline;
+}
