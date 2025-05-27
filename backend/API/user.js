@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
+const auth = require('../middleware/auth');
+const jwt = require('jsonwebtoken');
 
 console.log('Setting up user routes...');
 
@@ -37,14 +39,14 @@ router.post('/users/register', async (req, res) => {
         // Insert new user
         const [result] = await db.query(
             `INSERT INTO customer 
-            (customer_name, phone, password, email, loyalty_point) 
-            VALUES (?, ?, ?, ?, ?)`,
-            [`${firstName} ${lastName}`, contactMobile, hashedPassword, email, 0]
+            (customer_name, phone, password, email, loyalty_point, address) 
+            VALUES (?, ?, ?, ?, ?, ?)`,
+            [`${firstName} ${lastName}`, contactMobile, hashedPassword, email, 0, address]
         );
 
         // Get the inserted user data (excluding password)
         const [newUser] = await db.query(
-            'SELECT customer_id, customer_name, email, phone, loyalty_point FROM customer WHERE customer_id = ?',
+            'SELECT customer_id, customer_name, email, phone, loyalty_point, address FROM customer WHERE customer_id = ?',
             [result.insertId]
         );
 
@@ -76,6 +78,8 @@ router.post('/users/signin', async (req, res) => {
             [email]
         );
 
+        console.log('Found users:', users.length > 0 ? 'Yes' : 'No');
+
         if (users.length === 0) {
             return res.status(401).json({
                 success: false,
@@ -84,20 +88,65 @@ router.post('/users/signin', async (req, res) => {
         }
 
         const user = users[0];
+        console.log('User found:', {
+            id: user.customer_id,
+            email: user.email,
+            passwordType: user.password.startsWith('$2') ? 'hashed' : 'plain'
+        });
 
-        // Compare password (temporarily using plain text comparison)
-        if (password !== user.password) {
+        let passwordMatch = false;
+
+        // Check if password is hashed (starts with $2)
+        if (user.password.startsWith('$2')) {
+            console.log('Comparing with bcrypt');
+            // Compare with bcrypt
+            passwordMatch = await bcrypt.compare(password, user.password);
+            console.log('Bcrypt comparison result:', passwordMatch);
+        } else {
+            console.log('Comparing plain text passwords');
+            // Compare plain text password
+            passwordMatch = password === user.password;
+            console.log('Plain text comparison result:', passwordMatch);
+            
+            // If password matches and is plain text, hash it and update the database
+            if (passwordMatch) {
+                console.log('Password matched, hashing and updating...');
+                const hashedPassword = await bcrypt.hash(password, 10);
+                await db.query(
+                    'UPDATE customer SET password = ? WHERE customer_id = ?',
+                    [hashedPassword, user.customer_id]
+                );
+                console.log('Password updated to hashed version');
+            }
+        }
+
+        if (!passwordMatch) {
+            console.log('Password did not match');
             return res.status(401).json({
                 success: false,
                 message: 'Invalid email or password'
             });
         }
 
-        // Return user data (excluding password)
+        // Create token
+        const token = jwt.sign(
+            { 
+                id: user.customer_id,
+                email: user.email,
+                type: 'customer'
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+
+        console.log('Sign in successful, token generated');
+
+        // Return user data (excluding password) and token
         const { password: _, ...userWithoutPassword } = user;
         res.json({
             success: true,
             message: 'Sign in successful',
+            token,
             user: userWithoutPassword
         });
 

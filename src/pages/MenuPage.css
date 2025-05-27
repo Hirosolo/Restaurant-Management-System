@@ -130,8 +130,9 @@
     top: 80px; /* Ngay dưới navbar */
     left: 0;
     right: 0;
-    background-color: #fff;
-    border-bottom: 1px solid #e0e0e0;
+    background-color: #f8f9fa;
+    padding: 10px 0;
+    border-bottom: 1px solid #e9ecef;
     z-index: 999;
     height: 40px;
     display: flex;
@@ -143,7 +144,7 @@
     max-width: 1200px;
     width: 100%;
     margin: 0 auto;
-    padding: 0 15px;
+    padding: 0 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -152,29 +153,28 @@
   .user-nav-left {
     display: flex;
     align-items: center;
+    gap: 10px;
   }
   
   .user-icon {
-    color: #DF6D14;
-    font-size: 18px;
-    margin-right: 8px;
+    font-size: 1.2em;
+    margin-right: 5px;
   }
   
   .user-nav-item {
-    font-size: 14px;
-    color: #333;
     cursor: pointer;
-    padding: 0 5px;
+    color: #333;
+    padding: 5px 10px;
+    transition: color 0.2s ease;
   }
   
   .user-nav-item:hover {
-    color: #DF6D14;
+    color: #007bff;
     text-decoration: underline;
   }
   
   .separator {
-    color: #ccc;
-    margin: 0 8px;
+    color: #dee2e6;
   }
   
   /* Menu page styles */

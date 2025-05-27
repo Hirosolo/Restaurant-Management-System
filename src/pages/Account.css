@@ -4,7 +4,7 @@
     min-height: 100vh;
     background-color: #ffffff;
     font-family: 'Bubblegum Sans', cursive, Arial, sans-serif;
-    padding-top: 120px; /* Để tránh bị navbar + user-nav che (80px + 40px) */
+    padding-top: 80px;
   }
   
   /* Chúng ta giữ nguyên các styles từ header vì sẽ dùng chung */
@@ -49,15 +49,40 @@
   .account-content {
     flex: 1;
     background-color: #f9f9e9;
-    border-radius: 4px;
-    padding: 20px;
+    border-radius: 8px;
+    padding: 30px;
+    margin-left: 20px;
   }
   
-  .account-section h2 {
-    font-size: 24px;
-    font-weight: 600;
-    margin-bottom: 20px;
+  .account-overview h2 {
     color: #333;
+    margin-bottom: 30px;
+    font-size: 24px;
+  }
+  
+  .user-info, .address-info {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+  
+  .user-info h3, .address-info h3 {
+    color: #333;
+    margin-bottom: 15px;
+    font-size: 18px;
+  }
+  
+  .user-info p, .address-info p {
+    margin: 10px 0;
+    color: #666;
+    font-size: 16px;
+  }
+  
+  .user-info strong, .address-info strong {
+    color: #333;
+    margin-right: 10px;
   }
   
   /* Profile Settings styles */
@@ -510,6 +535,25 @@
   @media (max-width: 768px) {
     .account-container {
       flex-direction: column;
+      padding: 10px;
+    }
+    
+    .account-content {
+      margin-left: 0;
+      margin-top: 20px;
+      padding: 20px;
+    }
+    
+    .account-overview h2 {
+      font-size: 20px;
+    }
+    
+    .user-info, .address-info {
+      padding: 15px;
+    }
+    
+    .user-info p, .address-info p {
+      font-size: 14px;
     }
     
     .account-sidebar {

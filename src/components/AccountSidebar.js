@@ -1,31 +1,46 @@
 import React from 'react';
-import styles from '../styles/AccountSidebar.module.css';
+import './AccountSidebar.css';
 
 function AccountSidebar({ activeTab, handleTabChange, handleLogout }) {
-  const tabs = [
-    { id: 'account', label: 'Account' },
-    { id: 'track-order', label: 'Track Order' },
-    { id: 'order-history', label: 'Order History' },
-    { id: 'favourite-order', label: 'Favourite Order' },
-    { id: 'profile-settings', label: 'Profile Settings' }
-  ];
-  
   return (
-    <div className={styles.accountSidebar}>
-      {tabs.map(tab => (
-        <div
-          key={tab.id}
-          className={`${styles.sidebarItem} ${activeTab === tab.id ? styles.active : ''}`}
-          onClick={() => handleTabChange(tab.id)}
+    <div className="account-sidebar">
+      <div className="sidebar-menu">
+        <button 
+          className={`sidebar-item ${activeTab === 'account' ? 'active' : ''}`}
+          onClick={() => handleTabChange('account')}
         >
-          {tab.label}
-        </div>
-      ))}
-      <div
-        className={`${styles.sidebarItem} ${styles.logout}`}
-        onClick={handleLogout}
-      >
-        Log Out
+          Account Overview
+        </button>
+        <button 
+          className={`sidebar-item ${activeTab === 'track-order' ? 'active' : ''}`}
+          onClick={() => handleTabChange('track-order')}
+        >
+          Track Order
+        </button>
+        <button 
+          className={`sidebar-item ${activeTab === 'order-history' ? 'active' : ''}`}
+          onClick={() => handleTabChange('order-history')}
+        >
+          Order History
+        </button>
+        <button 
+          className={`sidebar-item ${activeTab === 'favourite-order' ? 'active' : ''}`}
+          onClick={() => handleTabChange('favourite-order')}
+        >
+          Favourite Orders
+        </button>
+        <button 
+          className={`sidebar-item ${activeTab === 'profile-settings' ? 'active' : ''}`}
+          onClick={() => handleTabChange('profile-settings')}
+        >
+          Profile Settings
+        </button>
+        <button 
+          className="sidebar-item logout"
+          onClick={handleLogout}
+        >
+          Logout
+        </button>
       </div>
     </div>
   );

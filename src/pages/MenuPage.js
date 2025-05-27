@@ -1,18 +1,23 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { useCart } from '../contexts/CartContext';
 import './MenuPage.css';
 
-function MenuPage({ 
-  cart: propCart, 
-  setCart: setPropCart, 
-  authStatus: propAuthStatus, 
-  setAuthStatus: setPropAuthStatus,
-  userAddress: propUserAddress,
-  setUserAddress: setPropUserAddress 
-}) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [cart, setCart] = useState([]);
+function MenuPage() {
+  const { 
+    authStatus, 
+    setAuthStatus, 
+    userAddress, 
+    setUserAddress, 
+    continueAsGuest, 
+    handleCreateAccount, 
+    handleSignIn,
+    userData 
+  } = useAuth();
+  const { cart, addToCart, removeFromCart, increaseQuantity, decreaseQuantity, updateNote } = useCart();
   const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState({});
   const [categoriesOpen, setCategoriesOpen] = useState({});
   const [noteOpen, setNoteOpen] = useState({});
@@ -20,6 +25,15 @@ function MenuPage({
   const overlayRef = useRef(null);
   const [showDetailPopup, setShowDetailPopup] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showSignInForm, setShowSignInForm] = useState(false);
+  const [showCreateAccountForm, setShowCreateAccountForm] = useState(false);
+  const [tempItemToAdd, setTempItemToAdd] = useState(null);
+  const [userEmail, setUserEmail] = useState('');
+  const [userPassword, setUserPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [contactMobile, setContactMobile] = useState('');
   
   // New state variables for fetched data
   const [categories, setCategories] = useState([]);
@@ -45,43 +59,14 @@ function MenuPage({
   const districts = ['District 1', 'District 2', 'District 3', 'District 4', 'District 5'];
   const streets = ['Street 1', 'Street 2', 'Street 3', 'Street 4', 'Street 5'];
 
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [userAddress, setUserAddress] = useState(null);
-  const [tempItemToAdd, setTempItemToAdd] = useState(null);
-  const [showSignInForm, setShowSignInForm] = useState(false);
-  const [showCreateAccountForm, setShowCreateAccountForm] = useState(false);
-  const [userEmail, setUserEmail] = useState('');
-  const [userPassword, setUserPassword] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [contactMobile, setContactMobile] = useState('');
-
   // Đồng bộ state với props
   useEffect(() => {
-    if (propCart && propCart.length > 0) setCart(propCart);
-  }, [propCart]);
+    if (userAddress) setUserAddress(userAddress);
+  }, [userAddress, setUserAddress]);
   
   useEffect(() => {
-    if (propUserAddress) setUserAddress(propUserAddress);
-  }, [propUserAddress]);
-  
-  useEffect(() => {
-    if (cart !== propCart && setPropCart) setPropCart(cart);
-  }, [cart, setPropCart, propCart]);
-  
-  useEffect(() => {
-    if (userAddress !== propUserAddress && setPropUserAddress) setPropUserAddress(userAddress);
-  }, [userAddress, setPropUserAddress, propUserAddress]);
-
-  // Theo dõi propAuthStatus để điều hướng
-  useEffect(() => {
-    console.log('propAuthStatus updated:', propAuthStatus);
-    // Remove automatic navigation to account page
-    // if (propAuthStatus === 'signedIn') {
-    //   console.log('Navigating to /account');
-    //   navigate('/account');
-    // }
-  }, [propAuthStatus, navigate]);
+    if (userAddress !== userAddress && setUserAddress) setUserAddress(userAddress);
+  }, [userAddress, setUserAddress, userAddress]);
 
   // Fetch recipes when component mounts
   useEffect(() => {
@@ -123,6 +108,15 @@ function MenuPage({
     fetchRecipes();
   }, []);
 
+  // Update the useEffect hook for auth modal
+  useEffect(() => {
+    // Show auth modal if user is not authenticated or is a guest
+    if (authStatus !== 'signedIn') {
+      console.log('MenuPage: Initial auth check - showing auth modal');
+      setShowAuthModal(true);
+    }
+  }, [authStatus]);
+
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
   };
@@ -160,9 +154,10 @@ function MenuPage({
 
   const handleAccountClick = (e) => {
     e.preventDefault();
-    if (propAuthStatus === 'signedIn') {
+    if (authStatus === 'signedIn') {
       navigate('/account');
     } else {
+      console.log('MenuPage: Showing auth modal from account click');
       setShowAuthModal(true);
     }
   };
@@ -172,166 +167,31 @@ function MenuPage({
     { id: 'protein', name: 'Main Protein', options: ['Salmon', 'Tuna', 'Chicken', 'Shrimp', 'Scallop', 'Tofu'] }
   ];
 
-  const addToCart = (item) => {
-    if (propAuthStatus !== 'signedIn') {
-      setTempItemToAdd(item);
-      setShowAuthModal(true);
-    } else {
-      const existingItemIndex = cart.findIndex(cartItem => cartItem.id === item.id);
-      if (existingItemIndex !== -1) {
-        const updatedCart = [...cart];
-        updatedCart[existingItemIndex].quantity += 1;
-        setCart(updatedCart);
-      } else {
-        setCart([...cart, { ...item, quantity: 1, note: '' }]);
-      }
-    }
-  };
-
-  const removeFromCart = (index) => {
-    const newCart = [...cart];
-    newCart.splice(index, 1);
-    setCart(newCart);
-  };
-
-  const increaseQuantity = (index) => {
-    const newCart = [...cart];
-    newCart[index].quantity += 1;
-    setCart(newCart);
-  };
-
-  const decreaseQuantity = (index) => {
-    const newCart = [...cart];
-    if (newCart[index].quantity > 1) {
-      newCart[index].quantity -= 1;
-      setCart(newCart);
-    } else {
-      removeFromCart(index);
-    }
-  };
-
-  const updateNote = (index, note) => {
-    const newCart = [...cart];
-    newCart[index].note = note;
-    setCart(newCart);
-  };
-
-  const handleSignIn = () => {
-    setShowAuthModal(false);
-    setShowSignInForm(true);
-  };
-
-  const handleCreateAccount = () => {
-    setShowAuthModal(false);
-    setShowCreateAccountForm(true);
-  };
-
-  const handleNavSignInClick = () => {
-    if (propAuthStatus !== 'signedIn') {
-      setShowAuthModal(true);
-    }
-  };
-
-  const handleContinueAsGuest = () => {
-    setShowAuthModal(false);
-    setPropAuthStatus('guest');
-    if (tempItemToAdd) {
-      const existingItemIndex = cart.findIndex(cartItem => cartItem.id === tempItemToAdd.id);
-      if (existingItemIndex !== -1) {
-        const updatedCart = [...cart];
-        updatedCart[existingItemIndex].quantity += 1;
-        setCart(updatedCart);
-      } else {
-        setCart([...cart, { ...tempItemToAdd, quantity: 1, note: '' }]);
-      }
-      setTempItemToAdd(null);
-    }
-  };
-
-  const handleSignInSubmit = async (e) => {
-    e.preventDefault();
-    console.log('Starting sign in process...', { email: userEmail });
-    try {
-      console.log('Making API request to sign in...');
-      const response = await fetch('http://localhost:3001/api/users/signin', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: userEmail,
-          password: userPassword
-        })
-      });
-
-      console.log('Received response from server:', response.status);
-      const data = await response.json();
-      console.log('Response data:', data);
-
-      if (!response.ok) {
-        console.error('Sign in failed:', data.message);
-        throw new Error(data.message || 'Sign in failed');
-      }
-
-      console.log('Sign in successful, updating user state...');
-      // If sign in successful
-      setPropAuthStatus('signedIn');
-      localStorage.setItem('authStatus', 'signedIn');
-      localStorage.setItem('userData', JSON.stringify(data.user));
-      setShowSignInForm(false);
-      setUserEmail('');
-      setUserPassword('');
-
-      // If there was a temporary item to add to cart
-      if (tempItemToAdd) {
-        console.log('Adding temporary item to cart:', tempItemToAdd);
-        const existingItemIndex = cart.findIndex(cartItem => cartItem.id === tempItemToAdd.id);
-        if (existingItemIndex !== -1) {
-          const updatedCart = [...cart];
-          updatedCart[existingItemIndex].quantity += 1;
-          setCart(updatedCart);
-        } else {
-          setCart([...cart, { ...tempItemToAdd, quantity: 1, note: '' }]);
-        }
-        setTempItemToAdd(null);
-      }
-      console.log('Sign in process completed successfully');
-    } catch (error) {
-      console.error('Sign in error:', error);
-      alert(error.message || 'Failed to sign in. Please try again.');
-    }
-  };
-
-  const handleCreateAccountSubmit = (e) => {
-    e.preventDefault();
-    setPropAuthStatus('signedIn');
-    localStorage.setItem('authStatus', 'signedIn');
-    setShowCreateAccountForm(false);
-    const newAddress = {
-      ward,
-      district,
-      street,
-      houseNumber,
-      buildingName,
-      block,
-      floor,
-      roomNumber,
-      deliveryInstructions,
-      fullName: `${firstName} ${lastName}`,
-      contactMobile
-    };
-    setUserAddress(newAddress);
+  const calculateTotal = () => {
+    return cart.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2);
   };
 
   const handleCheckout = () => {
+    console.log('MenuPage: Checkout clicked', {
+      authStatus,
+      userData,
+      cartLength: cart.length
+    });
+
     if (cart.length === 0) {
       alert("Your cart is empty");
       return;
     }
-    if (propAuthStatus === 'guest') {
+
+    if (authStatus === 'guest') {
+      console.log('MenuPage: Proceeding as guest user');
       navigate('/delivery');
-    } else {
+    } else if (authStatus === 'signedIn') {
+      console.log('MenuPage: Proceeding as signed-in user', { userData });
       navigate('/checkout');
+    } else {
+      console.log('MenuPage: User not authenticated, showing auth modal');
+      setShowAuthModal(true);
     }
   };
 
@@ -405,10 +265,6 @@ function MenuPage({
     );
   };
 
-  const calculateTotal = () => {
-    return cart.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2);
-  };
-
   return (
     <div className="menu-page">
       <div className="navbar menu-navbar">
@@ -441,15 +297,15 @@ function MenuPage({
         <div className="user-nav-container">
           <div className="user-nav-left">
             <span className="user-icon">👤</span>
-            {propAuthStatus === 'signedIn' ? (
-              <span className="user-nav-item">User</span>
+            {authStatus === 'signedIn' ? (
+              <span className="user-nav-item" onClick={handleAccountClick}>My Account</span>
             ) : (
-              <span className="user-nav-item" onClick={handleNavSignInClick}>Sign In</span>
+              <span className="user-nav-item" onClick={handleAccountClick}>Sign In</span>
             )}
             <span className="separator">|</span>
-            <span className="user-nav-item">Guest Order</span>
+            <span className="user-nav-item" onClick={() => navigate('/guest-order')}>Guest Order</span>
             <span className="separator">|</span>
-            <span className="user-nav-item">Track Your Order</span>
+            <span className="user-nav-item" onClick={() => navigate('/track-order')}>Track Your Order</span>
           </div>
         </div>
       </div>
@@ -552,17 +408,20 @@ function MenuPage({
           <div className="auth-modal">
             <h3>Sign in to Greedible and start Green today</h3>
             <div className="auth-options">
-              <button className="auth-option-btn sign-in-btn" onClick={handleSignIn}>
+              <button className="auth-option-btn sign-in-btn" onClick={() => setShowSignInForm(true)}>
                 SIGN IN
               </button>
               <div className="auth-separator"></div>
-              <button className="auth-option-btn create-account-btn" onClick={handleCreateAccount}>
+              <button className="auth-option-btn create-account-btn" onClick={() => setShowCreateAccountForm(true)}>
                 CREATE AN ACCOUNT
                 <span className="account-time">in less than 2 minutes</span>
                 <span className="account-benefits">To enjoy member benefits</span>
               </button>
               <div className="auth-separator"></div>
-              <button className="auth-option-btn guest-btn" onClick={handleContinueAsGuest}>
+              <button className="auth-option-btn guest-btn" onClick={() => {
+                continueAsGuest();
+                setShowAuthModal(false);
+              }}>
                 CONTINUE AS GUEST
               </button>
             </div>
@@ -575,7 +434,14 @@ function MenuPage({
           <div className="auth-form-modal">
             <h3>Sign In</h3>
             <button className="close-modal-btn" onClick={() => setShowSignInForm(false)}>✕</button>
-            <form onSubmit={handleSignInSubmit}>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              handleSignIn(userEmail, userPassword);
+              setShowSignInForm(false);
+              setShowAuthModal(false);
+              setUserEmail('');
+              setUserPassword('');
+            }}>
               <div className="form-group">
                 <label>Email</label>
                 <input 
@@ -612,7 +478,32 @@ function MenuPage({
           <div className="auth-form-modal register-form">
             <h3>Create New Account</h3>
             <button className="close-modal-btn" onClick={() => setShowCreateAccountForm(false)}>✕</button>
-            <form onSubmit={handleCreateAccountSubmit}>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const newAddress = {
+                ward,
+                district,
+                street,
+                houseNumber,
+                buildingName,
+                block,
+                floor,
+                roomNumber,
+                deliveryInstructions,
+                fullName: `${firstName} ${lastName}`,
+                contactMobile
+              };
+
+              const userInfo = {
+                email: userEmail,
+                firstName,
+                lastName,
+                contactMobile
+              };
+
+              handleCreateAccount(newAddress, userInfo);
+              setShowCreateAccountForm(false);
+            }}>
               <div className="form-section">
                 <div className="form-group">
                   <label>Email</label>
