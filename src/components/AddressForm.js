@@ -3,7 +3,7 @@ import { useAddress } from '../hooks/useAddress';
 import styles from '../styles/AddressForm.module.css';
 
 /* Component form địa chỉ */
-function AddressForm({ onSubmit }) {
+function AddressForm({ onSubmit, showDeliveryInstructions = false }) {
   const { address, updateAddressField, dropdownOpen, toggleDropdown, addressOptions } = useAddress();
 
   /* Xử lý gửi form */
@@ -147,14 +147,16 @@ function AddressForm({ onSubmit }) {
             />
           </div>
         </div>
-        <div className={styles.deliveryFieldSingle}>
-          <label>Delivery Instruction to Rider:</label>
-          <textarea 
-            value={address.deliveryInstructions}
-            onChange={(e) => updateAddressField('deliveryInstructions', e.target.value)}
-            rows={3}
-          />
-        </div>
+        {showDeliveryInstructions && (
+          <div className={styles.deliveryFieldSingle}>
+            <label>Delivery Instruction to Rider:</label>
+            <textarea 
+              value={address.deliveryInstructions}
+              onChange={(e) => updateAddressField('deliveryInstructions', e.target.value)}
+              rows={3}
+            />
+          </div>
+        )}
         <button type="submit" className={styles.submitBtn}>Confirm</button>
       </div>
     </form>

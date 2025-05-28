@@ -162,6 +162,16 @@ function MenuPage() {
     }
   };
 
+  const onAuthSuccess = (status) => {
+    console.log('MenuPage: onAuthSuccess called with status:', status);
+    // Only close forms if authentication was successful
+    if (status === 'signedIn') {
+      setShowAuthModal(false);
+      setShowSignInForm(false);
+      setShowCreateAccountForm(false);
+    }
+  };
+
   const filters = [
     { id: 'calories', name: 'Calories', options: ['< 300', '300 - 500', '> 500'] },
     { id: 'protein', name: 'Main Protein', options: ['Salmon', 'Tuna', 'Chicken', 'Shrimp', 'Scallop', 'Tofu'] }

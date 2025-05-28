@@ -21,7 +21,7 @@ FLUSH PRIVILEGES;
 npm install
 ```
 
-2. Create a `.env` file in the root directory with the following content:
+2. Create a `.env` file in the root directory (if not exist yet) with the following content:
 ```
 DB_HOST=localhost
 DB_USER=restaurant_user
@@ -32,7 +32,7 @@ PORT=5000
 
 ### 2. Running the Application
 
-1. Start the Frontend:
+1. Start the Frontend and Backend:
    - Open a new terminal
    - Run the following command:
    ```bash

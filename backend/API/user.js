@@ -20,6 +20,15 @@ router.post('/users/register', async (req, res) => {
             address
         } = req.body;
 
+        // Validate required fields
+        if (!email || !password || !firstName || !lastName || !contactMobile) {
+            return res.status(400).json({
+                success: false,
+                message: 'All fields are required'
+            });
+        }
+
+        console.log('Checking for existing user with email:', email);
         // Check if email already exists
         const [existingUsers] = await db.query(
             'SELECT * FROM customer WHERE email = ?',
@@ -27,37 +36,55 @@ router.post('/users/register', async (req, res) => {
         );
 
         if (existingUsers.length > 0) {
+            console.log('Email already exists:', email);
             return res.status(400).json({
                 success: false,
                 message: 'Email already registered'
             });
         }
 
+        console.log('Hashing password...');
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // Convert address object to JSON string
+        const addressJson = address ? JSON.stringify(address) : null;
+        console.log('Prepared address JSON:', addressJson);
+
+        console.log('Attempting to insert new user...');
         // Insert new user
         const [result] = await db.query(
             `INSERT INTO customer 
             (customer_name, phone, password, email, loyalty_point, address) 
             VALUES (?, ?, ?, ?, ?, ?)`,
-            [`${firstName} ${lastName}`, contactMobile, hashedPassword, email, 0, address]
+            [`${firstName} ${lastName}`, contactMobile, hashedPassword, email, 0, addressJson]
         );
+        console.log('Insert result:', result);
 
+        console.log('Fetching newly created user...');
         // Get the inserted user data (excluding password)
         const [newUser] = await db.query(
             'SELECT customer_id, customer_name, email, phone, loyalty_point, address FROM customer WHERE customer_id = ?',
             [result.insertId]
         );
+        console.log('New user data:', newUser[0]);
 
+        // Parse the address back to an object for the response
+        const userData = {
+            ...newUser[0],
+            address: newUser[0].address ? JSON.parse(newUser[0].address) : null
+        };
+
+        console.log('Sending successful response...');
         res.status(201).json({
             success: true,
             message: 'User registered successfully',
-            user: newUser[0]
+            user: userData
         });
 
     } catch (error) {
         console.error('Error registering user:', error);
+        console.error('Error stack:', error.stack);
         res.status(500).json({
             success: false,
             message: 'Error registering user',
@@ -155,6 +182,104 @@ router.post('/users/signin', async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Error signing in',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+});
+
+// Get user profile
+router.get('/users/profile', auth.authenticateToken, async (req, res) => {
+    try {
+        // Get user data from database
+        const [users] = await db.query(
+            'SELECT customer_id, customer_name, email, phone, loyalty_point, address FROM customer WHERE customer_id = ?',
+            [req.user.id]
+        );
+
+        if (users.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        const user = users[0];
+        
+        // Parse the address if it exists
+        let address = null;
+        if (user.address) {
+            try {
+                address = JSON.parse(user.address);
+            } catch (e) {
+                console.error('Error parsing address:', e);
+            }
+        }
+
+        // Split customer_name into firstName and lastName
+        const nameParts = user.customer_name.split(' ');
+        const firstName = nameParts[0];
+        const lastName = nameParts.slice(1).join(' ');
+
+        // Format user data
+        const formattedUser = {
+            id: user.customer_id,
+            firstName,
+            lastName,
+            email: user.email,
+            contactMobile: user.phone,
+            loyaltyPoints: user.loyalty_point,
+            address
+        };
+
+        res.json({
+            success: true,
+            user: formattedUser
+        });
+
+    } catch (error) {
+        console.error('Error fetching user profile:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching user profile',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+});
+
+// Update user address
+router.put('/users/update-address', auth.authenticateToken, async (req, res) => {
+    try {
+        const { address } = req.body;
+        const userId = req.user.id;
+
+        // Validate address data
+        if (!address || !address.ward || !address.district || !address.street || !address.houseNumber) {
+            return res.status(400).json({
+                success: false,
+                message: 'Required address fields are missing'
+            });
+        }
+
+        // Convert address object to JSON string
+        const addressJson = JSON.stringify(address);
+
+        // Update user's address in database
+        await db.query(
+            'UPDATE customer SET address = ? WHERE customer_id = ?',
+            [addressJson, userId]
+        );
+
+        res.json({
+            success: true,
+            message: 'Address updated successfully',
+            address
+        });
+
+    } catch (error) {
+        console.error('Error updating address:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error updating address',
             error: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
     }

@@ -53,6 +53,8 @@ export function AuthProvider({ children, initialAuthStatus, setPropAuthStatus, i
       if (setPropUserAddress) {
         setPropUserAddress(userAddress);
       }
+    } else {
+      localStorage.removeItem('userAddress');
     }
   }, [userAddress, setPropUserAddress]);
 
@@ -91,6 +93,57 @@ export function AuthProvider({ children, initialAuthStatus, setPropAuthStatus, i
     }
   }, []);
 
+  // Fetch user's address from database when component mounts for signed-in users
+  useEffect(() => {
+    const fetchUserAddress = async () => {
+      if (authStatus === 'signedIn' && userData?.customer_id) {
+        try {
+          const token = localStorage.getItem('token');
+          if (!token) {
+            console.error('No token found for signed-in user');
+            return;
+          }
+
+          console.log('Fetching user profile for address');
+          const profileResponse = await fetch('http://localhost:3001/api/users/profile', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+
+          if (profileResponse.ok) {
+            const profileData = await profileResponse.json();
+            console.log('Received profile data:', profileData);
+            
+            if (profileData.success && profileData.user.address) {
+              try {
+                // Try to parse the address if it's a JSON string
+                const addressObj = typeof profileData.user.address === 'string' 
+                  ? JSON.parse(profileData.user.address)
+                  : profileData.user.address;
+
+                console.log('Setting address object:', addressObj);
+                setUserAddress(addressObj);
+                localStorage.setItem('userAddress', JSON.stringify(addressObj));
+              } catch (error) {
+                console.error('Error parsing address:', error);
+                // If parsing fails, store the address as is
+                setUserAddress(profileData.user.address);
+                localStorage.setItem('userAddress', JSON.stringify(profileData.user.address));
+              }
+            }
+          } else {
+            console.error('Failed to fetch profile:', await profileResponse.text());
+          }
+        } catch (error) {
+          console.error('Error fetching user profile:', error);
+        }
+      }
+    };
+
+    fetchUserAddress();
+  }, [authStatus, userData?.customer_id]);
+
   /* Xử lý đăng nhập */
   const handleSignIn = useCallback(async (email, password) => {
     console.log('AuthContext: Signing in', { email });
@@ -117,6 +170,34 @@ export function AuthProvider({ children, initialAuthStatus, setPropAuthStatus, i
       setUserData(data.user);
       setAuthStatus('signedIn');
       
+      // Fetch user's profile to get their address
+      const profileResponse = await fetch('http://localhost:3001/api/users/profile', {
+        headers: {
+          'Authorization': `Bearer ${data.token}`
+        }
+      });
+
+      if (profileResponse.ok) {
+        const profileData = await profileResponse.json();
+        if (profileData.success && profileData.user.address) {
+          try {
+            // Try to parse the address if it's a JSON string
+            const addressObj = typeof profileData.user.address === 'string' 
+              ? JSON.parse(profileData.user.address)
+              : profileData.user.address;
+
+            console.log('Setting address object:', addressObj);
+            setUserAddress(addressObj);
+            localStorage.setItem('userAddress', JSON.stringify(addressObj));
+          } catch (error) {
+            console.error('Error parsing address:', error);
+            // If parsing fails, store the address as is
+            setUserAddress(profileData.user.address);
+            localStorage.setItem('userAddress', JSON.stringify(profileData.user.address));
+          }
+        }
+      }
+      
       // Store auth data in localStorage
       localStorage.setItem('authStatus', 'signedIn');
       localStorage.setItem('userData', JSON.stringify(data.user));
@@ -131,47 +212,81 @@ export function AuthProvider({ children, initialAuthStatus, setPropAuthStatus, i
       return Promise.resolve();
     } catch (error) {
       console.error('AuthContext: Sign in error:', error);
-      throw error;
+      throw new Error(error.message);
     }
   }, []);
 
   /* Xử lý tạo tài khoản */
-  const handleCreateAccount = useCallback((address, userInfo) => {
-    console.log('AuthContext: Creating account', { userInfo });
+  const handleCreateAccount = useCallback(async (address, userInfo) => {
+    console.log('AuthContext: Creating account', { userInfo, address });
     
-    // Create new address from user info
-    const newAddress = { 
-      ...address, 
-      fullName: `${userInfo.firstName} ${userInfo.lastName}`, 
-      contactMobile: userInfo.contactMobile 
-    };
-    
-    // Update user data
-    setUserData({
-      email: userInfo.email,
-      firstName: userInfo.firstName,
-      lastName: userInfo.lastName,
-      contactMobile: userInfo.contactMobile
-    });
-    
-    // Update auth status and address
-    setAuthStatus('signedIn');
-    setUserAddress(newAddress);
-    
-    // Store in localStorage
-    localStorage.setItem('authStatus', 'signedIn');
-    localStorage.setItem('userData', JSON.stringify(userInfo));
-    localStorage.setItem('userAddress', JSON.stringify(newAddress));
-    
-    // Emit auth status change event
-    const event = new CustomEvent('authStatusChanged', { 
-      detail: { status: 'signedIn', user: userInfo } 
-    });
-    window.dispatchEvent(event);
-    
-    console.log('AuthContext: Account creation successful');
-    return Promise.resolve();
-  }, []);
+    try {
+      // Validate required fields
+      if (!userInfo.password) {
+        throw new Error('Password is required');
+      }
+
+      // Make API call to create account
+      const requestBody = {
+        email: userInfo.email,
+        password: userInfo.password,
+        firstName: userInfo.firstName,
+        lastName: userInfo.lastName,
+        contactMobile: userInfo.contactMobile,
+        address: address
+      };
+
+      console.log('Sending registration request with data:', {
+        ...requestBody,
+        password: '***' // Hide password in logs
+      });
+
+      const response = await fetch('http://localhost:3001/api/users/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Account creation failed');
+      }
+
+      // Create new address from user info
+      const newAddress = { 
+        ...address, 
+        fullName: `${userInfo.firstName} ${userInfo.lastName}`, 
+        contactMobile: userInfo.contactMobile 
+      };
+      
+      // Update user data
+      setUserData(data.user);
+      
+      // Update auth status and address
+      setAuthStatus('signedIn');
+      setUserAddress(newAddress);
+      
+      // Store in localStorage
+      localStorage.setItem('authStatus', 'signedIn');
+      localStorage.setItem('userData', JSON.stringify(data.user));
+      localStorage.setItem('userAddress', JSON.stringify(newAddress));
+      
+      // Emit auth status change event
+      const event = new CustomEvent('authStatusChanged', { 
+        detail: { status: 'signedIn', user: data.user } 
+      });
+      window.dispatchEvent(event);
+      
+      console.log('AuthContext: Account creation successful');
+      return Promise.resolve();
+    } catch (error) {
+      console.error('AuthContext: Account creation error:', error);
+      throw new Error(error.message);
+    }
+  }, [handleSignIn, setUserData, setAuthStatus, setUserAddress, navigate]);
 
   /* Xử lý đăng xuất */
   const handleSignOut = useCallback(() => {

@@ -10,6 +10,103 @@ function Account() {
   
   // States
   const [activeTab, setActiveTab] = useState('account');
+  const [profileData, setProfileData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showAddressModal, setShowAddressModal] = useState(false);
+  const [orderHistory, setOrderHistory] = useState([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(false);
+  const [favoriteMeals, setFavoriteMeals] = useState([]);
+  const [isLoadingFavorites, setIsLoadingFavorites] = useState(false);
+  
+  // Address form states
+  const [ward, setWard] = useState('');
+  const [district, setDistrict] = useState('');
+  const [street, setStreet] = useState('');
+  const [houseNumber, setHouseNumber] = useState('');
+  const [buildingName, setBuildingName] = useState('');
+  const [block, setBlock] = useState('');
+  const [floor, setFloor] = useState('');
+  const [roomNumber, setRoomNumber] = useState('');
+  const [deliveryInstructions, setDeliveryInstructions] = useState('');
+
+  // Dropdown states
+  const [wardDropdownOpen, setWardDropdownOpen] = useState(false);
+  const [districtDropdownOpen, setDistrictDropdownOpen] = useState(false);
+  const [streetDropdownOpen, setStreetDropdownOpen] = useState(false);
+
+  // Sample data for dropdowns
+  const wards = ['Ward 1', 'Ward 2', 'Ward 3', 'Ward 4', 'Ward 5'];
+  const districts = ['District 1', 'District 2', 'District 3', 'District 4', 'District 5'];
+  const streets = ['Street 1', 'Street 2', 'Street 3', 'Street 4', 'Street 5'];
+
+  // Fetch user profile data
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('No authentication token found');
+        }
+
+        const response = await fetch('http://localhost:3001/api/users/profile', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch profile data');
+        }
+
+        const data = await response.json();
+        if (data.success) {
+          // Parse the address string into an object if it exists
+          if (data.user.address) {
+            try {
+              const addressObj = JSON.parse(data.user.address);
+              data.user.address = addressObj;
+            } catch (e) {
+              // If address is not a JSON string, keep it as is
+              console.log('Address is not in JSON format:', data.user.address);
+            }
+          }
+          setProfileData(data.user);
+        }
+      } catch (err) {
+        setError(err.message);
+        console.error('Error fetching profile:', err);
+        if (err.message === 'No authentication token found') {
+          handleSignOut();
+          navigate('/');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (authStatus === 'signedIn') {
+      fetchProfileData();
+    }
+  }, [authStatus, handleSignOut, navigate]);
+
+  // Initialize address form with current address when opening modal
+  useEffect(() => {
+    if (showAddressModal && profileData?.address) {
+      setWard(profileData.address.ward || '');
+      setDistrict(profileData.address.district || '');
+      setStreet(profileData.address.street || '');
+      setHouseNumber(profileData.address.houseNumber || '');
+      setBuildingName(profileData.address.buildingName || '');
+      setBlock(profileData.address.block || '');
+      setFloor(profileData.address.floor || '');
+      setRoomNumber(profileData.address.roomNumber || '');
+      setDeliveryInstructions(profileData.address.deliveryInstructions || '');
+    }
+  }, [showAddressModal, profileData]);
   
   // Check authentication status when component mounts
   useEffect(() => {
@@ -17,6 +114,80 @@ function Account() {
       navigate('/');
     }
   }, [authStatus, navigate]);
+  
+  // Fetch order history when order history tab is active
+  useEffect(() => {
+    const fetchOrderHistory = async () => {
+      if (activeTab === 'order-history' && authStatus === 'signedIn') {
+        setIsLoadingOrders(true);
+        try {
+          const token = localStorage.getItem('token');
+          if (!token) {
+            throw new Error('No authentication token found');
+          }
+
+          const response = await fetch('http://localhost:3001/api/orders/user/orders', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to fetch order history');
+          }
+
+          const data = await response.json();
+          if (data.success) {
+            setOrderHistory(data.orders);
+          }
+        } catch (err) {
+          console.error('Error fetching order history:', err);
+          setError(err.message);
+        } finally {
+          setIsLoadingOrders(false);
+        }
+      }
+    };
+
+    fetchOrderHistory();
+  }, [activeTab, authStatus]);
+  
+  // Fetch favorite meals when favourite-orders tab is active
+  useEffect(() => {
+    const fetchFavoriteMeals = async () => {
+      if (activeTab === 'favourite-order' && authStatus === 'signedIn') {
+        setIsLoadingFavorites(true);
+        try {
+          const token = localStorage.getItem('token');
+          if (!token) {
+            throw new Error('No authentication token found');
+          }
+
+          const response = await fetch('http://localhost:3001/api/orders/user/favorite-meals', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to fetch favorite meals');
+          }
+
+          const data = await response.json();
+          if (data.success) {
+            setFavoriteMeals(data.favoriteMeals);
+          }
+        } catch (err) {
+          console.error('Error fetching favorite meals:', err);
+          setError(err.message);
+        } finally {
+          setIsLoadingFavorites(false);
+        }
+      }
+    };
+
+    fetchFavoriteMeals();
+  }, [activeTab, authStatus]);
   
   // Handlers
   const handleTabChange = (tab) => {
@@ -27,9 +198,66 @@ function Account() {
     handleSignOut();
     navigate('/');
   };
+
+  const handleUpdateAddress = async (e) => {
+    e.preventDefault();
+    
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const newAddress = {
+        ward,
+        district,
+        street,
+        houseNumber,
+        buildingName,
+        block,
+        floor,
+        roomNumber,
+        deliveryInstructions
+      };
+
+      const response = await fetch('http://localhost:3001/api/users/update-address', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ address: newAddress })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update address');
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        // Update local state
+        setProfileData(prev => ({
+          ...prev,
+          address: newAddress
+        }));
+        setShowAddressModal(false);
+      }
+    } catch (err) {
+      console.error('Error updating address:', err);
+      setError(err.message);
+    }
+  };
   
   // Render content based on active tab
   const renderContent = () => {
+    if (loading) {
+      return <div className="loading">Loading...</div>;
+    }
+
+    if (error) {
+      return <div className="error">{error}</div>;
+    }
+
     switch(activeTab) {
       case 'account':
         return (
@@ -37,21 +265,33 @@ function Account() {
             <h2>Account Overview</h2>
             <div className="user-info">
               <h3>Personal Information</h3>
-              <p><strong>Name:</strong> {userData?.firstName} {userData?.lastName}</p>
-              <p><strong>Email:</strong> {userData?.email}</p>
-              <p><strong>Phone:</strong> {userData?.contactMobile}</p>
+              <p><strong>Name:</strong> {profileData?.firstName} {profileData?.lastName}</p>
+              <p><strong>Email:</strong> {profileData?.email}</p>
+              <p><strong>Phone:</strong> {profileData?.contactMobile}</p>
+              <p><strong>Loyalty Points:</strong> {profileData?.loyaltyPoints || 0}</p>
             </div>
             <div className="address-info">
-              <h3>Delivery Address</h3>
-              {userAddress ? (
+              <div className="address-header">
+                <h3>Delivery Address</h3>
+                <button 
+                  className="change-address-btn"
+                  onClick={() => setShowAddressModal(true)}
+                >
+                  Change Address
+                </button>
+              </div>
+              {profileData?.address ? (
                 <>
-                  <p><strong>Address:</strong> {userAddress.houseNumber} {userAddress.street}</p>
-                  <p><strong>Ward:</strong> {userAddress.ward}</p>
-                  <p><strong>District:</strong> {userAddress.district}</p>
-                  {userAddress.buildingName && <p><strong>Building:</strong> {userAddress.buildingName}</p>}
-                  {userAddress.block && <p><strong>Block:</strong> {userAddress.block}</p>}
-                  {userAddress.floor && <p><strong>Floor:</strong> {userAddress.floor}</p>}
-                  {userAddress.roomNumber && <p><strong>Room:</strong> {userAddress.roomNumber}</p>}
+                  <p><strong>Address:</strong> {profileData.address.houseNumber} {profileData.address.street}</p>
+                  <p><strong>Ward:</strong> {profileData.address.ward}</p>
+                  <p><strong>District:</strong> {profileData.address.district}</p>
+                  {profileData.address.buildingName && <p><strong>Building:</strong> {profileData.address.buildingName}</p>}
+                  {profileData.address.block && <p><strong>Block:</strong> {profileData.address.block}</p>}
+                  {profileData.address.floor && <p><strong>Floor:</strong> {profileData.address.floor}</p>}
+                  {profileData.address.roomNumber && <p><strong>Room:</strong> {profileData.address.roomNumber}</p>}
+                  {profileData.address.deliveryInstructions && (
+                    <p><strong>Delivery Instructions:</strong> {profileData.address.deliveryInstructions}</p>
+                  )}
                 </>
               ) : (
                 <p>No delivery address set</p>
@@ -59,12 +299,130 @@ function Account() {
             </div>
           </div>
         );
+      case 'order-history':
+        return (
+          <div className="order-history">
+            <h2>Order History</h2>
+            {isLoadingOrders ? (
+              <div className="loading">Loading orders...</div>
+            ) : orderHistory.length > 0 ? (
+              <div className="orders-list">
+                {orderHistory.map((order) => (
+                  <div key={order.sale_id} className="order-card">
+                    <div className="order-header">
+                      <div className="order-info">
+                        <span className="order-id">Order #{order.sale_id}</span>
+                        <span className="order-date">
+                          {new Date(order.sale_time).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div className="order-status">
+                        <span className={`status ${order.status.toLowerCase()}`}>
+                          {order.status}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="order-items">
+                      {order.items.map((item, index) => (
+                        <div key={index} className="order-item">
+                          <img 
+                            src={item.image_url} 
+                            alt={item.recipe_name}
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = '/placeholder-food.jpg';
+                            }}
+                          />
+                          <div className="item-details">
+                            <span className="item-name">{item.recipe_name}</span>
+                            <span className="item-quantity">x{item.quantity}</span>
+                          </div>
+                          <span className="item-price">
+                            ${(item.price * item.quantity).toFixed(2)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="order-footer">
+                      <div className="order-total">
+                        <span>Total:</span>
+                        <span>${order.total_amount.toFixed(2)}</span>
+                      </div>
+                      <div className="order-address">
+                        <span>Delivered to:</span>
+                        <span>{order.delivery_address}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="no-orders">
+                <p>You haven't placed any orders yet.</p>
+                <button 
+                  className="start-ordering-btn"
+                  onClick={() => navigate('/menu')}
+                >
+                  Start Ordering
+                </button>
+              </div>
+            )}
+          </div>
+        );
       case 'track-order':
         return <div className="track-order">Track Order Content</div>;
-      case 'order-history':
-        return <div className="order-history">Order History Content</div>;
       case 'favourite-order':
-        return <div className="favourite-orders">Favourite Orders Content</div>;
+        return (
+          <div className="favorite-meals">
+            <h2>Favourite Meals</h2>
+            {isLoadingFavorites ? (
+              <div className="loading">Loading favorite meals...</div>
+            ) : favoriteMeals.length > 0 ? (
+              <div className="meals-list">
+                {favoriteMeals.map((meal) => (
+                  <div key={meal.recipe_id} className="meal-card">
+                    <div className="meal-image">
+                      <img 
+                        src={meal.image_url} 
+                        alt={meal.recipe_name}
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = '/placeholder-food.jpg';
+                        }}
+                      />
+                    </div>
+                    <div className="meal-details">
+                      <h3>{meal.recipe_name}</h3>
+                      <div className="meal-stats">
+                        <span>Ordered {meal.times_ordered} times</span>
+                        <span>Total items: {meal.total_ordered}</span>
+                      </div>
+                      <div className="meal-price">
+                        ${meal.price.toFixed(2)}
+                      </div>
+                      <button 
+                        className="reorder-btn"
+                        onClick={() => navigate('/menu')}
+                      >
+                        Order Again
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="no-favorites">
+                <p>You haven't ordered any meals yet.</p>
+                <button 
+                  className="start-ordering-btn"
+                  onClick={() => navigate('/menu')}
+                >
+                  Start Ordering
+                </button>
+              </div>
+            )}
+          </div>
+        );
       case 'profile-settings':
         return <div className="profile-settings">Profile Settings Content</div>;
       default:
@@ -85,6 +443,178 @@ function Account() {
           {renderContent()}
         </div>
       </div>
+
+      {showAddressModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>Update Delivery Address</h3>
+              <button 
+                className="close-modal-btn"
+                onClick={() => setShowAddressModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <form onSubmit={handleUpdateAddress}>
+              <div className="delivery-form">
+                <div className="delivery-row">
+                  <div className="delivery-field">
+                    <label>*Ward:</label>
+                    <div className="custom-select">
+                      <div 
+                        className="select-header" 
+                        onClick={() => setWardDropdownOpen(!wardDropdownOpen)}
+                      >
+                        {ward || "Select ward"}
+                        <span className="dropdown-arrow">▼</span>
+                      </div>
+                      {wardDropdownOpen && (
+                        <div className="select-options">
+                          {wards.map((item, index) => (
+                            <div 
+                              key={index} 
+                              className="select-option" 
+                              onClick={() => {
+                                setWard(item);
+                                setWardDropdownOpen(false);
+                              }}
+                            >
+                              {item}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="delivery-field">
+                    <label>*District:</label>
+                    <div className="custom-select">
+                      <div 
+                        className="select-header" 
+                        onClick={() => setDistrictDropdownOpen(!districtDropdownOpen)}
+                      >
+                        {district || "Select district"}
+                        <span className="dropdown-arrow">▼</span>
+                      </div>
+                      {districtDropdownOpen && (
+                        <div className="select-options">
+                          {districts.map((item, index) => (
+                            <div 
+                              key={index} 
+                              className="select-option" 
+                              onClick={() => {
+                                setDistrict(item);
+                                setDistrictDropdownOpen(false);
+                              }}
+                            >
+                              {item}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="delivery-row">
+                  <div className="delivery-field">
+                    <label>*Street:</label>
+                    <div className="custom-select">
+                      <div 
+                        className="select-header" 
+                        onClick={() => setStreetDropdownOpen(!streetDropdownOpen)}
+                      >
+                        {street || "Select street"}
+                        <span className="dropdown-arrow">▼</span>
+                      </div>
+                      {streetDropdownOpen && (
+                        <div className="select-options">
+                          {streets.map((item, index) => (
+                            <div 
+                              key={index} 
+                              className="select-option" 
+                              onClick={() => {
+                                setStreet(item);
+                                setStreetDropdownOpen(false);
+                              }}
+                            >
+                              {item}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="delivery-field">
+                    <label>*House/Street Number:</label>
+                    <input 
+                      type="text" 
+                      value={houseNumber}
+                      onChange={(e) => setHouseNumber(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="delivery-field single-row">
+                  <label>Building Name:</label>
+                  <input 
+                    type="text" 
+                    value={buildingName}
+                    onChange={(e) => setBuildingName(e.target.value)}
+                  />
+                </div>
+
+                <div className="delivery-row three-column">
+                  <div className="delivery-field">
+                    <label>Block:</label>
+                    <input 
+                      type="text" 
+                      value={block}
+                      onChange={(e) => setBlock(e.target.value)}
+                    />
+                  </div>
+                  <div className="delivery-field">
+                    <label>Floor / Level:</label>
+                    <input 
+                      type="text" 
+                      value={floor}
+                      onChange={(e) => setFloor(e.target.value)}
+                    />
+                  </div>
+                  <div className="delivery-field">
+                    <label>Room Number / Company Name:</label>
+                    <input 
+                      type="text" 
+                      value={roomNumber}
+                      onChange={(e) => setRoomNumber(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="delivery-field single-row">
+                  <label>Delivery Instructions:</label>
+                  <textarea 
+                    value={deliveryInstructions}
+                    onChange={(e) => setDeliveryInstructions(e.target.value)}
+                    rows={3}
+                  />
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button type="button" className="cancel-btn" onClick={() => setShowAddressModal(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="save-btn">
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

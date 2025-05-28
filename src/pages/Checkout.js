@@ -30,6 +30,30 @@ function Checkout() {
     }
   }, [cart.length]);
 
+  // Load address from localStorage when component mounts
+  useEffect(() => {
+    try {
+      const storedAddress = localStorage.getItem('userAddress');
+      console.log('Stored address from localStorage:', storedAddress);
+      if (storedAddress && storedAddress !== 'null') {
+        const parsedAddress = JSON.parse(storedAddress);
+        console.log('Parsed address:', parsedAddress);
+        setUserAddress(parsedAddress);
+      }
+    } catch (err) {
+      console.error('Error loading address from localStorage:', err);
+    }
+  }, []);
+
+  // Initialize temp values when component mounts or context values change
+  useEffect(() => {
+    console.log('Current userAddress:', userAddress);
+    const formattedAddr = formatAddress(userAddress);
+    console.log('Formatted address:', formattedAddr);
+    setTempAddress(formattedAddr);
+    setTempContact(userContact || '');
+  }, [userAddress, userContact]);
+
   // Handle note change for a specific item
   const handleNoteChange = (index, value) => {
     const newNotes = [...notes];
@@ -40,7 +64,25 @@ function Checkout() {
   // Handle address edit
   const handleAddressEdit = () => {
     if (isEditingAddress) {
-      setUserAddress(tempAddress);
+      // When saving, keep the original address object structure
+      if (typeof userAddress === 'object' && userAddress !== null) {
+        // Keep the original object structure
+        setUserAddress(userAddress);
+      } else {
+        // If somehow we lost the object structure, create a new one
+        const addressParts = tempAddress.split(', ');
+        const addressObj = {
+          houseNumber: addressParts[0] || '',
+          street: addressParts[1] || '',
+          buildingName: addressParts[2] || '',
+          block: addressParts[3]?.replace('Block ', '') || '',
+          floor: addressParts[4]?.replace('Floor ', '') || '',
+          roomNumber: addressParts[5]?.replace('Room ', '') || '',
+          ward: addressParts[6] || '',
+          district: addressParts[7] || ''
+        };
+        setUserAddress(addressObj);
+      }
       setIsEditingAddress(false);
     } else {
       setTempAddress(formatAddress(userAddress));
@@ -78,17 +120,68 @@ function Checkout() {
 
   // Format address for display
   const formatAddress = (address) => {
-    if (!address) return '';
+    console.log('Formatting address:', address);
     
-    // If address is already a string, return it
-    if (typeof address === 'string') return address;
+    if (!address) {
+      console.log('No address provided');
+      return '';
+    }
+
+    // If address is a string, return it directly
+    if (typeof address === 'string') {
+      console.log('Address is a string, returning as is:', address);
+      return address;
+    }
+
+    // If address is an object with formattedAddress, use that
+    if (address.formattedAddress) {
+      console.log('Using formattedAddress:', address.formattedAddress);
+      return address.formattedAddress;
+    }
+
+    // If address is an object with address field, use that
+    if (address.address) {
+      console.log('Using address field:', address.address);
+      return address.address;
+    }
+
+    // If address is an object with individual fields, construct the address
+    const parts = [];
+    if (address.houseNumber) parts.push(address.houseNumber);
+    if (address.street) parts.push(address.street);
+    if (address.buildingName) parts.push(`Building: ${address.buildingName}`);
+    if (address.block) parts.push(`Block ${address.block}`);
+    if (address.floor) parts.push(`Floor ${address.floor}`);
+    if (address.roomNumber) parts.push(`Room ${address.roomNumber}`);
+    if (address.ward) parts.push(address.ward);
+    if (address.district) parts.push(address.district);
+
+    const formatted = parts.join(', ');
+    console.log('Constructed address:', formatted);
+    return formatted;
+  };
+
+  // Format address for database
+  const formatAddressForDB = (addressObj) => {
+    if (!addressObj) return '';
     
-    // If it's an object, format it
+    // If it's already a string, return it
+    if (typeof addressObj === 'string') return addressObj;
+    
+    // If it's an object, format it into a single string
     const addressParts = [];
-    if (address.houseNumber) addressParts.push(address.houseNumber);
-    if (address.street) addressParts.push(address.street);
-    if (address.ward) addressParts.push(address.ward);
-    if (address.district) addressParts.push(address.district);
+    
+    // Required fields
+    if (addressObj.houseNumber) addressParts.push(addressObj.houseNumber);
+    if (addressObj.street) addressParts.push(addressObj.street);
+    if (addressObj.ward) addressParts.push(addressObj.ward);
+    if (addressObj.district) addressParts.push(addressObj.district);
+    
+    // Optional fields
+    if (addressObj.buildingName) addressParts.push(`Building: ${addressObj.buildingName}`);
+    if (addressObj.block) addressParts.push(`Block ${addressObj.block}`);
+    if (addressObj.floor) addressParts.push(`Floor ${addressObj.floor}`);
+    if (addressObj.roomNumber) addressParts.push(`Room ${addressObj.roomNumber}`);
     
     return addressParts.join(', ');
   };
@@ -110,7 +203,7 @@ function Checkout() {
           price: item.price,
           note: item.note || ''
         })),
-        delivery_address: formatAddress(userAddress),
+        delivery_address: formatAddressForDB(userAddress),
         contact_number: userContact,
         delivery_charge: deliveryCharge,
         subtotal: calculateSubtotal(),
@@ -204,7 +297,7 @@ function Checkout() {
                 />
               ) : (
                 <div className="address-display">
-                  {formatAddress(userAddress) || 'Please add your delivery address'}
+                  {userAddress ? formatAddress(userAddress) : 'Please add your delivery address'}
                 </div>
               )}
             </div>
