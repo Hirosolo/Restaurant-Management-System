@@ -293,13 +293,11 @@ function MenuPage() {
         ></div>
         <div className={`nav-links ${menuOpen ? 'active' : ''}`} ref={navRef}>
           <div className="close-btn" onClick={toggleMenu}>✕</div>
-          <a href="#">Menu</a>
-          <a href="#">Discount</a>
+          <a href="/">Home</a>
+          <a href="/discount">Discount</a>
           <img src="/assets/logo.png" alt="Logo" className="logo" />
-          <span className="nav-link" onClick={handleAccountClick} style={{ cursor: 'pointer' }}>
-            Account
-          </span>
-          <a href="#">Support</a>
+          <a href="/menu">Menu</a>
+          <a href="/support">Support</a>
         </div>
       </div>
 
