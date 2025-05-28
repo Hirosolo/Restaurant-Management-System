@@ -5,21 +5,67 @@ const db = require('../config/db');
 // Get all recipes with their categories
 router.get('/recipes', async (req, res) => {
     try {
-        const [recipes] = await db.query(`
-            SELECT 
-                recipe_id,
-                recipe_name,
-                category,
-                calories,
-                protein,
-                fat,
-                carbohydrate,
-                fiber,
-                price,
-                image_url
-            FROM recipe
-            ORDER BY category, recipe_name
-        `);
+        const { calories, protein } = req.query;
+        let query = `
+            SELECT DISTINCT
+                r.recipe_id,
+                r.recipe_name,
+                r.category,
+                r.calories,
+                r.protein,
+                r.fat,
+                r.carbohydrate,
+                r.fiber,
+                r.price,
+                r.image_url
+            FROM recipe r
+            LEFT JOIN recipe_detail rd ON r.recipe_id = rd.recipe_id
+            LEFT JOIN ingredient i ON rd.ingredient_id = i.ingredient_id
+            WHERE 1=1
+        `;
+        const params = [];
+
+        // Apply calories filter
+        if (calories) {
+            switch (calories) {
+                case '< 300':
+                    query += ' AND r.calories < 300';
+                    break;
+                case '300 - 500':
+                    query += ' AND r.calories >= 300 AND r.calories <= 500';
+                    break;
+                case '> 500':
+                    query += ' AND r.calories > 500';
+                    break;
+            }
+        }
+
+        // Apply protein filter
+        if (protein) {
+            // Map the filter options to actual ingredient names in the database
+            const proteinMap = {
+                'Salmon': 'Salmon Fillet',
+                'Tuna': 'Cans tuna',
+                'Chicken': ['Chicken Breast Fillet', 'Chicken Thigh'],
+                'Shrimp': 'Shrimp',
+                'Scallop': 'Scallop',
+                'Tofu': 'Tofu'
+            };
+            
+            const ingredientNames = proteinMap[protein];
+            if (Array.isArray(ingredientNames)) {
+                // For chicken, we need to check both breast and thigh
+                query += ' AND (i.ingredient_name = ? OR i.ingredient_name = ?)';
+                params.push(ingredientNames[0], ingredientNames[1]);
+            } else {
+                query += ' AND i.ingredient_name = ?';
+                params.push(ingredientNames);
+            }
+        }
+
+        query += ' ORDER BY r.category, r.recipe_name';
+
+        const [recipes] = await db.query(query, params);
 
         // Group recipes by category
         const categories = recipes.reduce((acc, recipe) => {

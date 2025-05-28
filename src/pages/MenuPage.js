@@ -59,6 +59,11 @@ function MenuPage() {
   const districts = ['District 1', 'District 2', 'District 3', 'District 4', 'District 5'];
   const streets = ['Street 1', 'Street 2', 'Street 3', 'Street 4', 'Street 5'];
 
+  const [selectedFilters, setSelectedFilters] = useState({
+    calories: '',
+    protein: ''
+  });
+
   // Đồng bộ state với props
   useEffect(() => {
     if (userAddress) setUserAddress(userAddress);
@@ -68,11 +73,20 @@ function MenuPage() {
     if (userAddress !== userAddress && setUserAddress) setUserAddress(userAddress);
   }, [userAddress, setUserAddress, userAddress]);
 
-  // Fetch recipes when component mounts
+  // Fetch recipes when component mounts or filters change
   useEffect(() => {
     const fetchRecipes = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/recipes');
+        setLoading(true);
+        const queryParams = new URLSearchParams();
+        if (selectedFilters.calories) {
+          queryParams.append('calories', selectedFilters.calories);
+        }
+        if (selectedFilters.protein) {
+          queryParams.append('protein', selectedFilters.protein);
+        }
+
+        const response = await fetch(`http://localhost:3001/api/recipes?${queryParams.toString()}`);
         if (!response.ok) {
           throw new Error('Failed to fetch recipes');
         }
@@ -92,7 +106,7 @@ function MenuPage() {
               fat: item.fat.toString(),
               fiber: item.fiber.toString(),
               carb: item.carb.toString(),
-              description: `${item.name} is a delicious ${category.name.toLowerCase()} dish.` // You might want to add descriptions to your database
+              description: `${item.name} is a delicious ${category.name.toLowerCase()} dish.`
             };
           });
         });
@@ -106,7 +120,7 @@ function MenuPage() {
     };
 
     fetchRecipes();
-  }, []);
+  }, [selectedFilters]);
 
   // Update the useEffect hook for auth modal
   useEffect(() => {
@@ -173,8 +187,8 @@ function MenuPage() {
   };
 
   const filters = [
-    { id: 'calories', name: 'Calories', options: ['< 300', '300 - 500', '> 500'] },
-    { id: 'protein', name: 'Main Protein', options: ['Salmon', 'Tuna', 'Chicken', 'Shrimp', 'Scallop', 'Tofu'] }
+    { id: 'calories', name: 'Calories', options: ['All', '< 300', '300 - 500', '> 500'] },
+    { id: 'protein', name: 'Main Protein', options: ['All', 'Salmon', 'Tuna', 'Chicken', 'Shrimp', 'Scallop', 'Tofu'] }
   ];
 
   const calculateTotal = () => {
@@ -205,6 +219,19 @@ function MenuPage() {
     }
   };
 
+  const handleFilterChange = (filterType, value) => {
+    setSelectedFilters(prev => {
+      // If "All" is selected or the same value is clicked again, clear the filter
+      if (value === 'All' || prev[filterType] === value) {
+        const newFilters = { ...prev };
+        delete newFilters[filterType];
+        return newFilters;
+      }
+      // Otherwise, update with the new value
+      return { ...prev, [filterType]: value };
+    });
+  };
+
   const renderFilterOptions = (filter) => {
     const isOpen = filtersOpen[filter.id] !== false;
     return (
@@ -220,11 +247,17 @@ function MenuPage() {
         </div>
         {isOpen && (
           <div className="filter-options">
-            {filter.options.map((option, index) => (
-              <div className="filter-option" key={index}>
-                <input type="radio" id={`${filter.id}-${index}`} name={filter.id} />
-                <label htmlFor={`${filter.id}-${index}`}>{option}</label>
-              </div>
+            {filter.options.map((option) => (
+              <label key={option} className="filter-option">
+                <input
+                  type="radio"
+                  name={filter.id}
+                  value={option}
+                  checked={selectedFilters[filter.id] === option}
+                  onChange={() => handleFilterChange(filter.id, option)}
+                />
+                <span>{option}</span>
+              </label>
             ))}
           </div>
         )}
