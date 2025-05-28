@@ -64,6 +64,8 @@ function MenuPage() {
     protein: ''
   });
 
+  const [notification, setNotification] = useState({ show: false, message: '', type: '' });
+
   // Đồng bộ state với props
   useEffect(() => {
     if (userAddress) setUserAddress(userAddress);
@@ -308,8 +310,84 @@ function MenuPage() {
     );
   };
 
+  const showNotification = (message, type = 'info') => {
+    setNotification({ show: true, message, type });
+    // Auto hide notification after 5 seconds
+    setTimeout(() => {
+      setNotification({ show: false, message: '', type: '' });
+    }, 5000);
+  };
+
+  const handleCreateAccountSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Validate required fields
+    if (!userEmail || !userPassword || !firstName || !lastName || !contactMobile) {
+      showNotification('Please fill in all required fields', 'error');
+      return;
+    }
+
+    if (!ward || !district || !street || !houseNumber) {
+      showNotification('Please fill in all required address fields', 'error');
+      return;
+    }
+
+    const newAddress = {
+      ward,
+      district,
+      street,
+      houseNumber,
+      buildingName,
+      block,
+      floor,
+      roomNumber,
+      deliveryInstructions,
+      fullName: `${firstName} ${lastName}`,
+      contactMobile
+    };
+
+    const userInfo = {
+      email: userEmail,
+      firstName,
+      lastName,
+      contactMobile,
+      password: userPassword
+    };
+
+    try {
+      showNotification('Creating your account...', 'info');
+      await handleCreateAccount(newAddress, userInfo);
+      showNotification('Account created successfully! Welcome to Greedible!', 'success');
+      setShowCreateAccountForm(false);
+      setShowAuthModal(false);
+      // Clear form fields
+      setUserEmail('');
+      setUserPassword('');
+      setFirstName('');
+      setLastName('');
+      setContactMobile('');
+      setWard('');
+      setDistrict('');
+      setStreet('');
+      setHouseNumber('');
+      setBuildingName('');
+      setBlock('');
+      setFloor('');
+      setRoomNumber('');
+      setDeliveryInstructions('');
+    } catch (error) {
+      showNotification(error.message || 'Failed to create account. Please try again.', 'error');
+    }
+  };
+
   return (
     <div className="menu-page">
+      {notification.show && (
+        <div className={`notification ${notification.type}`}>
+          {notification.message}
+        </div>
+      )}
+
       <div className="navbar menu-navbar">
         <div className={`menu-icon ${menuOpen ? 'open' : ''}`} onClick={toggleMenu}>
           <div className="bar"></div>
@@ -519,32 +597,7 @@ function MenuPage() {
           <div className="auth-form-modal register-form">
             <h3>Create New Account</h3>
             <button className="close-modal-btn" onClick={() => setShowCreateAccountForm(false)}>✕</button>
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              const newAddress = {
-                ward,
-                district,
-                street,
-                houseNumber,
-                buildingName,
-                block,
-                floor,
-                roomNumber,
-                deliveryInstructions,
-                fullName: `${firstName} ${lastName}`,
-                contactMobile
-              };
-
-              const userInfo = {
-                email: userEmail,
-                firstName,
-                lastName,
-                contactMobile
-              };
-
-              handleCreateAccount(newAddress, userInfo);
-              setShowCreateAccountForm(false);
-            }}>
+            <form onSubmit={handleCreateAccountSubmit}>
               <div className="form-section">
                 <div className="form-group">
                   <label>Email</label>
@@ -727,14 +780,6 @@ function MenuPage() {
                       onChange={(e) => setRoomNumber(e.target.value)}
                     />
                   </div>
-                </div>
-                <div className="delivery-field single-row">
-                  <label>Delivery Instruction to Rider:</label>
-                  <textarea 
-                    value={deliveryInstructions}
-                    onChange={(e) => setDeliveryInstructions(e.target.value)}
-                    rows={3}
-                  />
                 </div>
               </div>
               <button type="submit" className="form-submit-btn">Confirm</button>
