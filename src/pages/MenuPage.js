@@ -35,6 +35,9 @@ function MenuPage() {
   const [lastName, setLastName] = useState('');
   const [contactMobile, setContactMobile] = useState('');
   
+  // New state variable for forgot password modal
+  const [showForgotPasswordForm, setShowForgotPasswordForm] = useState(false);
+
   // New state variables for fetched data
   const [categories, setCategories] = useState([]);
   const [recipeDetails, setRecipeDetails] = useState({});
@@ -185,6 +188,8 @@ function MenuPage() {
       setShowAuthModal(false);
       setShowSignInForm(false);
       setShowCreateAccountForm(false);
+      // Close forgot password form if it was open
+      setShowForgotPasswordForm(false);
     }
   };
 
@@ -321,53 +326,46 @@ function MenuPage() {
   const handleCreateAccountSubmit = async (e) => {
     e.preventDefault();
     
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(userEmail)) {
-      showNotification('Please enter a valid email address', 'error');
+    // Validate first name
+    const firstNameInput = e.target.querySelector('input[name="firstName"]');
+    if (!firstNameInput.value) {
+      firstNameInput.setCustomValidity('This field is required');
+      firstNameInput.reportValidity();
+      return;
+    } else if (!/^[A-Za-z]+$/.test(firstNameInput.value)) {
+      firstNameInput.setCustomValidity('First name should contain only letters');
+      firstNameInput.reportValidity();
       return;
     }
+    firstNameInput.setCustomValidity('');
 
-    // Name validation (only letters and spaces)
-    const nameRegex = /^[A-Za-z]+$/;
-    if (!nameRegex.test(firstName)) {
-      showNotification('First name should contain only letters', 'error');
+    // Validate last name
+    const lastNameInput = e.target.querySelector('input[name="lastName"]');
+    if (!lastNameInput.value) {
+      lastNameInput.setCustomValidity('This field is required');
+      lastNameInput.reportValidity();
+      return;
+    } else if (!/^[A-Za-z]+$/.test(lastNameInput.value)) {
+      lastNameInput.setCustomValidity('Last name should contain only letters');
+      lastNameInput.reportValidity();
       return;
     }
-    if (!nameRegex.test(lastName)) {
-      showNotification('Last name should contain only letters', 'error');
-      return;
-    }
+    lastNameInput.setCustomValidity('');
 
-    // Contact number validation (exactly 10 digits)
-    if (!/^[0-9]{10}$/.test(contactMobile)) {
-      showNotification('Contact number must be exactly 10 digits', 'error');
+    // Validate contact mobile
+    const contactInput = e.target.querySelector('input[name="contactMobile"]');
+    if (!contactInput.value) {
+      contactInput.setCustomValidity('This field is required');
+      contactInput.reportValidity();
+      return;
+    } else if (!/^\d{10}$/.test(contactInput.value)) {
+      contactInput.setCustomValidity('Contact number must be exactly 10 digits');
+      contactInput.reportValidity();
       return;
     }
+    contactInput.setCustomValidity('');
 
-    // Floor/Level validation (must be a number)
-    if (floor && !/^\d+$/.test(floor)) {
-      showNotification('Floor/Level must be a number', 'error');
-      return;
-    }
-
-    // House/Street Number validation (must be a number)
-    if (!/^\d+$/.test(houseNumber)) {
-      showNotification('House/Street Number must be a number', 'error');
-      return;
-    }
-
-    // Validate required fields
-    if (!userEmail || !userPassword || !firstName || !lastName || !contactMobile) {
-      showNotification('Please fill in all required fields', 'error');
-      return;
-    }
-
-    if (!ward || !district || !street || !houseNumber) {
-      showNotification('Please fill in all required address fields', 'error');
-      return;
-    }
-
+    // If all validations pass, proceed with form submission
     const newAddress = {
       ward,
       district,
@@ -416,18 +414,29 @@ function MenuPage() {
     }
   };
 
-  // Add custom validation message handler
+  // Add validation message handler
   const handleInvalid = (e) => {
     e.preventDefault();
     e.target.setCustomValidity('');
     if (!e.target.validity.valid) {
-      e.target.setCustomValidity(e.target.title);
+      if (e.target.validity.valueMissing) {
+        e.target.setCustomValidity('This field is required');
+      } else if (e.target.validity.patternMismatch) {
+        e.target.setCustomValidity(e.target.title);
+      }
     }
   };
 
-  // Clear custom validation message on input
+  // Clear validation message on input
   const handleInput = (e) => {
     e.target.setCustomValidity('');
+  };
+
+  // Handle Forgot Password click
+  const handleForgotPasswordClick = (e) => {
+    e.preventDefault();
+    setShowSignInForm(false);
+    setShowForgotPasswordForm(true);
   };
 
   return (
@@ -471,8 +480,12 @@ function MenuPage() {
             ) : (
               <span className="user-nav-item" onClick={handleAccountClick}>Sign In</span>
             )}
-            <span className="separator">|</span>
-            <span className="user-nav-item" onClick={() => navigate('/guest-order')}>Guest Order</span>
+            {authStatus !== 'signedIn' && (
+              <>
+                <span className="separator">|</span>
+                <span className="user-nav-item" onClick={() => navigate('/guest-order')}>Guest Order</span>
+              </>
+            )}
             <span className="separator">|</span>
             <span className="user-nav-item" onClick={() => navigate('/track-order')}>Track Your Order</span>
           </div>
@@ -605,6 +618,25 @@ function MenuPage() {
             <button className="close-modal-btn" onClick={() => setShowSignInForm(false)}>✕</button>
             <form onSubmit={async (e) => {
               e.preventDefault();
+              
+              // Validate email
+              const emailInput = e.target.querySelector('input[type="email"]');
+              if (!emailInput.value) {
+                emailInput.setCustomValidity('This field is required');
+                emailInput.reportValidity();
+                return;
+              }
+              emailInput.setCustomValidity('');
+
+              // Validate password
+              const passwordInput = e.target.querySelector('input[type="password"]');
+              if (!passwordInput.value) {
+                passwordInput.setCustomValidity('This field is required');
+                passwordInput.reportValidity();
+                return;
+              }
+              passwordInput.setCustomValidity('');
+
               try {
                 showNotification('Signing in...', 'info');
                 await handleSignIn(userEmail, userPassword);
@@ -624,6 +656,14 @@ function MenuPage() {
                   value={userEmail} 
                   onChange={(e) => setUserEmail(e.target.value)} 
                   required 
+                  onInvalid={(e) => {
+                    e.preventDefault();
+                    e.target.setCustomValidity('');
+                    if (e.target.validity.valueMissing) {
+                      e.target.setCustomValidity('This field is required');
+                    }
+                  }}
+                  onInput={(e) => e.target.setCustomValidity('')}
                 />
               </div>
               <div className="form-group">
@@ -633,6 +673,14 @@ function MenuPage() {
                   value={userPassword} 
                   onChange={(e) => setUserPassword(e.target.value)} 
                   required 
+                  onInvalid={(e) => {
+                    e.preventDefault();
+                    e.target.setCustomValidity('');
+                    if (e.target.validity.valueMissing) {
+                      e.target.setCustomValidity('This field is required');
+                    }
+                  }}
+                  onInput={(e) => e.target.setCustomValidity('')}
                 />
               </div>
               <div className="form-options">
@@ -640,7 +688,7 @@ function MenuPage() {
                   <input type="checkbox" id="remember" />
                   <label htmlFor="remember">Remember me</label>
                 </div>
-                <a href="#" className="forgot-password">Forgot password?</a>
+                <a href="#" className="forgot-password" onClick={handleForgotPasswordClick}>Forgot password?</a>
               </div>
               <button type="submit" className="form-submit-btn">SIGN IN</button>
             </form>
@@ -662,8 +710,6 @@ function MenuPage() {
                     value={userEmail} 
                     onChange={(e) => setUserEmail(e.target.value)} 
                     required 
-                    pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
-                    title="Please enter a valid email address"
                   />
                 </div>
                 <div className="form-group">
@@ -681,31 +727,30 @@ function MenuPage() {
                 <div className="form-group">
                   <label>First Name</label>
                   <input 
+                    name="firstName"
                     type="text" 
                     value={firstName} 
-                    onChange={(e) => setFirstName(e.target.value)} 
+                    onChange={(e) => setFirstName(e.target.value)}
                     required 
-                    pattern="[A-Za-z]+"
-                    title="First name should contain only letters"
                   />
                 </div>
                 <div className="form-group">
                   <label>Last Name</label>
                   <input 
+                    name="lastName"
                     type="text" 
                     value={lastName} 
-                    onChange={(e) => setLastName(e.target.value)} 
+                    onChange={(e) => setLastName(e.target.value)}
                     required 
-                    pattern="[A-Za-z]+"
-                    title="Last name should contain only letters"
                   />
                 </div>
                 <div className="form-group">
                   <label>Contact Mobile</label>
                   <input 
+                    name="contactMobile"
                     type="tel" 
                     value={contactMobile} 
-                    onChange={(e) => setContactMobile(e.target.value)} 
+                    onChange={(e) => setContactMobile(e.target.value)}
                     required 
                     pattern="[0-9]{10}"
                     title="Contact number must be exactly 10 digits"
@@ -805,6 +850,7 @@ function MenuPage() {
                     <label>*House/Street Number:</label>
                     <input 
                       type="text" 
+                      name="houseNumber"
                       value={houseNumber}
                       onChange={(e) => setHouseNumber(e.target.value)}
                       required
@@ -834,6 +880,7 @@ function MenuPage() {
                     <label>Floor / Level:</label>
                     <input 
                       type="text" 
+                      name="floor"
                       value={floor}
                       onChange={(e) => setFloor(e.target.value)}
                       pattern="\d+"
@@ -886,6 +933,65 @@ function MenuPage() {
                 </ul>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showForgotPasswordForm && (
+        <div className="auth-modal-overlay">
+          <div className="auth-form-modal">
+            <h3>Forgot Password?</h3>
+            <button className="close-modal-btn" onClick={() => setShowForgotPasswordForm(false)}>✕</button>
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              const email = userEmail;
+
+              if (!email) {
+                // Basic validation - though the input field is required, adding this check
+                console.log('Email field is empty');
+                // Using existing showNotification for simplicity for now. Can refine later if needed.
+                showNotification('Please enter your email address.', 'error');
+                return;
+              }
+
+              try {
+                showNotification('Sending password reset link...', 'info');
+                // Assume backend endpoint for forgot password is /api/forgot-password
+                const response = await fetch('http://localhost:3001/api/forgot-password', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ email }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                  showNotification(data.message || 'If your email is in our system, you will receive a password reset link shortly.', 'success');
+                  setShowForgotPasswordForm(false);
+                  setUserEmail(''); // Clear email field
+                } else {
+                  // Handle backend errors (e.g., email not found)
+                  showNotification(data.message || 'Failed to send reset link. Please try again.', 'error');
+                }
+
+              } catch (error) {
+                console.error('Error sending password reset email:', error);
+                showNotification('An error occurred while trying to send the reset link. Please try again later.', 'error');
+              }
+            }}>
+              <div className="form-group">
+                <label>Email</label>
+                <input 
+                  type="email" 
+                  value={userEmail} 
+                  onChange={(e) => setUserEmail(e.target.value)} 
+                  required 
+                />
+              </div>
+              <button type="submit" className="form-submit-btn">Send Reset Link</button>
+            </form>
           </div>
         </div>
       )}
