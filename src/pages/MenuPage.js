@@ -126,8 +126,8 @@ function MenuPage() {
 
   // Update the useEffect hook for auth modal
   useEffect(() => {
-    // Show auth modal if user is not authenticated or is a guest
-    if (authStatus !== 'signedIn') {
+    // Only show auth modal if user is not authenticated
+    if (authStatus !== 'signedIn' && !showAuthModal) {
       console.log('MenuPage: Initial auth check - showing auth modal');
       setShowAuthModal(true);
     }
@@ -321,6 +321,42 @@ function MenuPage() {
   const handleCreateAccountSubmit = async (e) => {
     e.preventDefault();
     
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(userEmail)) {
+      showNotification('Please enter a valid email address', 'error');
+      return;
+    }
+
+    // Name validation (only letters and spaces)
+    const nameRegex = /^[A-Za-z]+$/;
+    if (!nameRegex.test(firstName)) {
+      showNotification('First name should contain only letters', 'error');
+      return;
+    }
+    if (!nameRegex.test(lastName)) {
+      showNotification('Last name should contain only letters', 'error');
+      return;
+    }
+
+    // Contact number validation (exactly 10 digits)
+    if (!/^[0-9]{10}$/.test(contactMobile)) {
+      showNotification('Contact number must be exactly 10 digits', 'error');
+      return;
+    }
+
+    // Floor/Level validation (must be a number)
+    if (floor && !/^\d+$/.test(floor)) {
+      showNotification('Floor/Level must be a number', 'error');
+      return;
+    }
+
+    // House/Street Number validation (must be a number)
+    if (!/^\d+$/.test(houseNumber)) {
+      showNotification('House/Street Number must be a number', 'error');
+      return;
+    }
+
     // Validate required fields
     if (!userEmail || !userPassword || !firstName || !lastName || !contactMobile) {
       showNotification('Please fill in all required fields', 'error');
@@ -378,6 +414,20 @@ function MenuPage() {
     } catch (error) {
       showNotification(error.message || 'Failed to create account. Please try again.', 'error');
     }
+  };
+
+  // Add custom validation message handler
+  const handleInvalid = (e) => {
+    e.preventDefault();
+    e.target.setCustomValidity('');
+    if (!e.target.validity.valid) {
+      e.target.setCustomValidity(e.target.title);
+    }
+  };
+
+  // Clear custom validation message on input
+  const handleInput = (e) => {
+    e.target.setCustomValidity('');
   };
 
   return (
@@ -553,13 +603,19 @@ function MenuPage() {
           <div className="auth-form-modal">
             <h3>Sign In</h3>
             <button className="close-modal-btn" onClick={() => setShowSignInForm(false)}>✕</button>
-            <form onSubmit={(e) => {
+            <form onSubmit={async (e) => {
               e.preventDefault();
-              handleSignIn(userEmail, userPassword);
-              setShowSignInForm(false);
-              setShowAuthModal(false);
-              setUserEmail('');
-              setUserPassword('');
+              try {
+                showNotification('Signing in...', 'info');
+                await handleSignIn(userEmail, userPassword);
+                showNotification('Successfully signed in! Welcome back!', 'success');
+                setShowSignInForm(false);
+                setShowAuthModal(false);
+                setUserEmail('');
+                setUserPassword('');
+              } catch (error) {
+                showNotification(error.message || 'Invalid email or password. Please try again.', 'error');
+              }
             }}>
               <div className="form-group">
                 <label>Email</label>
@@ -606,6 +662,8 @@ function MenuPage() {
                     value={userEmail} 
                     onChange={(e) => setUserEmail(e.target.value)} 
                     required 
+                    pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
+                    title="Please enter a valid email address"
                   />
                 </div>
                 <div className="form-group">
@@ -627,6 +685,8 @@ function MenuPage() {
                     value={firstName} 
                     onChange={(e) => setFirstName(e.target.value)} 
                     required 
+                    pattern="[A-Za-z]+"
+                    title="First name should contain only letters"
                   />
                 </div>
                 <div className="form-group">
@@ -636,6 +696,8 @@ function MenuPage() {
                     value={lastName} 
                     onChange={(e) => setLastName(e.target.value)} 
                     required 
+                    pattern="[A-Za-z]+"
+                    title="Last name should contain only letters"
                   />
                 </div>
                 <div className="form-group">
@@ -645,6 +707,8 @@ function MenuPage() {
                     value={contactMobile} 
                     onChange={(e) => setContactMobile(e.target.value)} 
                     required 
+                    pattern="[0-9]{10}"
+                    title="Contact number must be exactly 10 digits"
                   />
                 </div>
               </div>
@@ -744,6 +808,8 @@ function MenuPage() {
                       value={houseNumber}
                       onChange={(e) => setHouseNumber(e.target.value)}
                       required
+                      pattern="\d+"
+                      title="House/Street Number must be a number"
                     />
                   </div>
                 </div>
@@ -770,6 +836,8 @@ function MenuPage() {
                       type="text" 
                       value={floor}
                       onChange={(e) => setFloor(e.target.value)}
+                      pattern="\d+"
+                      title="Floor/Level must be a number"
                     />
                   </div>
                   <div className="delivery-field">
