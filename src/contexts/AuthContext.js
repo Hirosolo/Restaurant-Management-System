@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 /* Context cho xác thực */
@@ -6,160 +6,339 @@ const AuthContext = createContext();
 
 /* Provider cung cấp trạng thái xác thực và hàm quản lý */
 export function AuthProvider({ children, initialAuthStatus, setPropAuthStatus, initialUserAddress, setPropUserAddress }) {
-  /* Trạng thái xác thực, khởi tạo từ initialAuthStatus */
-  const [authStatus, setAuthStatus] = useState(initialAuthStatus || localStorage.getItem('authStatus') || 'guest');
-  /* Trạng thái địa chỉ, khởi tạo từ initialUserAddress */
-  const [userAddress, setUserAddress] = useState(initialUserAddress || null);
-  const [userData, setUserData] = useState(null);
+  const [authStatus, setAuthStatus] = useState(() => {
+    const storedStatus = localStorage.getItem('authStatus');
+    return storedStatus || initialAuthStatus || 'guest';
+  });
+  
+  const [userAddress, setUserAddress] = useState(() => {
+    try {
+      const storedAddress = localStorage.getItem('userAddress');
+      if (storedAddress && storedAddress !== 'null') {
+        return JSON.parse(storedAddress);
+      }
+    } catch (err) {
+      console.error('Error parsing userAddress from localStorage:', err);
+    }
+    return initialUserAddress || null;
+  });
+
+  const [userData, setUserData] = useState(() => {
+    try {
+      const storedUserData = localStorage.getItem('userData');
+      if (storedUserData && storedUserData !== 'null') {
+        return JSON.parse(storedUserData);
+      }
+    } catch (err) {
+      console.error('Error parsing userData from localStorage:', err);
+    }
+    return null;
+  });
+
+  const [userContact, setUserContact] = useState(localStorage.getItem('userContact') || '');
   const navigate = useNavigate();
 
-  /* Xử lý đăng nhập */
-  const handleSignIn = useCallback((email, password, redirectToAccount = false) => {
-    console.log('AuthContext: Signing in', { email, redirectToAccount });
-    
-    // Ở đây bạn có thể thêm logic kiểm tra thông tin đăng nhập
-    
-    // Giả lập thông tin người dùng sau khi đăng nhập thành công
-    const userInfo = {
-      email,
-      firstName: 'Người',
-      lastName: 'Dùng',
-      contactMobile: '0123456789'
-    };
-    
-    setUserData(userInfo);
-    setAuthStatus('signedIn');
+  // Sync authStatus with localStorage and parent component
+  useEffect(() => {
+    localStorage.setItem('authStatus', authStatus);
     if (setPropAuthStatus) {
-      setPropAuthStatus('signedIn');
+      setPropAuthStatus(authStatus);
     }
-    localStorage.setItem('authStatus', 'signedIn');
-    localStorage.setItem('userData', JSON.stringify(userInfo));
-    
-    // Phát ra sự kiện về thay đổi trạng thái đăng nhập
-    const event = new CustomEvent('authStatusChanged', { 
-      detail: { status: 'signedIn', user: userInfo } 
-    });
-    window.dispatchEvent(event);
-    
-    console.log('AuthContext: Auth status updated to signedIn');
-    console.log('AuthContext: localStorage after update:', localStorage.getItem('authStatus'));
-    
-    // Chỉ chuyển hướng đến trang tài khoản nếu redirectToAccount = true
-    if (redirectToAccount) {
-      console.log('AuthContext: Navigating to /account');
-      navigate('/account');
+  }, [authStatus, setPropAuthStatus]);
+
+  // Sync userAddress with localStorage and parent component
+  useEffect(() => {
+    if (userAddress) {
+      localStorage.setItem('userAddress', JSON.stringify(userAddress));
+      if (setPropUserAddress) {
+        setPropUserAddress(userAddress);
+      }
+    } else {
+      localStorage.removeItem('userAddress');
     }
+  }, [userAddress, setPropUserAddress]);
+
+  // Load initial data from localStorage
+  useEffect(() => {
+    try {
+      const storedAuthStatus = localStorage.getItem('authStatus');
+      const storedUserData = localStorage.getItem('userData');
+      const storedUserAddress = localStorage.getItem('userAddress');
+      const storedUserContact = localStorage.getItem('userContact');
+
+      if (storedAuthStatus) {
+        setAuthStatus(storedAuthStatus);
+      }
+
+      if (storedUserData && storedUserData !== 'null') {
+        setUserData(JSON.parse(storedUserData));
+      }
+
+      if (storedUserAddress && storedUserAddress !== 'null') {
+        setUserAddress(JSON.parse(storedUserAddress));
+      }
+
+      if (storedUserContact) {
+        setUserContact(storedUserContact);
+      }
+
+      console.log('AuthContext: Loaded from localStorage', {
+        authStatus: storedAuthStatus,
+        hasUserData: !!storedUserData,
+        hasUserAddress: !!storedUserAddress,
+        hasUserContact: !!storedUserContact
+      });
+    } catch (err) {
+      console.error('Error loading auth data from localStorage:', err);
+    }
+  }, []);
+
+  // Fetch user's address from database when component mounts for signed-in users
+  useEffect(() => {
+    const fetchUserAddress = async () => {
+      if (authStatus === 'signedIn' && userData?.customer_id) {
+        try {
+          const token = localStorage.getItem('token');
+          if (!token) {
+            console.error('No token found for signed-in user');
+            return;
+          }
+
+          console.log('Fetching user profile for address');
+          const profileResponse = await fetch('http://localhost:3001/api/users/profile', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+
+          if (profileResponse.ok) {
+            const profileData = await profileResponse.json();
+            console.log('Received profile data:', profileData);
+            
+            if (profileData.success && profileData.user.address) {
+              try {
+                // Try to parse the address if it's a JSON string
+                const addressObj = typeof profileData.user.address === 'string' 
+                  ? JSON.parse(profileData.user.address)
+                  : profileData.user.address;
+
+                console.log('Setting address object:', addressObj);
+                setUserAddress(addressObj);
+                localStorage.setItem('userAddress', JSON.stringify(addressObj));
+              } catch (error) {
+                console.error('Error parsing address:', error);
+                // If parsing fails, store the address as is
+                setUserAddress(profileData.user.address);
+                localStorage.setItem('userAddress', JSON.stringify(profileData.user.address));
+              }
+            }
+          } else {
+            console.error('Failed to fetch profile:', await profileResponse.text());
+          }
+        } catch (error) {
+          console.error('Error fetching user profile:', error);
+        }
+      }
+    };
+
+    fetchUserAddress();
+  }, [authStatus, userData?.customer_id]);
+
+  /* Xử lý đăng nhập */
+  const handleSignIn = useCallback(async (email, password) => {
+    console.log('AuthContext: Signing in', { email });
     
-    console.log('AuthContext: Sign-in successful');
-    return Promise.resolve();
-  }, [setPropAuthStatus, navigate]);
+    try {
+      const response = await fetch('http://localhost:3001/api/users/signin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Sign in failed');
+      }
+
+      // Store the token
+      localStorage.setItem('token', data.token);
+      
+      // Update user data and auth status
+      setUserData(data.user);
+      setAuthStatus('signedIn');
+      
+      // Fetch user's profile to get their address
+      const profileResponse = await fetch('http://localhost:3001/api/users/profile', {
+        headers: {
+          'Authorization': `Bearer ${data.token}`
+        }
+      });
+
+      if (profileResponse.ok) {
+        const profileData = await profileResponse.json();
+        if (profileData.success && profileData.user.address) {
+          try {
+            // Try to parse the address if it's a JSON string
+            const addressObj = typeof profileData.user.address === 'string' 
+              ? JSON.parse(profileData.user.address)
+              : profileData.user.address;
+
+            console.log('Setting address object:', addressObj);
+            setUserAddress(addressObj);
+            localStorage.setItem('userAddress', JSON.stringify(addressObj));
+          } catch (error) {
+            console.error('Error parsing address:', error);
+            // If parsing fails, store the address as is
+            setUserAddress(profileData.user.address);
+            localStorage.setItem('userAddress', JSON.stringify(profileData.user.address));
+          }
+        }
+      }
+      
+      // Store auth data in localStorage
+      localStorage.setItem('authStatus', 'signedIn');
+      localStorage.setItem('userData', JSON.stringify(data.user));
+      
+      // Emit auth status change event
+      const event = new CustomEvent('authStatusChanged', { 
+        detail: { status: 'signedIn', user: data.user } 
+      });
+      window.dispatchEvent(event);
+      
+      console.log('AuthContext: Sign-in successful');
+      return Promise.resolve();
+    } catch (error) {
+      console.error('AuthContext: Sign in error:', error);
+      throw new Error(error.message);
+    }
+  }, []);
 
   /* Xử lý tạo tài khoản */
-  const handleCreateAccount = useCallback((address, userInfo, redirectToAccount = false) => {
-    console.log('AuthContext: Creating account', { userInfo, redirectToAccount });
+  const handleCreateAccount = useCallback(async (address, userInfo) => {
+    console.log('AuthContext: Creating account', { userInfo, address });
     
-    // Tạo địa chỉ mới từ thông tin người dùng
-    const newAddress = { 
-      ...address, 
-      fullName: `${userInfo.firstName} ${userInfo.lastName}`, 
-      contactMobile: userInfo.contactMobile 
-    };
-    
-    // Cập nhật thông tin người dùng
-    setUserData({
-      email: userInfo.email,
-      firstName: userInfo.firstName,
-      lastName: userInfo.lastName,
-      contactMobile: userInfo.contactMobile
-    });
-    
-    // Cập nhật trạng thái xác thực và địa chỉ
-    setAuthStatus('signedIn');
-    if (setPropAuthStatus) {
-      setPropAuthStatus('signedIn');
+    try {
+      // Validate required fields
+      if (!userInfo.password) {
+        throw new Error('Password is required');
+      }
+
+      // Make API call to create account
+      const requestBody = {
+        email: userInfo.email,
+        password: userInfo.password,
+        firstName: userInfo.firstName,
+        lastName: userInfo.lastName,
+        contactMobile: userInfo.contactMobile,
+        address: address
+      };
+
+      console.log('Sending registration request with data:', {
+        ...requestBody,
+        password: '***' // Hide password in logs
+      });
+
+      const response = await fetch('http://localhost:3001/api/users/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Account creation failed');
+      }
+
+      // Create new address from user info
+      const newAddress = { 
+        ...address, 
+        fullName: `${userInfo.firstName} ${userInfo.lastName}`, 
+        contactMobile: userInfo.contactMobile 
+      };
+      
+      // Update user data
+      setUserData(data.user);
+      
+      // Update auth status and address
+      setAuthStatus('signedIn');
+      setUserAddress(newAddress);
+      
+      // Store in localStorage
+      localStorage.setItem('authStatus', 'signedIn');
+      localStorage.setItem('userData', JSON.stringify(data.user));
+      localStorage.setItem('userAddress', JSON.stringify(newAddress));
+      
+      // Emit auth status change event
+      const event = new CustomEvent('authStatusChanged', { 
+        detail: { status: 'signedIn', user: data.user } 
+      });
+      window.dispatchEvent(event);
+      
+      console.log('AuthContext: Account creation successful');
+      return Promise.resolve();
+    } catch (error) {
+      console.error('AuthContext: Account creation error:', error);
+      throw new Error(error.message);
     }
-    setUserAddress(newAddress);
-    if (setPropUserAddress) {
-      setPropUserAddress(newAddress);
-    }
-    
-    // Lưu thông tin vào localStorage
-    localStorage.setItem('authStatus', 'signedIn');
-    localStorage.setItem('userData', JSON.stringify(userInfo));
-    localStorage.setItem('userAddress', JSON.stringify(newAddress));
-    
-    // Phát ra sự kiện về thay đổi trạng thái đăng nhập
-    const event = new CustomEvent('authStatusChanged', { 
-      detail: { status: 'signedIn', user: userInfo } 
-    });
-    window.dispatchEvent(event);
-    
-    console.log('AuthContext: Auth status updated to signedIn');
-    console.log('AuthContext: localStorage after update:', localStorage.getItem('authStatus'));
-    
-    // Chỉ chuyển hướng đến trang tài khoản nếu redirectToAccount = true
-    if (redirectToAccount) {
-      console.log('AuthContext: Navigating to /account');
-      navigate('/account');
-    }
-    
-    console.log('AuthContext: Account creation successful');
-    return Promise.resolve();
-  }, [setPropAuthStatus, setPropUserAddress, navigate]);
+  }, [handleSignIn, setUserData, setAuthStatus, setUserAddress, navigate]);
 
   /* Xử lý đăng xuất */
   const handleSignOut = useCallback(() => {
     console.log('AuthContext: Signing out');
     
-    // Xóa thông tin người dùng và đặt lại trạng thái
+    // Clear user data and reset status
     setAuthStatus('guest');
     setUserData(null);
-    if (setPropAuthStatus) {
-      setPropAuthStatus('guest');
-    }
+    setUserAddress(null);
     
-    // Xóa thông tin từ localStorage
+    // Clear localStorage
     localStorage.removeItem('authStatus');
     localStorage.removeItem('userData');
     localStorage.removeItem('userAddress');
+    localStorage.removeItem('token');
     
-    // Phát ra sự kiện về thay đổi trạng thái đăng nhập
+    // Emit auth status change event
     const event = new CustomEvent('authStatusChanged', { 
       detail: { status: 'guest' } 
     });
     window.dispatchEvent(event);
     
-    // Chuyển hướng về trang chủ
+    // Navigate to home
     navigate('/');
     
     console.log('AuthContext: Sign-out successful');
-  }, [setPropAuthStatus, navigate]);
+  }, [navigate]);
 
   /* Tiếp tục với tư cách khách */
   const continueAsGuest = useCallback(() => {
     console.log('AuthContext: Continuing as guest');
     
     setAuthStatus('guest');
-    if (setPropAuthStatus) {
-      setPropAuthStatus('guest');
-    }
     localStorage.setItem('authStatus', 'guest');
     
-    // Phát ra sự kiện về thay đổi trạng thái đăng nhập
+    // Emit auth status change event
     const event = new CustomEvent('authStatusChanged', { 
       detail: { status: 'guest' } 
     });
     window.dispatchEvent(event);
     
     console.log('AuthContext: Set status to guest');
-    console.log('AuthContext: localStorage after update:', localStorage.getItem('authStatus'));
-  }, [setPropAuthStatus]);
+  }, []);
 
   return (
     <AuthContext.Provider value={{
       authStatus,
       userAddress,
+      userContact,
       userData,
+      setUserAddress,
+      setUserContact,
       handleSignIn,
       handleCreateAccount,
       handleSignOut,

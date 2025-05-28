@@ -53,12 +53,11 @@ function SignInForm({
         
         setTempItemToAdd(null);
       }
-      
       // Đóng form
       setShowSignInForm(false);
     } catch (err) {
-      setError('Invalid email or password. Please try again.');
-      console.error('SignInForm: Sign in error', err);
+      console.error('SignInForm: Sign in error:', err);
+      setError(err.message || 'Failed to sign in. Please try again.');
     } finally {
       setLoading(false);
     }

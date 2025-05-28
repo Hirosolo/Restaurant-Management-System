@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const recipeRoutes = require('./API/recipe');
 const userRoutes = require('./API/user');
+const orderRoutes = require('./API/order');
 require('dotenv').config();
 
 // const testRoutes = require('./routes/test'); 
@@ -36,6 +37,9 @@ console.log('Recipe routes registered');
 
 app.use('/api', userRoutes);
 console.log('User routes registered');
+
+app.use('/api/orders', orderRoutes);
+console.log('Order routes registered');
 
 // Error handling middleware
 app.use((err, req, res, next) => {

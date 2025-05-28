@@ -16,7 +16,7 @@ router.get('/recipes', async (req, res) => {
                 carbohydrate,
                 fiber,
                 price,
-                img_url
+                image_url
             FROM recipe
             ORDER BY category, recipe_name
         `);
@@ -32,7 +32,7 @@ router.get('/recipes', async (req, res) => {
                 name: recipe.recipe_name,
                 price: recipe.price,
                 rating: 5, // Default rating since it's not in the schema
-                image: recipe.img_url,
+                image: recipe.image_url,
                 calories: recipe.calories,
                 protein: recipe.protein,
                 fat: recipe.fat,
@@ -70,7 +70,7 @@ router.get('/recipes/:id', async (req, res) => {
                 carbohydrate,
                 fiber,
                 price,
-                img_url
+                image_url
             FROM recipe
             WHERE recipe_id = ?
         `, [req.params.id]);

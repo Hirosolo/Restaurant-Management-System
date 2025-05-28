@@ -38,7 +38,7 @@ function Delivery({ cart, setCart, userAddress, setUserAddress }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Save address information
+    // Save address information as an object for the UI
     const addressInfo = {
       ward,
       district,
@@ -51,7 +51,34 @@ function Delivery({ cart, setCart, userAddress, setUserAddress }) {
       deliveryInstructions
     };
     
-    setUserAddress(addressInfo);
+    // Format address as a single string for the database
+    const addressParts = [];
+    
+    // Required fields
+    if (houseNumber) addressParts.push(houseNumber);
+    if (street) addressParts.push(street);
+    if (ward) addressParts.push(ward);
+    if (district) addressParts.push(district);
+    
+    // Optional fields
+    if (buildingName) addressParts.push(`Building: ${buildingName}`);
+    if (block) addressParts.push(`Block ${block}`);
+    if (floor) addressParts.push(`Floor ${floor}`);
+    if (roomNumber) addressParts.push(`Room ${roomNumber}`);
+    
+    const formattedAddress = addressParts.join(', ');
+    
+    // Save both the object (for UI) and string (for DB) versions
+    const finalAddress = {
+      ...addressInfo,
+      formattedAddress
+    };
+    
+    console.log('Saving address:', finalAddress);
+    setUserAddress(finalAddress);
+    
+    // Save address to localStorage for guest users
+    localStorage.setItem('userAddress', JSON.stringify(finalAddress));
     
     // Navigate to checkout page
     navigate('/checkout');

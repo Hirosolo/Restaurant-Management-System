@@ -1,3 +1,57 @@
+# Restaurant Management System
+
+## Setup Instructions
+
+### 1. Environment Setup
+
+#### Database Setup
+1. Install MySQL if you haven't already
+2. Open MySQL command line or MySQL Workbench
+3. Create a new user and database:
+```sql
+CREATE USER 'restaurant_user'@'localhost' IDENTIFIED BY 'your_password';
+CREATE DATABASE restaurant_db;
+GRANT ALL PRIVILEGES ON restaurant_db.* TO 'restaurant_user'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+#### Project Setup
+1. Install dependencies:
+```bash
+npm install
+```
+
+2. Create a `.env` file in the root directory (if not exist yet) with the following content:
+```
+DB_HOST=localhost
+DB_USER=restaurant_user
+DB_PASSWORD=your_password
+DB_NAME=restaurant_db
+PORT=5000
+```
+
+### 2. Running the Application
+
+1. Start the Frontend and Backend:
+   - Open a new terminal
+   - Run the following command:
+   ```bash
+   npm start
+   ```
+   - The frontend will be available at http://localhost:3000
+
+2. Start the Backend:
+   - Open another terminal
+   - Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+   - Run the server:
+   ```bash
+   node server.js
+   ```
+   - The backend will be available at http://localhost:5000
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
