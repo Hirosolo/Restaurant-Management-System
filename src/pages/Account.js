@@ -40,6 +40,15 @@ function Account() {
   const districts = ['District 1', 'District 2', 'District 3', 'District 4', 'District 5'];
   const streets = ['Street 1', 'Street 2', 'Street 3', 'Street 4', 'Street 5'];
 
+  // Helper to format currency
+  const formatCurrency = (amount) => {
+    // Convert to integer to remove decimals, then to string
+    const amountStr = Math.floor(amount).toString();
+    // Use regex to add dot as thousand separator
+    const formattedAmount = amountStr.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return `${formattedAmount} vnd`;
+  };
+
   // Fetch user profile data
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -248,6 +257,10 @@ function Account() {
     }
   };
   
+  const calculateTotalAmount = (items) => {
+    return items.reduce((total, item) => total + item.price * item.quantity, 0);
+  };
+
   // Render content based on active tab
   const renderContent = () => {
     if (loading) {
@@ -337,16 +350,16 @@ function Account() {
                             <span className="item-name">{item.recipe_name}</span>
                             <span className="item-quantity">x{item.quantity}</span>
                           </div>
-                          <span className="item-price">
-                            ${(item.price * item.quantity).toFixed(2)}
-                          </span>
+                          <div className="order-item-details">
+                            <p>{formatCurrency(item.price * item.quantity)}</p>
+                          </div>
                         </div>
                       ))}
                     </div>
                     <div className="order-footer">
                       <div className="order-total">
                         <span>Total:</span>
-                        <span>${order.total_amount.toFixed(2)}</span>
+                        <span>{formatCurrency(calculateTotalAmount(order.items))}</span>
                       </div>
                       <div className="order-address">
                         <span>Delivered to:</span>
@@ -397,8 +410,10 @@ function Account() {
                         <span>Ordered {meal.times_ordered} times</span>
                         <span>Total items: {meal.total_ordered}</span>
                       </div>
-                      <div className="meal-price">
-                        ${meal.price.toFixed(2)}
+                      <div className="favourite-meal-details">
+                        <h4>{meal.recipe_name}</h4>
+                        <p>{meal.description}</p>
+                        <p>{formatCurrency(meal.price)}</p>
                       </div>
                       <button 
                         className="reorder-btn"

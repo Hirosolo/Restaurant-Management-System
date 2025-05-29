@@ -4,16 +4,20 @@ const db = require('../config/db');
 const auth = require('../middleware/auth');
 
 // Create a new order
-router.post('/create', async (req, res) => {
+router.post('/create', auth.authenticateToken, async (req, res) => {
   const { 
     items, 
     delivery_address, 
     delivery_distance, 
     delivery_charge, 
-    customer_id,
-    payment_method 
+    payment_method,
+    status,
+    loyalty_points_used,
+    loyalty_points_earned
   } = req.body;
   let connection;
+  
+  console.log('Received order data:', req.body);
   
   try {
     // Get a connection from the pool
@@ -25,21 +29,32 @@ router.post('/create', async (req, res) => {
     // Calculate total amount
     const totalAmount = items.reduce((total, item) => total + (item.price * item.quantity), 0);
 
+    console.log('Inserting into sale:', {
+        totalAmount,
+        payment_method: payment_method || 'cash',
+        status: status || 'Pending',
+        customer_id: req.user.id, // Use authenticated user's ID
+        delivery_address,
+        delivery_distance,
+        delivery_charge
+    });
+
     // Insert into sale table
     const [saleResult] = await connection.query(
       `INSERT INTO sale (
         total_amount, 
         payment_method, 
-        status, 
+        status,
         customer_id, 
         delivery_address, 
         delivery_distance, 
         delivery_charge
-      ) VALUES (?, ?, 'Pending', ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
         totalAmount,
         payment_method || 'cash', // Default to cash if not specified
-        customer_id || null, // Allow null for guest orders
+        status || 'Pending', // Use status from frontend, default to Pending
+        req.user.id, // Use authenticated user's ID instead of customer_id from body
         delivery_address,
         delivery_distance,
         delivery_charge
@@ -47,17 +62,43 @@ router.post('/create', async (req, res) => {
     );
 
     const saleId = saleResult.insertId;
+    console.log('Sale inserted with ID:', saleId);
 
     // Insert order details
     for (const item of items) {
+      console.log('Inserting order detail:', { saleId, recipeId: item.id, quantity: item.quantity });
       await connection.query(
         `INSERT INTO order_detail (sale_id, recipe_id, quantity) VALUES (?, ?, ?)`,
         [saleId, item.id, item.quantity]
       );
     }
+    console.log('Order details inserted.');
+
+    // Update user's loyalty points if customer_id is present
+    if (req.user.id) {
+      let loyaltyPointsAdjustment = -loyalty_points_used; // Subtract used points
+      
+      // Add earned points only if the order status is 'completed'
+      if (status === 'completed') {
+        loyaltyPointsAdjustment += loyalty_points_earned;
+      }
+      
+      console.log('Updating loyalty points for customer:', {
+          customerId: req.user.id,
+          adjustment: loyaltyPointsAdjustment,
+          orderStatus: status
+      });
+
+      await connection.query(
+        `UPDATE customer SET loyalty_point = loyalty_point + ? WHERE customer_id = ?`,
+        [loyaltyPointsAdjustment, req.user.id]
+      );
+      console.log('Loyalty points updated.');
+    }
 
     // Commit transaction
     await connection.commit();
+    console.log('Transaction committed successfully.');
 
     res.json({
       success: true,
@@ -68,7 +109,8 @@ router.post('/create', async (req, res) => {
   } catch (error) {
     // Rollback transaction on error
     if (connection) {
-      await connection.rollback();
+      connection.rollback();
+      console.error('Transaction rolled back due to error:', error);
     }
     console.error('Error creating order:', error);
     res.status(500).json({
@@ -80,6 +122,7 @@ router.post('/create', async (req, res) => {
     // Release the connection back to the pool
     if (connection) {
       connection.release();
+      console.log('Database connection released.');
     }
   }
 });

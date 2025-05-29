@@ -29,7 +29,17 @@ function CartSection() {
       console.error('Error reading cart from localStorage', err);
     }
   }, []);
-   const handleCheckout = () => {
+  
+  // Helper to format currency
+  const formatCurrency = (amount) => {
+    // Convert to integer to remove decimals, then to string
+    const amountStr = Math.floor(amount).toString();
+    // Use regex to add dot as thousand separator
+    const formattedAmount = amountStr.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return `${formattedAmount} vnd`;
+  };
+  
+  const handleCheckout = () => {
     // Nếu giỏ hàng không trống, chuyển đến trang checkout
     if (cart.length > 0) {
       navigate('/checkout');
@@ -51,7 +61,7 @@ function CartSection() {
           
           <div className={styles.cartTotal}>
             <span>Total:</span>
-            <span>${calculateTotal()}</span>
+            <span>{formatCurrency(calculateTotal())}</span>
           </div>
         </div>
       )}

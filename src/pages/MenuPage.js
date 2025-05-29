@@ -296,7 +296,7 @@ function MenuPage() {
                   ))}
                 </div>
                 <div className="food-actions">
-                  <span className="price">${(item.price / 1000).toFixed(2)}</span>
+                  <span className="price">{formatCurrency(item.price)}</span>
                   <button className="add-to-cart" onClick={() => addToCart(item)}>Add to cart</button>
                 </div>
                 {recipeDetails[recipeId] && (
@@ -321,6 +321,15 @@ function MenuPage() {
     setTimeout(() => {
       setNotification({ show: false, message: '', type: '' });
     }, 5000);
+  };
+
+  // Helper to format currency (assuming item.price is in a base unit and needs conversion)
+  const formatCurrency = (amount) => {
+    // Convert to integer to remove decimals, then to string
+    const amountStr = Math.floor(amount).toString();
+    // Use regex to add dot as thousand separator
+    const formattedAmount = amountStr.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return `${formattedAmount} vnd`;
   };
 
   const handleCreateAccountSubmit = async (e) => {
@@ -559,7 +568,7 @@ function MenuPage() {
                             onChange={(e) => updateNote(index, e.target.value)}
                           />
                         </div>
-                        <div className="cart-item-price">{item.price.toFixed(2)}$</div>
+                        <div className="cart-item-price">{formatCurrency(item.price)}</div>
                       </div>
                     </div>
                   </div>
@@ -572,7 +581,7 @@ function MenuPage() {
           {cart.length > 0 && (
             <div className="cart-total">
               <span>Total:</span>
-              <span>${calculateTotal()}</span>
+              <span>{formatCurrency(calculateTotal())}</span>
             </div>
           )}
           <button 

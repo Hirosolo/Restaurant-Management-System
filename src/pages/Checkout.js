@@ -7,6 +7,7 @@ import UserNav from '../components/UserNav';
 import './Checkout.css';
 
 function Checkout() {
+  console.log('Checkout component rendered');
   const { cart, setCart } = useCart();
   const { 
     userData, 
@@ -15,6 +16,8 @@ function Checkout() {
     userContact, 
     setUserContact 
   } = useAuth();
+  console.log('userData in Checkout:', userData);
+  console.log('Loyalty points in Checkout:', userData?.loyaltyPoints);
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditingAddress, setIsEditingAddress] = useState(false);
@@ -25,6 +28,8 @@ function Checkout() {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [notification, setNotification] = useState(null);
+  const [useLoyaltyPoints, setUseLoyaltyPoints] = useState(false);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
 
   // Update notes array when cart changes
   useEffect(() => {
@@ -146,14 +151,27 @@ function Checkout() {
   // Calculate delivery charge
   const deliveryCharge = 2.50;
 
-  // Calculate loyalty points
-  const loyaltyPoints = calculateSubtotal() * 0.1;
+  // Calculate loyalty points earned for this order
+  const loyaltyPointsEarned = calculateSubtotal() * 0.1;
 
   // Calculate total
   const calculateTotal = () => {
-    return calculateSubtotal() + deliveryCharge;
+    let total = calculateSubtotal() + deliveryCharge;
+    if (useLoyaltyPoints && userData?.loyaltyPoints > 0) {
+      // Apply loyalty points, but not more than the total
+      total = Math.max(0, total - userData.loyaltyPoints);
+    }
+    return total;
   };
 
+  // Helper to format currency
+  const formatCurrency = (amount) => {
+    // Convert to integer to remove decimals, then to string
+    const amountStr = Math.floor(amount).toString();
+    // Use regex to add dot as thousand separator
+    const formattedAmount = amountStr.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return `${formattedAmount} vnd`;
+  };
   // Format address for display
   const formatAddress = (address) => {
     console.log('Formatting address:', address);
@@ -246,76 +264,91 @@ function Checkout() {
 
   // Process order after payment confirmation
   const processOrder = async () => {
-    setIsSubmitting(true);
-
     try {
+      setIsProcessingPayment(true);
+      console.log('Attempting to process order...');
+      
+      // Prepare order data
       const orderData = {
         items: cart.map(item => ({
           id: item.id,
           quantity: item.quantity,
-          price: item.price,
-          note: item.note || ''
+          price: item.price
         })),
         delivery_address: formatAddressForDB(userAddress),
-        contact_number: userContact,
+        delivery_distance: 5, // This should be calculated based on actual distance
         delivery_charge: deliveryCharge,
-        subtotal: calculateSubtotal(),
-        total: calculateTotal(),
-        customer_id: userData?.customer_id || null,
-        payment_method: selectedPaymentMethod
+        payment_method: selectedPaymentMethod,
+        status: 'Pending',
+        loyalty_points_used: useLoyaltyPoints ? userData?.loyaltyPoints : 0,
+        loyalty_points_earned: Math.floor(calculateSubtotal() * 0.1) // 10% of subtotal
       };
-
-      const token = localStorage.getItem('token');
-      const headers = {
-        'Content-Type': 'application/json'
-      };
-
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
 
       // Create order
-      const orderResponse = await fetch('http://localhost:3001/api/orders/create', {
+      const response = await fetch('http://localhost:3001/api/orders/create', {
         method: 'POST',
-        headers,
-        body: JSON.stringify(orderData),
-        credentials: 'include'
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(orderData)
       });
 
-      if (!orderResponse.ok) {
-        const errorData = await orderResponse.json();
-        console.error('API error response:', errorData);
-        throw new Error(errorData.message || 'Failed to create order');
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to create order');
       }
 
-      const orderResult = await orderResponse.json();
+      console.log('Order API call successful. Response data:', data);
 
-      if (!orderResult.success) {
-        console.error('API result success is false:', orderResult);
-        throw new Error(orderResult.message || 'Failed to create order');
+      // If order is successful, refresh user data to update loyalty points
+      if (data.success) {
+        // Fetch updated user profile
+        const profileResponse = await fetch('http://localhost:3001/api/users/profile', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+
+        if (profileResponse.ok) {
+          const profileData = await profileResponse.json();
+          if (profileData.success) {
+            // Update userData in localStorage and context
+            localStorage.setItem('userData', JSON.stringify(profileData.user));
+            // Update the userData in the auth context
+            const event = new CustomEvent('userDataUpdated', { 
+              detail: { userData: profileData.user } 
+            });
+            window.dispatchEvent(event);
+          }
+        }
       }
 
-      // Show success message and redirect
-      alert('Order placed successfully!');
-      setCart([]);
-      navigate('/menu');
+      // Show success message
+      showNotification('Order placed successfully!', 'success');
+
+      // Close payment modal and show confirmation modal
+      setShowPaymentModal(false);
+      setShowConfirmationModal(true);
 
     } catch (error) {
       console.error('Error processing order:', error);
-      alert(error.message || 'Failed to process order. Please try again.');
+      console.log('Caught error in processOrder:', error.message);
+      showNotification(error.message || 'Error processing order', 'error');
     } finally {
-      setIsSubmitting(false);
-      setShowPaymentModal(false);
+      setIsProcessingPayment(false);
     }
   };
 
   // Function to show general notification (like success/info)
   const showNotification = (message, type) => {
+    console.log(`Showing notification: ${message} (${type})`);
     setNotification({ message, type });
     // Auto-hide notification after 3 seconds
     setTimeout(() => {
       setNotification(null);
-    }, 3000);
+    }, 3500);
   };
 
   // Show empty cart message if cart is empty
@@ -418,7 +451,7 @@ function Checkout() {
                     </div>
                   </div>
                   <div className="item-price">
-                    ${((item.price || 0) * (item.quantity || 1)).toFixed(2)}
+                    {formatCurrency(((item.price || 0) * (item.quantity || 1)))}
                   </div>
                 </div>
               ))}
@@ -430,31 +463,39 @@ function Checkout() {
             <div className="order-summary">
               <div className="summary-row">
                 <span>Sub Total:</span>
-                <span>${calculateSubtotal().toFixed(2)}</span>
+                <span>{formatCurrency(calculateSubtotal())}</span>
               </div>
               <div className="summary-row">
                 <span>Delivery Charge:</span>
-                <span>${deliveryCharge.toFixed(2)}</span>
+                <span>{formatCurrency(deliveryCharge)}</span>
               </div>
               <div className="summary-row loyalty">
                 <span>Loyalty points:</span>
-                <span>+ {loyaltyPoints.toFixed(2)}</span>
-              </div>
-              <div className="summary-row exchange">
-                <span>You want to exchange your loyalty points</span>
-                <span className="info-icon">ⓘ</span>
+                <span>+ {Math.floor(loyaltyPointsEarned)}</span>
               </div>
               <div className="summary-row discount">
                 <span>Discount:</span>
-                <span>-</span>
+                <span>{useLoyaltyPoints && userData?.loyaltyPoints > 0 ? formatCurrency(Math.min(calculateSubtotal() + deliveryCharge, userData.loyaltyPoints)) : '-'}</span>
               </div>
               
               <div className="summary-divider"></div>
               
               <div className="summary-row total">
                 <span>Total:</span>
-                <span>${calculateTotal().toFixed(2)}</span>
+                <span>{formatCurrency(calculateTotal())}</span>
               </div>
+              {userData?.loyaltyPoints > 0 && (
+                <div className="summary-row loyalty-exchange">
+                  <label>
+                    <input 
+                      type="checkbox"
+                      checked={useLoyaltyPoints}
+                      onChange={(e) => setUseLoyaltyPoints(e.target.checked)}
+                    />
+                    Use {Math.floor(userData.loyaltyPoints)} available loyalty points
+                  </label>
+                </div>
+              )}
             </div>
           </div>
 
@@ -547,7 +588,7 @@ function Checkout() {
                 </div>
                 <div className="payment-amount">
                   <p>Amount to pay:</p>
-                  <h4>${calculateTotal().toFixed(2)}</h4>
+                  <h4>{formatCurrency(calculateTotal())}</h4>
                 </div>
                 <button 
                   className="confirm-payment-btn"
@@ -568,6 +609,31 @@ function Checkout() {
           </div>
         )}
       </div>
+
+      {/* Order Confirmation Modal */}
+      {showConfirmationModal && (
+        <div className="payment-modal-overlay">
+          <div className="payment-modal">
+            <div className="payment-modal-header">
+              <h3>Order Placed!</h3>
+            </div>
+            <div className="payment-modal-content">
+              <p>Your order has been placed successfully.</p>
+              <button 
+                className="payment-btn"
+                onClick={() => {
+                  setShowConfirmationModal(false);
+                  setCart([]);
+                  localStorage.removeItem('cart');
+                  navigate('/menu');
+                }}
+              >
+                Back to Menu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
