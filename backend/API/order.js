@@ -5,7 +5,14 @@ const auth = require('../middleware/auth');
 
 // Create a new order
 router.post('/create', async (req, res) => {
-  const { items, delivery_address, delivery_distance, delivery_charge, customer_id } = req.body;
+  const { 
+    items, 
+    delivery_address, 
+    delivery_distance, 
+    delivery_charge, 
+    customer_id,
+    payment_method 
+  } = req.body;
   let connection;
   
   try {
@@ -31,7 +38,7 @@ router.post('/create', async (req, res) => {
       ) VALUES (?, ?, 'Pending', ?, ?, ?, ?)`,
       [
         totalAmount,
-        'Online Transfer',
+        payment_method || 'cash', // Default to cash if not specified
         customer_id || null, // Allow null for guest orders
         delivery_address,
         delivery_distance,

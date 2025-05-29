@@ -19,9 +19,12 @@ function Checkout() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [tempAddress, setTempAddress] = useState('');
-  const [isEditingContact, setIsEditingContact] = useState(false);
   const [tempContact, setTempContact] = useState('');
   const [notes, setNotes] = useState([]);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('cash');
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [notification, setNotification] = useState(null);
 
   // Update notes array when cart changes
   useEffect(() => {
@@ -51,8 +54,27 @@ function Checkout() {
     const formattedAddr = formatAddress(userAddress);
     console.log('Formatted address:', formattedAddr);
     setTempAddress(formattedAddr);
-    setTempContact(userContact || '');
-  }, [userAddress, userContact]);
+    // Initialize tempContact based on user login status
+    setTempContact(userData?.phone || userContact || '');
+  }, [userAddress, userContact, userData]);
+
+  // Load auth data from localStorage when component mounts
+  useEffect(() => {
+    try {
+      const storedAuthStatus = localStorage.getItem('authStatus');
+      const storedUserData = localStorage.getItem('userData');
+      const storedUserAddress = localStorage.getItem('userAddress');
+      const storedUserContact = localStorage.getItem('userContact');
+      console.log('AuthContext: Loaded from localStorage', {
+        authStatus: storedAuthStatus,
+        hasUserData: !!storedUserData,
+        hasUserAddress: !!storedUserAddress,
+        hasUserContact: !!storedUserContact
+      });
+    } catch (err) {
+      console.error('Error loading auth data from localStorage:', err);
+    }
+  }, []);
 
   // Handle note change for a specific item
   const handleNoteChange = (index, value) => {
@@ -90,15 +112,29 @@ function Checkout() {
     }
   };
 
-  // Handle contact edit
+  // Handle contact edit (modified to handle blur validation)
   const handleContactEdit = () => {
-    if (isEditingContact) {
-      setUserContact(tempContact);
-      setIsEditingContact(false);
-    } else {
-      setTempContact(userContact || '');
-      setIsEditingContact(true);
+    // Validate phone number before saving
+    if (!tempContact || tempContact.trim() === '') {
+      showNotification('Please enter a valid contact number.', 'error');
+      return;
     }
+
+    // Basic validation for 10 digits (assuming phone number format)
+    const phoneRegex = /^\d{10}$/;
+    
+    console.log('Validating tempContact:', tempContact);
+    console.log('Regex test result:', phoneRegex.test(tempContact));
+
+    // For guest users or logged-in users changing the number, validate 10 digits
+    if (!phoneRegex.test(tempContact)) {
+      showNotification('Contact number must be exactly 10 digits.', 'error');
+      return;
+    }
+
+    // If validation passes, update userContact
+    setUserContact(tempContact);
+    showNotification('Contact number updated successfully!', 'success');
   };
 
   // Calculate subtotal
@@ -188,11 +224,28 @@ function Checkout() {
 
   // Handle payment
   const handlePayment = async () => {
-    if (!userAddress || !userContact) {
-      alert('Please provide delivery address and contact number');
+    if (!userAddress) {
+      showNotification('Please provide delivery address', 'error');
+      return;
+    }
+    console.log('Validating userContact before payment:', userContact);
+    if (!userContact || userContact.trim() === '') {
+      showNotification('Please provide a valid contact number', 'error');
       return;
     }
 
+    // If payment method is cash, proceed with order
+    if (selectedPaymentMethod === 'cash') {
+      await processOrder();
+      return;
+    }
+
+    // For online payments, show QR code modal
+    setShowPaymentModal(true);
+  };
+
+  // Process order after payment confirmation
+  const processOrder = async () => {
     setIsSubmitting(true);
 
     try {
@@ -208,7 +261,8 @@ function Checkout() {
         delivery_charge: deliveryCharge,
         subtotal: calculateSubtotal(),
         total: calculateTotal(),
-        customer_id: userData?.customer_id || null
+        customer_id: userData?.customer_id || null,
+        payment_method: selectedPaymentMethod
       };
 
       const token = localStorage.getItem('token');
@@ -220,33 +274,48 @@ function Checkout() {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch('http://localhost:3001/api/orders/create', {
+      // Create order
+      const orderResponse = await fetch('http://localhost:3001/api/orders/create', {
         method: 'POST',
         headers,
         body: JSON.stringify(orderData),
         credentials: 'include'
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
+      if (!orderResponse.ok) {
+        const errorData = await orderResponse.json();
+        console.error('API error response:', errorData);
         throw new Error(errorData.message || 'Failed to create order');
       }
 
-      const data = await response.json();
+      const orderResult = await orderResponse.json();
 
-      if (data.success) {
-        alert('Order placed successfully!');
-        setCart([]);
-        navigate('/menu');
-      } else {
-        throw new Error(data.message || 'Failed to create order');
+      if (!orderResult.success) {
+        console.error('API result success is false:', orderResult);
+        throw new Error(orderResult.message || 'Failed to create order');
       }
+
+      // Show success message and redirect
+      alert('Order placed successfully!');
+      setCart([]);
+      navigate('/menu');
+
     } catch (error) {
-      console.error('Error creating order:', error);
-      alert(error.message || 'Failed to place order. Please try again.');
+      console.error('Error processing order:', error);
+      alert(error.message || 'Failed to process order. Please try again.');
     } finally {
       setIsSubmitting(false);
+      setShowPaymentModal(false);
     }
+  };
+
+  // Function to show general notification (like success/info)
+  const showNotification = (message, type) => {
+    setNotification({ message, type });
+    // Auto-hide notification after 3 seconds
+    setTimeout(() => {
+      setNotification(null);
+    }, 3000);
   };
 
   // Show empty cart message if cart is empty
@@ -307,24 +376,17 @@ function Checkout() {
           <div className="checkout-section">
             <div className="section-header">
               <span className="section-label">Contact Number:</span>
-              <button className="edit-btn" onClick={handleContactEdit}>
-                {isEditingContact ? 'Save' : 'Edit'}
-              </button>
             </div>
             <div className="section-content">
-              {isEditingContact ? (
-                <input
-                  type="tel"
-                  className="edit-input"
-                  value={tempContact}
-                  onChange={(e) => setTempContact(e.target.value)}
-                  placeholder="Enter your contact number"
-                />
-              ) : (
-                <div className="contact-display">
-                  {userContact || 'Please add your contact number'}
-                </div>
-              )}
+              <input
+                type="tel"
+                className="edit-input"
+                value={tempContact}
+                onChange={(e) => setTempContact(e.target.value)}
+                onBlur={handleContactEdit}
+                onFocus={() => setNotification(null)}
+                placeholder="Enter your contact number"
+              />
             </div>
           </div>
 
@@ -396,15 +458,115 @@ function Checkout() {
             </div>
           </div>
 
+          {/* Payment Method Section */}
+          <div className="checkout-section">
+            <div className="section-header">
+              <span className="section-label">Payment Method</span>
+            </div>
+            <div className="payment-methods">
+              <div className="payment-method">
+                <input
+                  type="radio"
+                  id="cash"
+                  name="paymentMethod"
+                  value="cash"
+                  checked={selectedPaymentMethod === 'cash'}
+                  onChange={(e) => setSelectedPaymentMethod(e.target.value)}
+                />
+                <label htmlFor="cash">Cash on Delivery</label>
+              </div>
+              <div className="payment-method">
+                <input
+                  type="radio"
+                  id="momo"
+                  name="paymentMethod"
+                  value="momo"
+                  checked={selectedPaymentMethod === 'momo'}
+                  onChange={(e) => setSelectedPaymentMethod(e.target.value)}
+                />
+                <label htmlFor="momo">MoMo Wallet</label>
+              </div>
+              <div className="payment-method">
+                <input
+                  type="radio"
+                  id="vietcombank"
+                  name="paymentMethod"
+                  value="vietcombank"
+                  checked={selectedPaymentMethod === 'vietcombank'}
+                  onChange={(e) => setSelectedPaymentMethod(e.target.value)}
+                />
+                <label htmlFor="vietcombank">Vietcombank</label>
+              </div>
+            </div>
+          </div>
+
           {/* Payment Button */}
           <button 
             className="payment-btn" 
             onClick={handlePayment}
-            disabled={isSubmitting}
+            disabled={isSubmitting || isProcessingPayment}
           >
-            {isSubmitting ? 'Processing...' : 'Place Order'}
+            {isSubmitting ? 'Processing...' : isProcessingPayment ? 'Redirecting to Payment...' : 'Place Order'}
           </button>
         </div>
+
+        {/* Payment Modal */}
+        {showPaymentModal && (
+          <div className="payment-modal-overlay">
+            <div className="payment-modal">
+              <div className="payment-modal-header">
+                <h3>Complete Your Payment</h3>
+                <button 
+                  className="close-modal-btn"
+                  onClick={() => setShowPaymentModal(false)}
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="payment-modal-content">
+                <div className="qr-code-container">
+                  {selectedPaymentMethod === 'momo' ? (
+                    <>
+                      <img 
+                        src="/assets/MomoQR.jpg" 
+                        alt="MoMo QR Code" 
+                        className="qr-code"
+                      />
+                      <p>Scan this QR code with your MoMo app to complete the payment</p>
+                    </>
+                  ) : (
+                    <>
+                      <img 
+                        src="/assets/VCBQR.jpg" 
+                        alt="Vietcombank QR Code" 
+                        className="qr-code"
+                      />
+                      <p>Scan this QR code with your Vietcombank app to complete the payment</p>
+                    </>
+                  )}
+                </div>
+                <div className="payment-amount">
+                  <p>Amount to pay:</p>
+                  <h4>${calculateTotal().toFixed(2)}</h4>
+                </div>
+                <button 
+                  className="confirm-payment-btn"
+                  onClick={processOrder}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Processing...' : 'Confirm Payment'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Notification Display */}
+        {notification && (
+          <div className={`notification ${notification.type}`}>
+            {notification.message}
+          </div>
+        )}
       </div>
     </div>
   );

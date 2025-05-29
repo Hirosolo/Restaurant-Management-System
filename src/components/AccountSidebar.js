@@ -28,12 +28,6 @@ function AccountSidebar({ activeTab, handleTabChange, handleLogout }) {
           Account Overview
         </button>
         <button 
-          className={`sidebar-item ${activeTab === 'track-order' ? 'active' : ''}`}
-          onClick={() => handleTabChange('track-order')}
-        >
-          Track Order
-        </button>
-        <button 
           className={`sidebar-item ${activeTab === 'order-history' ? 'active' : ''}`}
           onClick={() => handleTabChange('order-history')}
         >
@@ -44,12 +38,6 @@ function AccountSidebar({ activeTab, handleTabChange, handleLogout }) {
           onClick={() => handleTabChange('favourite-order')}
         >
           Favourite Orders
-        </button>
-        <button 
-          className={`sidebar-item ${activeTab === 'profile-settings' ? 'active' : ''}`}
-          onClick={() => handleTabChange('profile-settings')}
-        >
-          Profile Settings
         </button>
         <button 
           className="sidebar-item logout"

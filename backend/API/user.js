@@ -4,6 +4,8 @@ const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 const auth = require('../middleware/auth');
 const jwt = require('jsonwebtoken');
+const nodemailer = require('nodemailer');
+const crypto = require('crypto');
 
 console.log('Setting up user routes...');
 
@@ -52,7 +54,7 @@ router.post('/users/register', async (req, res) => {
         console.log('Prepared address JSON:', addressJson);
 
         console.log('Attempting to insert new user...');
-        // Insert new user
+        // Insert new user - let the trigger handle the ID generation
         const [result] = await db.query(
             `INSERT INTO customer 
             (customer_name, phone, password, email, loyalty_point, address) 
@@ -64,8 +66,8 @@ router.post('/users/register', async (req, res) => {
         console.log('Fetching newly created user...');
         // Get the inserted user data (excluding password)
         const [newUser] = await db.query(
-            'SELECT customer_id, customer_name, email, phone, loyalty_point, address FROM customer WHERE customer_id = ?',
-            [result.insertId]
+            'SELECT customer_id, customer_name, email, phone, loyalty_point, address FROM customer WHERE email = ?',
+            [email]
         );
         console.log('New user data:', newUser[0]);
 
@@ -280,6 +282,57 @@ router.put('/users/update-address', auth.authenticateToken, async (req, res) => 
         res.status(500).json({
             success: false,
             message: 'Error updating address',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+});
+
+// Forgot password - Request reset link
+router.post('/forgot-password', async (req, res) => {
+    console.log('Received forgot password request for email:', req.body.email);
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email is required'
+            });
+        }
+
+        // Find user by email
+        const [users] = await db.query(
+            'SELECT customer_id, email FROM customer WHERE email = ?',
+            [email]
+        );
+
+        // Even if user is not found, return a success message to prevent email enumeration
+        if (users.length === 0) {
+            console.log('User with email not found, sending generic success response:', email);
+            return res.json({
+                success: true,
+                message: 'If your email is in our system, you will receive a password reset link shortly.'
+            });
+        }
+
+        const user = users[0];
+        const userId = user.customer_id;
+
+        // TODO: Generate a password reset token
+        // TODO: Store the token in the database with an expiration time
+        // TODO: Configure and send the email using Nodemailer
+
+        // For now, send a generic success message even if email sending fails (should be handled within the TODO)
+        res.json({
+            success: true,
+            message: 'If your email is in our system, you will receive a password reset link shortly.'
+        });
+
+    } catch (error) {
+        console.error('Error in forgot password request:', error);
+        res.status(500).json({
+            success: false,
+            message: 'An error occurred while processing your request.',
             error: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
     }

@@ -296,12 +296,14 @@ export function AuthProvider({ children, initialAuthStatus, setPropAuthStatus, i
     setAuthStatus('guest');
     setUserData(null);
     setUserAddress(null);
+    setUserContact('');
     
     // Clear localStorage
     localStorage.removeItem('authStatus');
     localStorage.removeItem('userData');
     localStorage.removeItem('userAddress');
     localStorage.removeItem('token');
+    localStorage.removeItem('userContact');
     
     // Emit auth status change event
     const event = new CustomEvent('authStatusChanged', { 
@@ -329,6 +331,10 @@ export function AuthProvider({ children, initialAuthStatus, setPropAuthStatus, i
     window.dispatchEvent(event);
     
     console.log('AuthContext: Set status to guest');
+    
+    // Also clear userContact when continuing as guest
+    setUserContact('');
+    localStorage.removeItem('userContact');
   }, []);
 
   return (

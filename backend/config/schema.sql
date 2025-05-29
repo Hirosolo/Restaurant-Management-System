@@ -60,7 +60,7 @@ create table sale(
 	sale_id int auto_increment primary key,
     sale_time datetime default current_timestamp,
     total_amount float,
-    payment_method enum('Cash', 'Online Transfer'),
+    payment_method enum('cash', 'momo', 'vietcombank'),
     completion_time datetime,
     status varchar(20) default 'Pending',
     customer_id int,

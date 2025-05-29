@@ -13,6 +13,7 @@ function AccountOverview() {
           <li>View your favorite orders</li>
           <li>Update your profile settings</li>
         </ul>
+        <button className={styles.changePasswordButton}>Change Password</button>
       </div>
     </div>
   );

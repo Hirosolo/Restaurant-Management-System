@@ -112,6 +112,25 @@ async function initializeDatabase() {
         }
         console.log('Schema created successfully');
 
+        // Create password_reset_tokens table if it doesn't exist
+        const createPasswordResetTokensTableSql = `
+          CREATE TABLE IF NOT EXISTS password_reset_tokens (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            customer_id INT NOT NULL,
+            token VARCHAR(255) NOT NULL UNIQUE,
+            expires_at DATETIME NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (customer_id) REFERENCES customer(customer_id) ON DELETE CASCADE
+          );
+        `;
+        try {
+          await connection.execute(createPasswordResetTokensTableSql);
+          console.log('password_reset_tokens table created or already exists');
+        } catch (err) {
+            console.error('Error creating password_reset_tokens table:', err);
+            throw err;
+        }
+
         // Read and execute seedData.sql
         const seedPath = path.join(__dirname, 'config', 'seedData.sql');
         const seedSql = await fs.readFile(seedPath, 'utf8');

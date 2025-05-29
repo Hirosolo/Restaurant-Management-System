@@ -1,4 +1,5 @@
 USE restaurant_db;
+
 -- Insert into ingredient (from Ingredients.csv)
 INSERT INTO ingredient (ingredient_id, ingredient_name, quantity, unit, minimum_threshold) VALUES
 (1, 'Salmon Fillet', 0, 'kg', 2),
@@ -100,7 +101,7 @@ INSERT INTO supplier_product (ingredient_id, supplier_id) VALUES
 (56, 12), (57, 12), (55, 13), (56, 13), (57, 13);
 
 -- Insert into recipe (from recipe.csv, with calculated prices)
-INSERT INTO recipe (recipe_id, recipe_name, category, calories, protein, fat, carbohydrate, fiber, price, img_url) VALUES
+INSERT INTO recipe (recipe_id, recipe_name, category, calories, protein, fat, carbohydrate, fiber, price, image_url) VALUES
 (1, 'Pecan Crusted Salmon', 'Main Dishes', 488, 54.4, 22.4, 18.6, 3.4, 165000, '/assets/RCP-001.jpg'),
 (2, 'Blackened Salmon', 'Main Dishes', 468, 50.6, 30.4, 0, 0, 159000, '/assets/RCP-002.jpg'),
 (3, 'Salmon Burger', 'Main Dishes', 694, 56.6, 37.2, 30.6, 2.6, 171000, '/assets/RCP-003.jpg'),
@@ -169,15 +170,15 @@ INSERT INTO recipe_detail (recipe_id, ingredient_id, weight) VALUES
 (31, 4, 0.0005), (31, 10, 0.00075), (31, 11, 0.00075), (31, 13, 0.0075), (31, 14, 0.0075), (31, 19, 0.2),
 (32, 1, 0.2), (32, 4, 0.0005), (32, 13, 0.007), (32, 14, 0.0075), (32, 15, 0.1), (32, 16, 0.00125), (32, 57, 0.00075);
 
--- Insert into customer (updated with email field)
-INSERT INTO customer (customer_name, phone, password, loyalty_point, email) VALUES
-('John Doe', '1234567890', 'pass123', 50.5, 'john.doe@email.com'),
-('Jane Smith', '2345678901', 'pass456', 30.0, 'jane.smith@email.com'),
-('Alice Johnson', '3456789012', 'pass789', 20.75, 'alice.johnson@email.com'),
-('Bob Wilson', '4567890123', 'pass101', 15.25, 'bob.wilson@email.com'),
-('Emma Brown', '5678901234', 'pass202', 10.0, 'emma.brown@email.com');
+-- Insert into customer (updated with email and address fields, customer_id omitted due to trigger)
+INSERT INTO customer (customer_name, phone, password, loyalty_point, email, address) VALUES
+('John Doe', '1234567890', 'pass123', 50.5, 'john.doe@email.com', '123 Nguyen Hue, District 1, HCMC, Vietnam'),
+('Jane Smith', '2345678901', 'pass456', 30.0, 'jane.smith@email.com', '456 Le Loi, District 3, HCMC, Vietnam'),
+('Alice Johnson', '3456789012', 'pass789', 20.75, 'alice.johnson@email.com', '789 Tran Hung Dao, District 5, HCMC, Vietnam'),
+('Bob Wilson', '4567890123', 'pass101', 15.25, 'bob.wilson@email.com', '321 Vo Van Tan, District 3, HCMC, Vietnam'),
+('Emma Brown', '5678901234', 'pass202', 10.0, 'emma.brown@email.com', '654 Nguyen Thi Minh Khai, District 1, HCMC, Vietnam');
 
--- Insert into staff (one for each role)
+-- Insert into staff (corrected pay_rates to pay_rate)
 INSERT INTO staff (staff_name, role, phone, pay_rate) VALUES
 ('Michael Green', 'Manager', '6789012345', 50000),
 ('Sarah Davis', 'Chef', '7890123456', 40000),
@@ -252,15 +253,15 @@ INSERT INTO waste_detail (waste_id, ingredient_id, quantity, reason) VALUES
 (1, 20, 3, 'Lettuce outdated, spoiled after 3 days'),
 (2, 53, 2, 'Spinach outdated, wilted after 3 days');
 
--- Insert into sale (realistic sales from June 2024, using calculated recipe prices)
-INSERT INTO sale (sale_time, total_amount, payment_method, completion_time, status, customer_id) VALUES
-('2024-06-01 12:30:00', 200000, 'Cash', '2024-06-01 13:00:00', 'Completed', 1), -- Pecan Crusted Salmon + Chicken Caesar Salad
-('2024-06-05 18:45:00', 42000, 'Online Transfer', '2024-06-05 19:15:00', 'Completed', 2), -- Cajun Shrimp Pasta
-('2024-06-10 13:00:00', 54000, 'Cash', '2024-06-10 13:30:00', 'Completed', 3), -- Pasta Pomodoro + Carrot Soup
-('2024-07-01 19:00:00', 23000, 'Online Transfer', '2024-07-01 19:30:00', 'Completed', 4), -- Tofu Salad
-('2024-07-15 12:15:00', 69000, 'Cash', '2024-07-15 12:45:00', 'Completed', 5), -- Grilled Chicken Salad + Classic Tomato Soup
-('2024-08-01 17:30:00', 103000, 'Online Transfer', '2024-08-01 18:00:00', 'Completed', 1), -- Smoked Salmon Salad + Shrimp Burger
-('2024-08-10 14:00:00', 82000, 'Cash', '2024-08-10 14:30:00', 'Completed', 2); -- Lemon Garlic Chicken + Tofu Fried Rice
+-- Insert into sale (realistic sales from June 2024, using calculated recipe prices, added delivery fields)
+INSERT INTO sale (sale_time, total_amount, payment_method, completion_time, status, customer_id, delivery_address, delivery_distance, delivery_charge) VALUES
+('2024-06-01 12:30:00', 200000, 'Cash', '2024-06-01 13:00:00', 'Completed', 1, '123 Nguyen Hue, District 1, HCMC, Vietnam', 2.5, 10000),
+('2024-06-05 18:45:00', 42000, 'Online Transfer', '2024-06-05 19:15:00', 'Completed', 2, '456 Le Loi, District 3, HCMC, Vietnam', 3.0, 12000),
+('2024-06-10 13:00:00', 54000, 'Cash', '2024-06-10 13:30:00', 'Completed', 3, '789 Tran Hung Dao, District 5, HCMC, Vietnam', 4.0, 15000),
+('2024-07-01 19:00:00', 23000, 'Online Transfer', '2024-07-01 19:30:00', 'Completed', 4, '321 Vo Van Tan, District 3, HCMC, Vietnam', 2.0, 8000),
+('2024-07-15 12:15:00', 69000, 'Cash', '2024-07-15 12:45:00', 'Completed', 5, '654 Nguyen Thi Minh Khai, District 1, HCMC, Vietnam', 1.5, 6000),
+('2024-08-01 17:30:00', 103000, 'Online Transfer', '2024-08-01 18:00:00', 'Completed', 1, '123 Nguyen Hue, District 1, HCMC, Vietnam', 2.5, 10000),
+('2024-08-10 14:00:00', 82000, 'Cash', '2024-08-10 14:30:00', 'Completed', 2, '456 Le Loi, District 3, HCMC, Vietnam', 3.0, 12000);
 
 -- Insert into order_detail
 INSERT INTO order_detail (sale_id, recipe_id, quantity) VALUES
