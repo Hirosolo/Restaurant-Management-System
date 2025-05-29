@@ -279,7 +279,7 @@ function Checkout() {
         delivery_distance: 5, // This should be calculated based on actual distance
         delivery_charge: deliveryCharge,
         payment_method: selectedPaymentMethod,
-        status: 'Pending',
+        status: (selectedPaymentMethod === 'momo' || selectedPaymentMethod === 'vietcombank') ? 'completed' : 'Pending',
         loyalty_points_used: useLoyaltyPoints ? userData?.loyaltyPoints : 0,
         loyalty_points_earned: Math.floor(calculateSubtotal() * 0.1) // 10% of subtotal
       };
