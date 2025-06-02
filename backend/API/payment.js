@@ -93,6 +93,14 @@ router.post('/momo/callback', async (req, res) => {
       [paymentStatus, data.transId, data.orderId]
     );
 
+    // If payment is successful, mark order as completed
+    if (paymentStatus === 'Paid') {
+      await connection.query(
+        `UPDATE sale SET status = 'Completed', completion_time = NOW() WHERE sale_id = ?`,
+        [data.orderId]
+      );
+    }
+
     await connection.commit();
 
     // Return success response to MoMo
@@ -137,6 +145,14 @@ router.post('/vietcombank/callback', async (req, res) => {
       'UPDATE sale SET payment_status = ?, payment_transaction_id = ? WHERE sale_id = ?',
       [paymentStatus, data.transactionId, data.orderId]
     );
+
+    // If payment is successful, mark order as completed
+    if (paymentStatus === 'Paid') {
+      await connection.query(
+        `UPDATE sale SET status = 'Completed', completion_time = NOW() WHERE sale_id = ?`,
+        [data.orderId]
+      );
+    }
 
     await connection.commit();
 

@@ -365,6 +365,22 @@ function Account() {
                         <span>Delivered to:</span>
                         <span>{order.delivery_address}</span>
                       </div>
+                      {order.status === 'Pending' && (
+                        <button
+                          className="received-order-btn"
+                          onClick={async () => {
+                            const token = localStorage.getItem('token');
+                            await fetch(`http://localhost:3001/api/orders/complete/${order.sale_id}`, {
+                              method: 'PUT',
+                              headers: { 'Authorization': `Bearer ${token}` }
+                            });
+                            // Refresh order history
+                            setOrderHistory((prev) => prev.map(o => o.sale_id === order.sale_id ? { ...o, status: 'Completed' } : o));
+                          }}
+                        >
+                          Received the order
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}

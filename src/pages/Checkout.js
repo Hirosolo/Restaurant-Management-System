@@ -60,7 +60,7 @@ function Checkout() {
     console.log('Formatted address:', formattedAddr);
     setTempAddress(formattedAddr);
     // Initialize tempContact based on user login status
-    setTempContact(userData?.phone || userContact || '');
+    setTempContact(userData?.contactMobile || userContact || '');
   }, [userAddress, userContact, userData]);
 
   // Load auth data from localStorage when component mounts

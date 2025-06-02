@@ -20,6 +20,12 @@ function AccountSidebar({ activeTab, handleTabChange, handleLogout }) {
         >
           Menu
         </button>
+        <button 
+          className="sidebar-item navigation"
+          onClick={() => navigate('/dashboard')}
+        >
+          Dashboard
+        </button>
         <div className="sidebar-divider"></div>
         <button 
           className={`sidebar-item ${activeTab === 'account' ? 'active' : ''}`}

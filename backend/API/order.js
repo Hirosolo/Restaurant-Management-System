@@ -29,11 +29,14 @@ router.post('/create', auth.authenticateToken, async (req, res) => {
     // Calculate total amount
     const totalAmount = items.reduce((total, item) => total + (item.price * item.quantity), 0);
 
+    // Convert payment method to match ENUM values
+    const normalizedPaymentMethod = payment_method === 'momo wallet' ? 'momo' : payment_method;
+
     console.log('Inserting into sale:', {
         totalAmount,
-        payment_method: payment_method || 'cash',
-        status: status || 'Pending',
-        customer_id: req.user.id, // Use authenticated user's ID
+        payment_method: normalizedPaymentMethod || 'cash',
+        status: 'Pending',
+        customer_id: req.user.id,
         delivery_address,
         delivery_distance,
         delivery_charge
@@ -48,13 +51,14 @@ router.post('/create', auth.authenticateToken, async (req, res) => {
         customer_id, 
         delivery_address, 
         delivery_distance, 
-        delivery_charge
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        delivery_charge,
+        completion_time
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, NULL)` ,
       [
         totalAmount,
-        payment_method || 'cash', // Default to cash if not specified
-        status || 'Pending', // Use status from frontend, default to Pending
-        req.user.id, // Use authenticated user's ID instead of customer_id from body
+        normalizedPaymentMethod || 'cash',
+        'Pending',
+        req.user.id,
         delivery_address,
         delivery_distance,
         delivery_charge
@@ -74,12 +78,33 @@ router.post('/create', auth.authenticateToken, async (req, res) => {
     }
     console.log('Order details inserted.');
 
+    // Update ingredient quantities if order is completed
+    if (status === 'Completed') {
+      for (const item of items) {
+        const [ingredients] = await connection.query(
+          `SELECT rd.ingredient_id, rd.weight 
+           FROM recipe_detail rd 
+           WHERE rd.recipe_id = ?`,
+          [item.id]
+        );
+
+        for (const ingredient of ingredients) {
+          await connection.query(
+            `UPDATE ingredient 
+             SET quantity = quantity - ? 
+             WHERE ingredient_id = ?`,
+            [ingredient.weight * item.quantity, ingredient.ingredient_id]
+          );
+        }
+      }
+    }
+
     // Update user's loyalty points if customer_id is present
     if (req.user.id) {
       let loyaltyPointsAdjustment = -loyalty_points_used; // Subtract used points
       
-      // Add earned points only if the order status is 'completed'
-      if (status === 'completed') {
+      // Add earned points only if the order status is 'Completed'
+      if (status === 'Completed') {
         loyaltyPointsAdjustment += loyalty_points_earned;
       }
       
@@ -263,4 +288,46 @@ router.get('/:orderId', auth.authenticateToken, async (req, res) => {
   }
 });
 
-module.exports = router; 
+// Add an endpoint to mark an order as completed
+router.put('/complete/:orderId', auth.authenticateToken, async (req, res) => {
+  const { orderId } = req.params;
+  let connection;
+  try {
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+    // Set status to Completed and completion_time to NOW()
+    const [result] = await connection.query(
+      `UPDATE sale SET status = 'Completed', completion_time = NOW() WHERE sale_id = ?`,
+      [orderId]
+    );
+    await connection.commit();
+    res.json({ success: true, message: 'Order marked as completed.' });
+  } catch (error) {
+    if (connection) await connection.rollback();
+    res.status(500).json({ success: false, message: error.message });
+  } finally {
+    if (connection) connection.release();
+  }
+});
+
+// Get all revenue records
+router.get('/revenue', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT * FROM revenue ORDER BY date_recorded DESC');
+    res.json({ success: true, revenue: rows });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Get all ingredients and their stock
+router.get('/ingredients', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT * FROM ingredient ORDER BY ingredient_name');
+    res.json({ success: true, ingredients: rows });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+module.exports = router;

@@ -7,6 +7,7 @@ import MenuPage from './pages/MenuPage';
 import Delivery from './pages/Delivery';
 import Checkout from './pages/Checkout';
 import Account from './pages/Account';
+import Dashboard from './pages/Dashboard';
 
 function App() {
   const [authStatus, setAuthStatus] = useState('guest');
@@ -27,6 +28,7 @@ function App() {
             <Route path="/delivery" element={<Delivery userAddress={userAddress} setUserAddress={setUserAddress} />} />
             <Route path="/checkout" element={<Checkout userAddress={userAddress} setUserAddress={setUserAddress} />} />
             <Route path="/account" element={<Account />} />
+            <Route path="/dashboard" element={<Dashboard />} />
           </Routes>
         </CartProvider>
       </AuthProvider>

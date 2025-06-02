@@ -115,6 +115,13 @@ const handleAccountClick = (e) => {
           >
             Support
           </div>
+
+          <div 
+            className={styles.navItem} 
+            onClick={() => handleNavigation('/dashboard')}
+          >
+            Dashboard
+          </div>
         </div>
       </div>
 

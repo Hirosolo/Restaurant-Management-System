@@ -964,3 +964,20 @@
     color: #666;
     margin-bottom: 20px;
   }
+
+  .received-order-btn {
+    background: #2e6a35;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 22px;
+    font-size: 1rem;
+    font-weight: 500;
+    margin-top: 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .received-order-btn:hover {
+    background: #1d4420;
+  }
