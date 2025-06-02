@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
+import FoodItem from '../components/FoodItem';
 import './MenuPage.css';
 
 function MenuPage() {
@@ -105,6 +106,7 @@ function MenuPage() {
         data.forEach(category => {
           category.items.forEach(item => {
             details[`RCP-${String(item.id).padStart(3, '0')}`] = {
+              id: `RCP-${String(item.id).padStart(3, '0')}`,
               name: item.name,
               calories: item.calories.toString(),
               protein: item.protein.toString(),
@@ -285,30 +287,15 @@ function MenuPage() {
       <div className="category-items">
         {items.map(item => {
           const recipeId = `RCP-${String(item.id).padStart(3, '0')}`;
+          const formattedPrice = formatCurrency(item.price);
           return (
-            <div className="food-item" key={item.id}>
-              <img src={item.image} alt={item.name} className="food-image" />
-              <div className="food-details">
-                <h4>{item.name}</h4>
-                <div className="rating">
-                  {Array(5).fill().map((_, i) => (
-                    <span key={i} className={i < item.rating ? "star filled" : "star"}>★</span>
-                  ))}
-                </div>
-                <div className="food-actions">
-                  <span className="price">{formatCurrency(item.price)}</span>
-                  <button className="add-to-cart" onClick={() => addToCart(item)}>Add to cart</button>
-                </div>
-                {recipeDetails[recipeId] && (
-                  <div 
-                    className="show-more"
-                    onClick={() => showRecipeDetails(recipeId)}
-                  >
-                    Show more
-                  </div>
-                )}
-              </div>
-            </div>
+            <FoodItem
+              key={item.id}
+              product={item}
+              onAddToCart={addToCart}
+              showDetails={() => showRecipeDetails(recipeId)}
+              formattedPrice={formattedPrice}
+            />
           );
         })}
       </div>

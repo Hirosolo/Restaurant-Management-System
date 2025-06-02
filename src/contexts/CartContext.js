@@ -48,13 +48,16 @@ export function CartProvider({ children, initialCart, setPropCart }) {
       
       if (existingItemIndex !== -1) {
         updatedCart[existingItemIndex].quantity += 1;
+        console.log(`CartContext: Updated quantity for ${item.name}: ${updatedCart[existingItemIndex].quantity}`);
       } else {
-        updatedCart.push({ 
+        const newItem = { 
           ...item, 
           quantity: 1, 
           note: '',
           image: item.image || item.image_url
-        });
+        };
+        updatedCart.push(newItem);
+        console.log(`CartContext: Added new item ${newItem.name} with quantity: ${newItem.quantity}`);
       }
       
       return updatedCart;
@@ -71,6 +74,7 @@ export function CartProvider({ children, initialCart, setPropCart }) {
     setCart(prevCart => {
       const updatedCart = [...prevCart];
       updatedCart[index].quantity += 1;
+      console.log(`CartContext: Increased quantity for item at index ${index}: ${updatedCart[index].quantity}`);
       return updatedCart;
     });
   }, []);
@@ -81,8 +85,10 @@ export function CartProvider({ children, initialCart, setPropCart }) {
       const updatedCart = [...prevCart];
       if (updatedCart[index].quantity > 1) {
         updatedCart[index].quantity -= 1;
+        console.log(`CartContext: Decreased quantity for item at index ${index}: ${updatedCart[index].quantity}`);
       } else {
-        updatedCart.splice(index, 1);
+        const removedItem = updatedCart.splice(index, 1);
+        console.log(`CartContext: Removed item at index ${index}: ${removedItem[0]?.name}`);
       }
       return updatedCart;
     });
@@ -93,6 +99,7 @@ export function CartProvider({ children, initialCart, setPropCart }) {
     setCart(prevCart => {
       const updatedCart = [...prevCart];
       updatedCart[index].note = note;
+      console.log(`CartContext: Updated note for item at index ${index}: ${note}`);
       return updatedCart;
     });
   }, []);
@@ -100,7 +107,9 @@ export function CartProvider({ children, initialCart, setPropCart }) {
   /* Tính tổng giá */
   const calculateTotal = useCallback(() => {
     if (!cart || cart.length === 0) return 0;
-    return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    console.log(`CartContext: Calculated total: ${total}`);
+    return total;
   }, [cart]);
 
   return (

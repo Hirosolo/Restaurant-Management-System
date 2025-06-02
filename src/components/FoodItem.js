@@ -2,20 +2,11 @@ import React, { useState } from 'react';
 import styles from '../styles/FoodItem.module.css';
 import ShowMore from './ShowMore';
 
-function FoodItem({ product, onAddToCart, showDetails }) {
+function FoodItem({ product, onAddToCart, showDetails, formattedPrice }) {
   const [showPopup, setShowPopup] = useState(false);
 
-  // Chuyển đổi id sản phẩm thành định dạng recipeId
-  const getRecipeIdFromProduct = (product) => {
-    // Tìm trong recipeDetails món có name tương ứng
-    const recipeId = Object.keys(require('../data/menuData').recipeDetails).find(
-      key => require('../data/menuData').recipeDetails[key].name === product.name
-    );
-    return recipeId;
-  };
-
   const handleShowMore = () => {
-    setShowPopup(true);
+    showDetails(product.id);
   };
 
   const handleClosePopup = () => {
@@ -47,7 +38,7 @@ function FoodItem({ product, onAddToCart, showDetails }) {
         </div>
         
         <div className={styles.priceRow}>
-          <span className={styles.price}>${product.price.toFixed(2)}</span>
+          <span className={styles.price}>{formattedPrice}</span>
           <button 
             className={styles.addButton}
             onClick={(e) => {
@@ -75,7 +66,7 @@ function FoodItem({ product, onAddToCart, showDetails }) {
         <ShowMore 
           isOpen={showPopup} 
           onClose={handleClosePopup} 
-          recipeId={getRecipeIdFromProduct(product)}
+          recipeId={product.id}
         />
       )}
     </div>

@@ -1,13 +1,9 @@
 import React, { useRef } from 'react';
 import '../styles/ShowMore.css';
-import { recipeDetails } from '../data/menuData';
 
-const ShowMore = ({ isOpen, onClose, recipeId }) => {
+const ShowMore = ({ isOpen, onClose, foodDetails }) => {
   const modalRef = useRef();
   
-  // Lấy thông tin chi tiết dựa trên recipeId
-  const foodDetails = recipeId && recipeDetails[recipeId];
-
   if (!isOpen || !foodDetails) return null;
 
   // Xử lý click bên ngoài để đóng popup
@@ -41,7 +37,7 @@ const ShowMore = ({ isOpen, onClose, recipeId }) => {
               
               <div className="food-image">
                 <img 
-                  src={`/assets/${recipeId}.${recipeId === "RCP-003" || recipeId === "RCP-004" || recipeId === "RCP-006" || recipeId === "RCP-011" || recipeId === "RCP-013" || recipeId === "RCP-014" || recipeId === "RCP-015" || recipeId === "RCP-016" || recipeId === "RCP-022" || recipeId === "RCP-023" || recipeId === "RCP-024" || recipeId === "RCP-028" || recipeId === "RCP-029" || recipeId === "RCP-030" ? "webp" : "jpg"}`}
+                  src={`/assets/${foodDetails.id}.${foodDetails.id === "RCP-003" || foodDetails.id === "RCP-004" || foodDetails.id === "RCP-006" || foodDetails.id === "RCP-011" || foodDetails.id === "RCP-013" || foodDetails.id === "RCP-014" || foodDetails.id === "RCP-015" || foodDetails.id === "RCP-016" || foodDetails.id === "RCP-022" || foodDetails.id === "RCP-023" || foodDetails.id === "RCP-024" || foodDetails.id === "RCP-028" || foodDetails.id === "RCP-029" || foodDetails.id === "RCP-030" ? "webp" : "jpg"}`}
                   alt={foodDetails.name}
                   onError={(e) => {
                     e.target.src = '/assets/default-food.jpg';
