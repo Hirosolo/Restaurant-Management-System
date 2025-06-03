@@ -93,6 +93,20 @@ export function AuthProvider({ children, initialAuthStatus, setPropAuthStatus, i
     }
   }, []);
 
+  // Listen for userData updates
+  useEffect(() => {
+    const handleUserDataUpdate = (event) => {
+      console.log('AuthContext: Received userData update event', event.detail);
+      setUserData(event.detail.userData);
+    };
+
+    window.addEventListener('userDataUpdated', handleUserDataUpdate);
+
+    return () => {
+      window.removeEventListener('userDataUpdated', handleUserDataUpdate);
+    };
+  }, []);
+
   // Fetch user's address from database when component mounts for signed-in users
   useEffect(() => {
     const fetchUserAddress = async () => {
@@ -125,11 +139,20 @@ export function AuthProvider({ children, initialAuthStatus, setPropAuthStatus, i
                 console.log('Setting address object:', addressObj);
                 setUserAddress(addressObj);
                 localStorage.setItem('userAddress', JSON.stringify(addressObj));
+
+                // Also update userData with the profile data which includes loyalty points
+                setUserData(profileData.user);
+                localStorage.setItem('userData', JSON.stringify(profileData.user));
+
               } catch (error) {
                 console.error('Error parsing address:', error);
                 // If parsing fails, store the address as is
                 setUserAddress(profileData.user.address);
                 localStorage.setItem('userAddress', JSON.stringify(profileData.user.address));
+
+                // Even if address parsing fails, update userData with the rest of the profile data
+                setUserData(profileData.user);
+                localStorage.setItem('userData', JSON.stringify(profileData.user));
               }
             }
           } else {
@@ -189,11 +212,20 @@ export function AuthProvider({ children, initialAuthStatus, setPropAuthStatus, i
             console.log('Setting address object:', addressObj);
             setUserAddress(addressObj);
             localStorage.setItem('userAddress', JSON.stringify(addressObj));
+
+            // Also update userData with the profile data which includes loyalty points
+            setUserData(profileData.user);
+            localStorage.setItem('userData', JSON.stringify(profileData.user));
+
           } catch (error) {
             console.error('Error parsing address:', error);
             // If parsing fails, store the address as is
             setUserAddress(profileData.user.address);
             localStorage.setItem('userAddress', JSON.stringify(profileData.user.address));
+
+            // Even if address parsing fails, update userData with the rest of the profile data
+            setUserData(profileData.user);
+            localStorage.setItem('userData', JSON.stringify(profileData.user));
           }
         }
       }
@@ -296,12 +328,14 @@ export function AuthProvider({ children, initialAuthStatus, setPropAuthStatus, i
     setAuthStatus('guest');
     setUserData(null);
     setUserAddress(null);
+    setUserContact('');
     
     // Clear localStorage
     localStorage.removeItem('authStatus');
     localStorage.removeItem('userData');
     localStorage.removeItem('userAddress');
     localStorage.removeItem('token');
+    localStorage.removeItem('userContact');
     
     // Emit auth status change event
     const event = new CustomEvent('authStatusChanged', { 
@@ -329,6 +363,10 @@ export function AuthProvider({ children, initialAuthStatus, setPropAuthStatus, i
     window.dispatchEvent(event);
     
     console.log('AuthContext: Set status to guest');
+    
+    // Also clear userContact when continuing as guest
+    setUserContact('');
+    localStorage.removeItem('userContact');
   }, []);
 
   return (

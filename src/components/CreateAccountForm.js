@@ -60,9 +60,17 @@ function CreateAccountForm({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Add password logging
+    console.log('Password state at form submission:', {
+      passwordExists: !!userInfo.password,
+      passwordLength: userInfo.password ? userInfo.password.length : 0,
+      message: userInfo.password ? 'Password entered' : 'Password non-entered'
+    });
+    
     console.log('Main form submitted with user info:', {
       ...userInfo,
-      password: userInfo.password // Show actual password
+      password: userInfo.password ? '***' : undefined // Hide actual password in logs
     });
     
     if (!address) {
@@ -74,13 +82,6 @@ function CreateAccountForm({
     setError('');
     
     try {
-      // Add detailed logging for password validation
-      console.log('Password validation check:', {
-        passwordExists: !!userInfo.password,
-        passwordLength: userInfo.password ? userInfo.password.length : 0,
-        passwordValue: userInfo.password ? '***' : undefined
-      });
-
       // Validate required fields
       if (!userInfo.password) {
         console.error('CreateAccountForm: Password validation failed - password is empty');

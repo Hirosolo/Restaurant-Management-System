@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
+import FoodItem from '../components/FoodItem';
 import './MenuPage.css';
 
 function MenuPage() {
@@ -35,6 +36,9 @@ function MenuPage() {
   const [lastName, setLastName] = useState('');
   const [contactMobile, setContactMobile] = useState('');
   
+  // New state variable for forgot password modal
+  const [showForgotPasswordForm, setShowForgotPasswordForm] = useState(false);
+
   // New state variables for fetched data
   const [categories, setCategories] = useState([]);
   const [recipeDetails, setRecipeDetails] = useState({});
@@ -59,6 +63,13 @@ function MenuPage() {
   const districts = ['District 1', 'District 2', 'District 3', 'District 4', 'District 5'];
   const streets = ['Street 1', 'Street 2', 'Street 3', 'Street 4', 'Street 5'];
 
+  const [selectedFilters, setSelectedFilters] = useState({
+    calories: '',
+    protein: ''
+  });
+
+  const [notification, setNotification] = useState({ show: false, message: '', type: '' });
+
   // Đồng bộ state với props
   useEffect(() => {
     if (userAddress) setUserAddress(userAddress);
@@ -68,11 +79,20 @@ function MenuPage() {
     if (userAddress !== userAddress && setUserAddress) setUserAddress(userAddress);
   }, [userAddress, setUserAddress, userAddress]);
 
-  // Fetch recipes when component mounts
+  // Fetch recipes when component mounts or filters change
   useEffect(() => {
     const fetchRecipes = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/recipes');
+        setLoading(true);
+        const queryParams = new URLSearchParams();
+        if (selectedFilters.calories) {
+          queryParams.append('calories', selectedFilters.calories);
+        }
+        if (selectedFilters.protein) {
+          queryParams.append('protein', selectedFilters.protein);
+        }
+
+        const response = await fetch(`http://localhost:3001/api/recipes?${queryParams.toString()}`);
         if (!response.ok) {
           throw new Error('Failed to fetch recipes');
         }
@@ -86,13 +106,14 @@ function MenuPage() {
         data.forEach(category => {
           category.items.forEach(item => {
             details[`RCP-${String(item.id).padStart(3, '0')}`] = {
+              id: `RCP-${String(item.id).padStart(3, '0')}`,
               name: item.name,
               calories: item.calories.toString(),
               protein: item.protein.toString(),
               fat: item.fat.toString(),
               fiber: item.fiber.toString(),
               carb: item.carb.toString(),
-              description: `${item.name} is a delicious ${category.name.toLowerCase()} dish.` // You might want to add descriptions to your database
+              description: `${item.name} is a delicious ${category.name.toLowerCase()} dish.`
             };
           });
         });
@@ -106,12 +127,12 @@ function MenuPage() {
     };
 
     fetchRecipes();
-  }, []);
+  }, [selectedFilters]);
 
   // Update the useEffect hook for auth modal
   useEffect(() => {
-    // Show auth modal if user is not authenticated or is a guest
-    if (authStatus !== 'signedIn') {
+    // Only show auth modal if user is not authenticated
+    if (authStatus !== 'signedIn' && !showAuthModal) {
       console.log('MenuPage: Initial auth check - showing auth modal');
       setShowAuthModal(true);
     }
@@ -169,12 +190,14 @@ function MenuPage() {
       setShowAuthModal(false);
       setShowSignInForm(false);
       setShowCreateAccountForm(false);
+      // Close forgot password form if it was open
+      setShowForgotPasswordForm(false);
     }
   };
 
   const filters = [
-    { id: 'calories', name: 'Calories', options: ['< 300', '300 - 500', '> 500'] },
-    { id: 'protein', name: 'Main Protein', options: ['Salmon', 'Tuna', 'Chicken', 'Shrimp', 'Scallop', 'Tofu'] }
+    { id: 'calories', name: 'Calories', options: ['All', '< 300', '300 - 500', '> 500'] },
+    { id: 'protein', name: 'Main Protein', options: ['All', 'Salmon', 'Tuna', 'Chicken', 'Shrimp', 'Scallop', 'Tofu'] }
   ];
 
   const calculateTotal = () => {
@@ -205,6 +228,19 @@ function MenuPage() {
     }
   };
 
+  const handleFilterChange = (filterType, value) => {
+    setSelectedFilters(prev => {
+      // If "All" is selected or the same value is clicked again, clear the filter
+      if (value === 'All' || prev[filterType] === value) {
+        const newFilters = { ...prev };
+        delete newFilters[filterType];
+        return newFilters;
+      }
+      // Otherwise, update with the new value
+      return { ...prev, [filterType]: value };
+    });
+  };
+
   const renderFilterOptions = (filter) => {
     const isOpen = filtersOpen[filter.id] !== false;
     return (
@@ -220,11 +256,17 @@ function MenuPage() {
         </div>
         {isOpen && (
           <div className="filter-options">
-            {filter.options.map((option, index) => (
-              <div className="filter-option" key={index}>
-                <input type="radio" id={`${filter.id}-${index}`} name={filter.id} />
-                <label htmlFor={`${filter.id}-${index}`}>{option}</label>
-              </div>
+            {filter.options.map((option) => (
+              <label key={option} className="filter-option">
+                <input
+                  type="radio"
+                  name={filter.id}
+                  value={option}
+                  checked={selectedFilters[filter.id] === option}
+                  onChange={() => handleFilterChange(filter.id, option)}
+                />
+                <span>{option}</span>
+              </label>
             ))}
           </div>
         )}
@@ -245,38 +287,162 @@ function MenuPage() {
       <div className="category-items">
         {items.map(item => {
           const recipeId = `RCP-${String(item.id).padStart(3, '0')}`;
+          const formattedPrice = formatCurrency(item.price);
           return (
-            <div className="food-item" key={item.id}>
-              <img src={item.image} alt={item.name} className="food-image" />
-              <div className="food-details">
-                <h4>{item.name}</h4>
-                <div className="rating">
-                  {Array(5).fill().map((_, i) => (
-                    <span key={i} className={i < item.rating ? "star filled" : "star"}>★</span>
-                  ))}
-                </div>
-                <div className="food-actions">
-                  <span className="price">${(item.price / 1000).toFixed(2)}</span>
-                  <button className="add-to-cart" onClick={() => addToCart(item)}>Add to cart</button>
-                </div>
-                {recipeDetails[recipeId] && (
-                  <div 
-                    className="show-more"
-                    onClick={() => showRecipeDetails(recipeId)}
-                  >
-                    Show more
-                  </div>
-                )}
-              </div>
-            </div>
+            <FoodItem
+              key={item.id}
+              product={item}
+              onAddToCart={addToCart}
+              showDetails={() => showRecipeDetails(recipeId)}
+              formattedPrice={formattedPrice}
+            />
           );
         })}
       </div>
     );
   };
 
+  const showNotification = (message, type = 'info') => {
+    setNotification({ show: true, message, type });
+    // Auto hide notification after 5 seconds
+    setTimeout(() => {
+      setNotification({ show: false, message: '', type: '' });
+    }, 5000);
+  };
+
+  // Helper to format currency (assuming item.price is in a base unit and needs conversion)
+  const formatCurrency = (amount) => {
+    // Convert to integer to remove decimals, then to string
+    const amountStr = Math.floor(amount).toString();
+    // Use regex to add dot as thousand separator
+    const formattedAmount = amountStr.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return `${formattedAmount} vnd`;
+  };
+
+  const handleCreateAccountSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Validate first name
+    const firstNameInput = e.target.querySelector('input[name="firstName"]');
+    if (!firstNameInput.value) {
+      firstNameInput.setCustomValidity('This field is required');
+      firstNameInput.reportValidity();
+      return;
+    } else if (!/^[A-Za-z]+$/.test(firstNameInput.value)) {
+      firstNameInput.setCustomValidity('First name should contain only letters');
+      firstNameInput.reportValidity();
+      return;
+    }
+    firstNameInput.setCustomValidity('');
+
+    // Validate last name
+    const lastNameInput = e.target.querySelector('input[name="lastName"]');
+    if (!lastNameInput.value) {
+      lastNameInput.setCustomValidity('This field is required');
+      lastNameInput.reportValidity();
+      return;
+    } else if (!/^[A-Za-z]+$/.test(lastNameInput.value)) {
+      lastNameInput.setCustomValidity('Last name should contain only letters');
+      lastNameInput.reportValidity();
+      return;
+    }
+    lastNameInput.setCustomValidity('');
+
+    // Validate contact mobile
+    const contactInput = e.target.querySelector('input[name="contactMobile"]');
+    if (!contactInput.value) {
+      contactInput.setCustomValidity('This field is required');
+      contactInput.reportValidity();
+      return;
+    } else if (!/^\d{10}$/.test(contactInput.value)) {
+      contactInput.setCustomValidity('Contact number must be exactly 10 digits');
+      contactInput.reportValidity();
+      return;
+    }
+    contactInput.setCustomValidity('');
+
+    // If all validations pass, proceed with form submission
+    const newAddress = {
+      ward,
+      district,
+      street,
+      houseNumber,
+      buildingName,
+      block,
+      floor,
+      roomNumber,
+      deliveryInstructions,
+      fullName: `${firstName} ${lastName}`,
+      contactMobile
+    };
+
+    const userInfo = {
+      email: userEmail,
+      firstName,
+      lastName,
+      contactMobile,
+      password: userPassword
+    };
+
+    try {
+      showNotification('Creating your account...', 'info');
+      await handleCreateAccount(newAddress, userInfo);
+      showNotification('Account created successfully! Welcome to Greedible!', 'success');
+      setShowCreateAccountForm(false);
+      setShowAuthModal(false);
+      // Clear form fields
+      setUserEmail('');
+      setUserPassword('');
+      setFirstName('');
+      setLastName('');
+      setContactMobile('');
+      setWard('');
+      setDistrict('');
+      setStreet('');
+      setHouseNumber('');
+      setBuildingName('');
+      setBlock('');
+      setFloor('');
+      setRoomNumber('');
+      setDeliveryInstructions('');
+    } catch (error) {
+      showNotification(error.message || 'Failed to create account. Please try again.', 'error');
+    }
+  };
+
+  // Add validation message handler
+  const handleInvalid = (e) => {
+    e.preventDefault();
+    e.target.setCustomValidity('');
+    if (!e.target.validity.valid) {
+      if (e.target.validity.valueMissing) {
+        e.target.setCustomValidity('This field is required');
+      } else if (e.target.validity.patternMismatch) {
+        e.target.setCustomValidity(e.target.title);
+      }
+    }
+  };
+
+  // Clear validation message on input
+  const handleInput = (e) => {
+    e.target.setCustomValidity('');
+  };
+
+  // Handle Forgot Password click
+  const handleForgotPasswordClick = (e) => {
+    e.preventDefault();
+    setShowSignInForm(false);
+    setShowForgotPasswordForm(true);
+  };
+
   return (
     <div className="menu-page">
+      {notification.show && (
+        <div className={`notification ${notification.type}`}>
+          {notification.message}
+        </div>
+      )}
+
       <div className="navbar menu-navbar">
         <div className={`menu-icon ${menuOpen ? 'open' : ''}`} onClick={toggleMenu}>
           <div className="bar"></div>
@@ -293,13 +459,11 @@ function MenuPage() {
         ></div>
         <div className={`nav-links ${menuOpen ? 'active' : ''}`} ref={navRef}>
           <div className="close-btn" onClick={toggleMenu}>✕</div>
-          <a href="#">Menu</a>
-          <a href="#">Discount</a>
+          <a href="/">Home</a>
+          <a href="/discount">Discount</a>
           <img src="/assets/logo.png" alt="Logo" className="logo" />
-          <span className="nav-link" onClick={handleAccountClick} style={{ cursor: 'pointer' }}>
-            Account
-          </span>
-          <a href="#">Support</a>
+          <a href="/menu">Menu</a>
+          <a href="/support">Support</a>
         </div>
       </div>
 
@@ -312,8 +476,12 @@ function MenuPage() {
             ) : (
               <span className="user-nav-item" onClick={handleAccountClick}>Sign In</span>
             )}
-            <span className="separator">|</span>
-            <span className="user-nav-item" onClick={() => navigate('/guest-order')}>Guest Order</span>
+            {authStatus !== 'signedIn' && (
+              <>
+                <span className="separator">|</span>
+                <span className="user-nav-item" onClick={() => navigate('/guest-order')}>Guest Order</span>
+              </>
+            )}
             <span className="separator">|</span>
             <span className="user-nav-item" onClick={() => navigate('/track-order')}>Track Your Order</span>
           </div>
@@ -387,7 +555,7 @@ function MenuPage() {
                             onChange={(e) => updateNote(index, e.target.value)}
                           />
                         </div>
-                        <div className="cart-item-price">{item.price.toFixed(2)}$</div>
+                        <div className="cart-item-price">{formatCurrency(item.price)}</div>
                       </div>
                     </div>
                   </div>
@@ -400,7 +568,7 @@ function MenuPage() {
           {cart.length > 0 && (
             <div className="cart-total">
               <span>Total:</span>
-              <span>${calculateTotal()}</span>
+              <span>{formatCurrency(calculateTotal())}</span>
             </div>
           )}
           <button 
@@ -444,13 +612,38 @@ function MenuPage() {
           <div className="auth-form-modal">
             <h3>Sign In</h3>
             <button className="close-modal-btn" onClick={() => setShowSignInForm(false)}>✕</button>
-            <form onSubmit={(e) => {
+            <form onSubmit={async (e) => {
               e.preventDefault();
-              handleSignIn(userEmail, userPassword);
-              setShowSignInForm(false);
-              setShowAuthModal(false);
-              setUserEmail('');
-              setUserPassword('');
+              
+              // Validate email
+              const emailInput = e.target.querySelector('input[type="email"]');
+              if (!emailInput.value) {
+                emailInput.setCustomValidity('This field is required');
+                emailInput.reportValidity();
+                return;
+              }
+              emailInput.setCustomValidity('');
+
+              // Validate password
+              const passwordInput = e.target.querySelector('input[type="password"]');
+              if (!passwordInput.value) {
+                passwordInput.setCustomValidity('This field is required');
+                passwordInput.reportValidity();
+                return;
+              }
+              passwordInput.setCustomValidity('');
+
+              try {
+                showNotification('Signing in...', 'info');
+                await handleSignIn(userEmail, userPassword);
+                showNotification('Successfully signed in! Welcome back!', 'success');
+                setShowSignInForm(false);
+                setShowAuthModal(false);
+                setUserEmail('');
+                setUserPassword('');
+              } catch (error) {
+                showNotification(error.message || 'Invalid email or password. Please try again.', 'error');
+              }
             }}>
               <div className="form-group">
                 <label>Email</label>
@@ -459,6 +652,14 @@ function MenuPage() {
                   value={userEmail} 
                   onChange={(e) => setUserEmail(e.target.value)} 
                   required 
+                  onInvalid={(e) => {
+                    e.preventDefault();
+                    e.target.setCustomValidity('');
+                    if (e.target.validity.valueMissing) {
+                      e.target.setCustomValidity('This field is required');
+                    }
+                  }}
+                  onInput={(e) => e.target.setCustomValidity('')}
                 />
               </div>
               <div className="form-group">
@@ -468,6 +669,14 @@ function MenuPage() {
                   value={userPassword} 
                   onChange={(e) => setUserPassword(e.target.value)} 
                   required 
+                  onInvalid={(e) => {
+                    e.preventDefault();
+                    e.target.setCustomValidity('');
+                    if (e.target.validity.valueMissing) {
+                      e.target.setCustomValidity('This field is required');
+                    }
+                  }}
+                  onInput={(e) => e.target.setCustomValidity('')}
                 />
               </div>
               <div className="form-options">
@@ -475,7 +684,7 @@ function MenuPage() {
                   <input type="checkbox" id="remember" />
                   <label htmlFor="remember">Remember me</label>
                 </div>
-                <a href="#" className="forgot-password">Forgot password?</a>
+                <a href="#" className="forgot-password" onClick={handleForgotPasswordClick}>Forgot password?</a>
               </div>
               <button type="submit" className="form-submit-btn">SIGN IN</button>
             </form>
@@ -488,32 +697,7 @@ function MenuPage() {
           <div className="auth-form-modal register-form">
             <h3>Create New Account</h3>
             <button className="close-modal-btn" onClick={() => setShowCreateAccountForm(false)}>✕</button>
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              const newAddress = {
-                ward,
-                district,
-                street,
-                houseNumber,
-                buildingName,
-                block,
-                floor,
-                roomNumber,
-                deliveryInstructions,
-                fullName: `${firstName} ${lastName}`,
-                contactMobile
-              };
-
-              const userInfo = {
-                email: userEmail,
-                firstName,
-                lastName,
-                contactMobile
-              };
-
-              handleCreateAccount(newAddress, userInfo);
-              setShowCreateAccountForm(false);
-            }}>
+            <form onSubmit={handleCreateAccountSubmit}>
               <div className="form-section">
                 <div className="form-group">
                   <label>Email</label>
@@ -539,28 +723,33 @@ function MenuPage() {
                 <div className="form-group">
                   <label>First Name</label>
                   <input 
+                    name="firstName"
                     type="text" 
                     value={firstName} 
-                    onChange={(e) => setFirstName(e.target.value)} 
+                    onChange={(e) => setFirstName(e.target.value)}
                     required 
                   />
                 </div>
                 <div className="form-group">
                   <label>Last Name</label>
                   <input 
+                    name="lastName"
                     type="text" 
                     value={lastName} 
-                    onChange={(e) => setLastName(e.target.value)} 
+                    onChange={(e) => setLastName(e.target.value)}
                     required 
                   />
                 </div>
                 <div className="form-group">
                   <label>Contact Mobile</label>
                   <input 
+                    name="contactMobile"
                     type="tel" 
                     value={contactMobile} 
-                    onChange={(e) => setContactMobile(e.target.value)} 
+                    onChange={(e) => setContactMobile(e.target.value)}
                     required 
+                    pattern="[0-9]{10}"
+                    title="Contact number must be exactly 10 digits"
                   />
                 </div>
               </div>
@@ -657,9 +846,12 @@ function MenuPage() {
                     <label>*House/Street Number:</label>
                     <input 
                       type="text" 
+                      name="houseNumber"
                       value={houseNumber}
                       onChange={(e) => setHouseNumber(e.target.value)}
                       required
+                      pattern="\d+"
+                      title="House/Street Number must be a number"
                     />
                   </div>
                 </div>
@@ -684,8 +876,11 @@ function MenuPage() {
                     <label>Floor / Level:</label>
                     <input 
                       type="text" 
+                      name="floor"
                       value={floor}
                       onChange={(e) => setFloor(e.target.value)}
+                      pattern="\d+"
+                      title="Floor/Level must be a number"
                     />
                   </div>
                   <div className="delivery-field">
@@ -696,14 +891,6 @@ function MenuPage() {
                       onChange={(e) => setRoomNumber(e.target.value)}
                     />
                   </div>
-                </div>
-                <div className="delivery-field single-row">
-                  <label>Delivery Instruction to Rider:</label>
-                  <textarea 
-                    value={deliveryInstructions}
-                    onChange={(e) => setDeliveryInstructions(e.target.value)}
-                    rows={3}
-                  />
                 </div>
               </div>
               <button type="submit" className="form-submit-btn">Confirm</button>
@@ -742,6 +929,65 @@ function MenuPage() {
                 </ul>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showForgotPasswordForm && (
+        <div className="auth-modal-overlay">
+          <div className="auth-form-modal">
+            <h3>Forgot Password?</h3>
+            <button className="close-modal-btn" onClick={() => setShowForgotPasswordForm(false)}>✕</button>
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              const email = userEmail;
+
+              if (!email) {
+                // Basic validation - though the input field is required, adding this check
+                console.log('Email field is empty');
+                // Using existing showNotification for simplicity for now. Can refine later if needed.
+                showNotification('Please enter your email address.', 'error');
+                return;
+              }
+
+              try {
+                showNotification('Sending password reset link...', 'info');
+                // Assume backend endpoint for forgot password is /api/forgot-password
+                const response = await fetch('http://localhost:3001/api/forgot-password', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ email }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                  showNotification(data.message || 'If your email is in our system, you will receive a password reset link shortly.', 'success');
+                  setShowForgotPasswordForm(false);
+                  setUserEmail(''); // Clear email field
+                } else {
+                  // Handle backend errors (e.g., email not found)
+                  showNotification(data.message || 'Failed to send reset link. Please try again.', 'error');
+                }
+
+              } catch (error) {
+                console.error('Error sending password reset email:', error);
+                showNotification('An error occurred while trying to send the reset link. Please try again later.', 'error');
+              }
+            }}>
+              <div className="form-group">
+                <label>Email</label>
+                <input 
+                  type="email" 
+                  value={userEmail} 
+                  onChange={(e) => setUserEmail(e.target.value)} 
+                  required 
+                />
+              </div>
+              <button type="submit" className="form-submit-btn">Send Reset Link</button>
+            </form>
           </div>
         </div>
       )}

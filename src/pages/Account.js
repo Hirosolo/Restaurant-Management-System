@@ -18,6 +18,7 @@ function Account() {
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [favoriteMeals, setFavoriteMeals] = useState([]);
   const [isLoadingFavorites, setIsLoadingFavorites] = useState(false);
+  const [refreshOrdersTrigger, setRefreshOrdersTrigger] = useState(0);
   
   // Address form states
   const [ward, setWard] = useState('');
@@ -39,6 +40,15 @@ function Account() {
   const wards = ['Ward 1', 'Ward 2', 'Ward 3', 'Ward 4', 'Ward 5'];
   const districts = ['District 1', 'District 2', 'District 3', 'District 4', 'District 5'];
   const streets = ['Street 1', 'Street 2', 'Street 3', 'Street 4', 'Street 5'];
+
+  // Helper to format currency
+  const formatCurrency = (amount) => {
+    // Convert to integer to remove decimals, then to string
+    const amountStr = Math.floor(amount).toString();
+    // Use regex to add dot as thousand separator
+    const formattedAmount = amountStr.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return `${formattedAmount} vnd`;
+  };
 
   // Fetch user profile data
   useEffect(() => {
@@ -115,7 +125,7 @@ function Account() {
     }
   }, [authStatus, navigate]);
   
-  // Fetch order history when order history tab is active
+  // Fetch order history when order history tab is active or trigger changes
   useEffect(() => {
     const fetchOrderHistory = async () => {
       if (activeTab === 'order-history' && authStatus === 'signedIn') {
@@ -126,6 +136,7 @@ function Account() {
             throw new Error('No authentication token found');
           }
 
+          console.log('Fetching order history...');
           const response = await fetch('http://localhost:3001/api/orders/user/orders', {
             headers: {
               'Authorization': `Bearer ${token}`
@@ -137,6 +148,7 @@ function Account() {
           }
 
           const data = await response.json();
+          console.log('Order history fetched:', data);
           if (data.success) {
             setOrderHistory(data.orders);
           }
@@ -150,7 +162,7 @@ function Account() {
     };
 
     fetchOrderHistory();
-  }, [activeTab, authStatus]);
+  }, [activeTab, authStatus, refreshOrdersTrigger]);
   
   // Fetch favorite meals when favourite-orders tab is active
   useEffect(() => {
@@ -163,6 +175,7 @@ function Account() {
             throw new Error('No authentication token found');
           }
 
+          console.log('Fetching favorite meals...');
           const response = await fetch('http://localhost:3001/api/orders/user/favorite-meals', {
             headers: {
               'Authorization': `Bearer ${token}`
@@ -174,6 +187,7 @@ function Account() {
           }
 
           const data = await response.json();
+          console.log('Favorite meals fetched:', data);
           if (data.success) {
             setFavoriteMeals(data.favoriteMeals);
           }
@@ -192,6 +206,9 @@ function Account() {
   // Handlers
   const handleTabChange = (tab) => {
     setActiveTab(tab);
+    if (tab === 'order-history') {
+      setRefreshOrdersTrigger(prev => prev + 1);
+    }
   };
   
   const handleLogout = () => {
@@ -248,6 +265,10 @@ function Account() {
     }
   };
   
+  const calculateTotalAmount = (items) => {
+    return items.reduce((total, item) => total + item.price * item.quantity, 0);
+  };
+
   // Render content based on active tab
   const renderContent = () => {
     if (loading) {
@@ -337,21 +358,39 @@ function Account() {
                             <span className="item-name">{item.recipe_name}</span>
                             <span className="item-quantity">x{item.quantity}</span>
                           </div>
-                          <span className="item-price">
-                            ${(item.price * item.quantity).toFixed(2)}
-                          </span>
+                          <div className="order-item-details">
+                            <p>{formatCurrency(item.price * item.quantity)}</p>
+                          </div>
                         </div>
                       ))}
                     </div>
                     <div className="order-footer">
                       <div className="order-total">
                         <span>Total:</span>
-                        <span>${order.total_amount.toFixed(2)}</span>
+                        <span>{formatCurrency(calculateTotalAmount(order.items))}</span>
                       </div>
                       <div className="order-address">
                         <span>Delivered to:</span>
                         <span>{order.delivery_address}</span>
                       </div>
+                      {order.status === 'Pending' && (
+                        <button
+                          className="received-order-btn"
+                          onClick={async () => {
+                            const token = localStorage.getItem('token');
+                            await fetch(`http://localhost:3001/api/orders/complete/${order.sale_id}`, {
+                              method: 'PUT',
+                              headers: { 'Authorization': `Bearer ${token}` }
+                            });
+                            // Refresh order history locally after marking as complete
+                            setOrderHistory((prev) => prev.map(o => o.sale_id === order.sale_id ? { ...o, status: 'Completed' } : o));
+                            // Also trigger a full re-fetch to be safe, although local update might be enough
+                            setRefreshOrdersTrigger(prev => prev + 1);
+                          }}
+                        >
+                          Received the order
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -397,8 +436,10 @@ function Account() {
                         <span>Ordered {meal.times_ordered} times</span>
                         <span>Total items: {meal.total_ordered}</span>
                       </div>
-                      <div className="meal-price">
-                        ${meal.price.toFixed(2)}
+                      <div className="favourite-meal-details">
+                        <h4>{meal.recipe_name}</h4>
+                        <p>{meal.description}</p>
+                        <p>{formatCurrency(meal.price)}</p>
                       </div>
                       <button 
                         className="reorder-btn"

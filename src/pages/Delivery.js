@@ -4,6 +4,7 @@ import './Delivery.css';
 
 function Delivery({ cart, setCart, userAddress, setUserAddress }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [notification, setNotification] = useState(null);
   const navRef = useRef(null);
   const overlayRef = useRef(null);
   const navigate = useNavigate();
@@ -29,6 +30,12 @@ function Delivery({ cart, setCart, userAddress, setUserAddress }) {
   const districts = ['District 1', 'District 2', 'District 3', 'District 4', 'District 5'];
   const streets = ['Street 1', 'Street 2', 'Street 3', 'Street 4', 'Street 5'];
 
+  // Show notification
+  const showNotification = (message, type = 'error') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
+
   // Toggle menu
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
@@ -37,6 +44,25 @@ function Delivery({ cart, setCart, userAddress, setUserAddress }) {
   // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (!ward || !district || !street || !houseNumber) {
+      // Find the first empty required field and focus it
+      if (!ward) {
+        document.querySelector('select[name="ward"]')?.focus();
+        showNotification('Please select a ward', 'error');
+      } else if (!district) {
+        document.querySelector('select[name="district"]')?.focus();
+        showNotification('Please select a district', 'error');
+      } else if (!street) {
+        document.querySelector('select[name="street"]')?.focus();
+        showNotification('Please select a street', 'error');
+      } else if (!houseNumber) {
+        document.querySelector('input[name="houseNumber"]')?.focus();
+        showNotification('Please enter a house/street number', 'error');
+      }
+      return;
+    }
     
     // Save address information as an object for the UI
     const addressInfo = {
@@ -80,12 +106,22 @@ function Delivery({ cart, setCart, userAddress, setUserAddress }) {
     // Save address to localStorage for guest users
     localStorage.setItem('userAddress', JSON.stringify(finalAddress));
     
+    // Show success notification
+    showNotification('Delivery address saved successfully!', 'success');
+    
     // Navigate to checkout page
     navigate('/checkout');
   };
 
   return (
     <div className="delivery-page">
+      {/* Notification */}
+      {notification && (
+        <div className={`notification ${notification.type}`}>
+          {notification.message}
+        </div>
+      )}
+
       {/* Header with class menu-navbar */}
       <div className="navbar menu-navbar">
         <div className={`menu-icon ${menuOpen ? 'open' : ''}`} onClick={toggleMenu}>
@@ -134,64 +170,42 @@ function Delivery({ cart, setCart, userAddress, setUserAddress }) {
       <div className="delivery-container">
         <h2>DELIVERY ADDRESS</h2>
         
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} noValidate>
           <div className="delivery-form">
             <div className="delivery-row">
               <div className="delivery-field">
                 <label>*Ward:</label>
                 <div className="custom-select">
-                  <div 
-                    className="select-header" 
-                    onClick={() => setWardDropdownOpen(!wardDropdownOpen)}
+                  <select 
+                    name="ward"
+                    value={ward}
+                    onChange={(e) => setWard(e.target.value)}
+                    required
+                    className="select-header"
                   >
-                    {ward || "We only deliver to the wards in this list"}
-                    <span className="dropdown-arrow">▼</span>
-                  </div>
-                  {wardDropdownOpen && (
-                    <div className="select-options">
-                      {wards.map((item, index) => (
-                        <div 
-                          key={index} 
-                          className="select-option" 
-                          onClick={() => {
-                            setWard(item);
-                            setWardDropdownOpen(false);
-                          }}
-                        >
-                          {item}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                    <option value="">We only deliver to the wards in this list</option>
+                    {wards.map((item, index) => (
+                      <option key={index} value={item}>{item}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
               
               <div className="delivery-field">
                 <label>*District:</label>
                 <div className="custom-select">
-                  <div 
-                    className="select-header" 
-                    onClick={() => setDistrictDropdownOpen(!districtDropdownOpen)}
+                  <select 
+                    name="district"
+                    value={district}
+                    onChange={(e) => setDistrict(e.target.value)}
+                    required
+                    className="select-header"
                   >
-                    {district || "We only deliver to the districts in this list"}
-                    <span className="dropdown-arrow">▼</span>
-                  </div>
-                  {districtDropdownOpen && (
-                    <div className="select-options">
-                      {districts.map((item, index) => (
-                        <div 
-                          key={index} 
-                          className="select-option" 
-                          onClick={() => {
-                            setDistrict(item);
-                            setDistrictDropdownOpen(false);
-                          }}
-                        >
-                          {item}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                    <option value="">We only deliver to the districts in this list</option>
+                    {districts.map((item, index) => (
+                      <option key={index} value={item}>{item}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>
@@ -200,35 +214,25 @@ function Delivery({ cart, setCart, userAddress, setUserAddress }) {
               <div className="delivery-field">
                 <label>*Street:</label>
                 <div className="custom-select">
-                  <div 
-                    className="select-header" 
-                    onClick={() => setStreetDropdownOpen(!streetDropdownOpen)}
+                  <select 
+                    name="street"
+                    value={street}
+                    onChange={(e) => setStreet(e.target.value)}
+                    required
+                    className="select-header"
                   >
-                    {street || "We only deliver to the streets in this list"}
-                    <span className="dropdown-arrow">▼</span>
-                  </div>
-                  {streetDropdownOpen && (
-                    <div className="select-options">
-                      {streets.map((item, index) => (
-                        <div 
-                          key={index} 
-                          className="select-option" 
-                          onClick={() => {
-                            setStreet(item);
-                            setStreetDropdownOpen(false);
-                          }}
-                        >
-                          {item}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                    <option value="">We only deliver to the streets in this list</option>
+                    {streets.map((item, index) => (
+                      <option key={index} value={item}>{item}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
               
               <div className="delivery-field">
                 <label>*House/Street Number:</label>
                 <input 
+                  name="houseNumber"
                   type="text" 
                   value={houseNumber}
                   onChange={(e) => setHouseNumber(e.target.value)}
