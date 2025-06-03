@@ -190,12 +190,12 @@ router.post('/users/signin', async (req, res) => {
 });
 
 // Get user profile
-router.get('/users/profile', auth.authenticateToken, async (req, res) => {
+router.get('/users/profile', auth.authenticateCustomerToken, async (req, res) => {
     try {
         // Get user data from database
         const [users] = await db.query(
             'SELECT customer_id, customer_name, email, phone, loyalty_point, address FROM customer WHERE customer_id = ?',
-            [req.user.id]
+            [req.user.customer_id]
         );
 
         if (users.length === 0) {

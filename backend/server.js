@@ -1,8 +1,14 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path'); // Require the path module
 const recipeRoutes = require('./API/recipe');
 const userRoutes = require('./API/user');
 const orderRoutes = require('./API/order');
+const staffAuthRoutes = require('./API/staffAuth');
+const ingredientRoutes = require('./API/ingredient');
+const restockRoutes = require('./API/restock');
+const supplierRoutes = require('./API/supplier');
+const salesRoutes = require('./API/sales'); // Import the new sales routes
 require('dotenv').config();
 
 // const testRoutes = require('./routes/test'); 
@@ -10,11 +16,14 @@ const app = express();
 
 // Middleware
 app.use(cors({
-    origin: 'http://localhost:3000', // Allow requests from React app
+    origin: ['http://localhost:3000', 'http://localhost:3002'], // Allow requests from React app and staff interface
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
 }));
 app.use(express.json());
+
+// Serve static files from the 'public' directory in the project root
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // Initialize database
 require('./initDb');
@@ -40,6 +49,21 @@ console.log('User routes registered');
 
 app.use('/api/orders', orderRoutes);
 console.log('Order routes registered');
+
+app.use('/api/staff', staffAuthRoutes);
+console.log('Staff authentication routes registered');
+
+app.use('/api', ingredientRoutes);
+console.log('Ingredient routes registered');
+
+app.use('/api', restockRoutes);
+console.log('Restock routes registered');
+
+app.use('/api', supplierRoutes);
+console.log('Supplier routes registered');
+
+app.use('/api', salesRoutes); // Use the new sales routes
+console.log('Sales routes registered');
 
 // Error handling middleware
 app.use((err, req, res, next) => {

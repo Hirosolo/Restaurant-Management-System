@@ -1,33 +1,22 @@
 {
-  "name": "greedible-app",
+  "name": "my-app",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
-    "@testing-library/react": "^16.2.0",
+    "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^13.5.0",
-    "bcrypt": "^5.1.1",
-    "bcryptjs": "^3.0.2",
     "chart.js": "^4.4.9",
-    "cors": "^2.8.5",
-    "express": "^5.1.0",
-    "jsonwebtoken": "^9.0.2",
-    "lint": "^0.8.19",
-    "mysql": "^2.18.1",
-    "mysql2": "^3.14.1",
-    "nodemailer": "^7.0.3",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.3.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^7.5.0",
+    "react-router-dom": "^7.6.1",
     "react-scripts": "^5.0.1",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "concurrently \"npm run client\" \"npm run server\"",
-    "client": "react-scripts start",
-    "server": "cd backend && node server.js",
+    "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
@@ -49,13 +38,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.24.0",
-    "concurrently": "^9.1.2",
-    "eslint": "^8.57.1",
-    "eslint-plugin-react": "^7.37.5",
-    "eslint-plugin-react-hooks": "^5.2.0",
-    "globals": "^16.0.0"
   }
 }

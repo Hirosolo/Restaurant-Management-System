@@ -3,8 +3,27 @@ const router = express.Router();
 const db = require('../config/db');
 const auth = require('../middleware/auth');
 
+// Temporary test route
+router.get('/test', (req, res) => {
+  console.log('Test route in order.js hit!');
+  res.send('Order router test successful!');
+});
+
+// Get all revenue records
+router.get('/revenue', auth.authenticateToken, async (req, res) => {
+  try {
+    console.log('Fetching all revenue records for authenticated staff...');
+    const [rows] = await db.query('SELECT * FROM revenue ORDER BY date_recorded DESC');
+    console.log('Revenue records fetched.', rows.length);
+    res.json({ success: true, revenue: rows });
+  } catch (error) {
+    console.error('Error fetching revenue records:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // Create a new order
-router.post('/create', auth.authenticateToken, async (req, res) => {
+router.post('/create', auth.authenticateCustomerToken, async (req, res) => {
   const { 
     items, 
     delivery_address, 
@@ -36,7 +55,7 @@ router.post('/create', auth.authenticateToken, async (req, res) => {
         totalAmount,
         payment_method: normalizedPaymentMethod || 'cash',
         status: 'Pending',
-        customer_id: req.user.id,
+        customer_id: req.user.customer_id,
         delivery_address,
         delivery_distance,
         delivery_charge
@@ -58,7 +77,7 @@ router.post('/create', auth.authenticateToken, async (req, res) => {
         totalAmount,
         normalizedPaymentMethod || 'cash',
         'Pending',
-        req.user.id,
+        req.user.customer_id,
         delivery_address,
         delivery_distance,
         delivery_charge
@@ -100,7 +119,7 @@ router.post('/create', auth.authenticateToken, async (req, res) => {
     }
 
     // Update user's loyalty points if customer_id is present
-    if (req.user.id) {
+    if (req.user.customer_id) {
       let loyaltyPointsAdjustment = -loyalty_points_used; // Subtract used points
       
       // Add earned points only if the order status is 'Completed'
@@ -109,14 +128,14 @@ router.post('/create', auth.authenticateToken, async (req, res) => {
       }
       
       console.log('Updating loyalty points for customer:', {
-          customerId: req.user.id,
+          customerId: req.user.customer_id,
           adjustment: loyaltyPointsAdjustment,
           orderStatus: status
       });
 
       await connection.query(
         `UPDATE customer SET loyalty_point = loyalty_point + ? WHERE customer_id = ?`,
-        [loyaltyPointsAdjustment, req.user.id]
+        [loyaltyPointsAdjustment, req.user.customer_id]
       );
       console.log('Loyalty points updated.');
     }
@@ -153,7 +172,7 @@ router.post('/create', auth.authenticateToken, async (req, res) => {
 });
 
 // Get user's order history
-router.get('/user/orders', auth.authenticateToken, async (req, res) => {
+router.get('/user/orders', auth.authenticateCustomerToken, async (req, res) => {
   try {
     // Get all orders for the user with their items
     const [orders] = await db.query(
@@ -174,7 +193,7 @@ router.get('/user/orders', auth.authenticateToken, async (req, res) => {
       WHERE s.customer_id = ?
       GROUP BY s.sale_id
       ORDER BY s.sale_time DESC`,
-      [req.user.id]
+      [req.user.customer_id]
     );
 
     // Parse items JSON string to array for each order
@@ -199,7 +218,7 @@ router.get('/user/orders', auth.authenticateToken, async (req, res) => {
 });
 
 // Get user's frequently ordered meals
-router.get('/user/favorite-meals', auth.authenticateToken, async (req, res) => {
+router.get('/user/favorite-meals', auth.authenticateCustomerToken, async (req, res) => {
   try {
     // Get all orders for the user and count recipe occurrences
     const [favoriteMeals] = await db.query(
@@ -216,7 +235,7 @@ router.get('/user/favorite-meals', auth.authenticateToken, async (req, res) => {
       WHERE s.customer_id = ?
       GROUP BY r.recipe_id, r.recipe_name, r.price, r.image_url
       ORDER BY total_ordered DESC`,
-      [req.user.id]
+      [req.user.customer_id]
     );
 
     res.json({
@@ -234,7 +253,47 @@ router.get('/user/favorite-meals', auth.authenticateToken, async (req, res) => {
   }
 });
 
-// Get order details
+// Get all orders for staff dashboard
+router.get('/all', auth.authenticateToken, async (req, res) => {
+  try {
+    console.log('Fetching all orders for staff dashboard...'); // Add log
+    const [orders] = await db.query(`
+      SELECT 
+        s.sale_id as order_id,
+        s.sale_time as time,
+        s.status,
+        s.delivery_address,
+        c.customer_name,
+        GROUP_CONCAT(
+          JSON_OBJECT(
+            'recipe_name', r.recipe_name,
+            'quantity', od.quantity
+          )
+        ) as order_details
+      FROM sale s
+      JOIN customer c ON s.customer_id = c.customer_id
+      JOIN order_detail od ON s.sale_id = od.sale_id
+      JOIN recipe r ON od.recipe_id = r.recipe_id
+      GROUP BY s.sale_id, s.sale_time, s.status, s.delivery_address, c.customer_name
+      ORDER BY s.sale_time DESC
+    `);
+    console.log('All orders fetched.', orders.length);
+
+    // Parse order_details JSON string to array for each order
+    const formattedOrders = orders.map(order => ({
+      ...order,
+      order_details: JSON.parse(`[${order.order_details}]`)
+    }));
+
+    res.json({ success: true, orders: formattedOrders });
+
+  } catch (error) {
+    console.error('Error fetching all orders:', error);
+    res.status(500).json({ success: false, message: 'Error fetching all orders' });
+  }
+});
+
+// Get details for a specific order
 router.get('/:orderId', auth.authenticateToken, async (req, res) => {
   const { orderId } = req.params;
   
@@ -307,16 +366,6 @@ router.put('/complete/:orderId', auth.authenticateToken, async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   } finally {
     if (connection) connection.release();
-  }
-});
-
-// Get all revenue records
-router.get('/revenue', async (req, res) => {
-  try {
-    const [rows] = await db.query('SELECT * FROM revenue ORDER BY date_recorded DESC');
-    res.json({ success: true, revenue: rows });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
   }
 });
 

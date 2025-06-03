@@ -1,0 +1,257 @@
+/* Import font Bubblegum Sans từ Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Bubblegum+Sans&display=swap');
+
+/* Áp dụng font Bubblegum Sans cho toàn bộ dashboard */
+.dashboard-container {
+  padding: 20px;
+  background-color: #F8F5E9; 
+  min-height: 100vh;
+  font-family: 'Bubblegum Sans', sans-serif; 
+}
+
+/* Header */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.dashboard-tabs {
+  display: flex;
+  gap: 0;
+}
+
+.tab {
+  padding: 12px 24px;
+  background-color: #9DC08B; 
+  border: 1px solid #3A7D44; 
+  cursor: pointer;
+  font-weight: 1000;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  color: #3A7D44; 
+}
+
+.tab:first-child {
+  border-radius: 8px 0 0 8px;
+}
+
+.tab:last-child {
+  border-radius: 0 8px 8px 0;
+}
+
+.tab.active {
+  background-color: #3A7D44; /* Xanh lá đậm cho tab active */
+  color: #F8F5E9; /* Chữ màu nền nhạt */
+  font-weight: 600;
+}
+
+.tab:hover:not(.active) {
+  background-color: #DF6D14; /* Cam đậm khi hover */
+  color: #F8F5E9; /* Chữ màu nền nhạt */
+}
+
+.dashboard-date {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  color: #9DC08B; /* Xanh lá nhạt cho ngày tháng */
+  gap: 8px;
+}
+
+.date-icon {
+  font-size: 14px;
+  color: #3A7D44; /* Xanh lá đậm cho icon ngày */
+}
+
+/* Main Content */
+.dashboard-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.dashboard-left {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dashboard-right {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Cards */
+.dashboard-card {
+  background-color: #9DC08B; /* Xanh lá nhạt cho card */
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.card-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #3A7D44; /* Xanh lá đậm cho tiêu đề card */
+  margin-bottom: 15px;
+}
+
+/* Sale Card */
+.sale-card {
+  /* Remove fixed height */
+  /* height: 400px; */
+}
+
+.daily-sales-chart-area {
+  position: relative; /* Needed for Chart.js responsiveness */
+  height: calc(100% - 40px); /* Allocate height within the card, leave space for header/padding */
+  width: 100%;
+}
+
+/* New style for Daily Revenue Chart Area */
+.daily-revenue-chart-area {
+  position: relative; /* Needed for Chart.js responsiveness */
+  height: calc(100% - 40px); /* Allocate height within the card */
+  width: 100%;
+}
+
+.metric-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #3A7D44; /* Xanh lá đậm cho giá trị metric */
+  margin-bottom: 5px;
+}
+
+.metric-label {
+  font-size: 14px;
+  color: #DF6D14; /* Cam đậm cho nhãn metric */
+  margin-bottom: 20px;
+}
+
+.chart-container {
+  background-color: #F8F5E9; /* Màu nền nhạt cho chart */
+  border-radius: 8px;
+  padding: 15px;
+  height: 200px;
+}
+
+.chart-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #9DC08B; /* Xanh lá nhạt cho tiêu đề chart */
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.chart-subtitle {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  font-size: 10px;
+  color: #DF6D14; /* Cam đậm cho phụ đề chart */
+  margin-bottom: 15px;
+}
+
+.line-chart,
+.dual-line-chart {
+  position: relative;
+  height: 120px;
+}
+
+.chart-svg {
+  width: 100%;
+  height: 80px;
+}
+
+.chart-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #9DC08B; /* Xanh lá nhạt cho nhãn chart */
+  margin-top: 10px;
+}
+
+/* Salaries Card */
+.salaries-card {
+  /* Keep height flexible for the table */
+}
+
+.salaries-table {
+  width: 100%;
+  border-collapse: collapse; /* Remove space between borders */
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.salaries-table th,
+.salaries-table td {
+  border: 1px solid #3A7D44; /* Dark green border */
+  padding: 10px;
+  text-align: left; /* Align text to the left */
+}
+
+.salaries-table th {
+  background-color: #3A7D44; /* Dark green background for header */
+  color: #F8F5E9; /* Light text color */
+  font-weight: 600;
+}
+
+.salaries-table tbody tr:nth-child(even) {
+  background-color: #9DC08B; /* Light green background for even rows */
+}
+
+.salaries-table tbody tr:hover {
+  background-color: #DF6D14; /* Amber background on hover */
+  color: #F8F5E9; /* Light text color on hover */
+}
+
+/* Import Price Card */
+.import-card {
+  /* Remove fixed height */
+  /* height: 120px; */
+}
+
+/* Revenue Card */
+.revenue-card {
+  height: 300px;
+}
+
+.revenue-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #3A7D44; /* Xanh lá đậm cho giá trị revenue */
+  margin-bottom: 5px;
+}
+
+/* New style for Daily Import Price Chart Area */
+.daily-import-chart-area {
+  position: relative; /* Needed for Chart.js responsiveness */
+  height: calc(100% - 40px); /* Allocate height within the card */
+  width: 100%;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .dashboard-content {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-start;
+  }
+
+  .dashboard-date {
+    font-size: 11px;
+  }
+
+  .tab {
+    padding: 10px 16px;
+    font-size: 12px;
+  }
+}

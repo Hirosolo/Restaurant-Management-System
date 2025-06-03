@@ -15,6 +15,8 @@ CREATE TABLE customer(
 CREATE TABLE staff(
     staff_id INT AUTO_INCREMENT PRIMARY KEY,
     staff_name VARCHAR(100) NOT NULL,
+    staff_email VARCHAR(100) NOT NULL,
+    password VARCHAR(100) NOT NULL,
     role ENUM('Manager','Chef','Order Staff','Kitchen Supervisor','Shipper') NOT NULL,
     phone VARCHAR(10),
     pay_rates FLOAT

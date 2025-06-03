@@ -18,6 +18,7 @@ function Account() {
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [favoriteMeals, setFavoriteMeals] = useState([]);
   const [isLoadingFavorites, setIsLoadingFavorites] = useState(false);
+  const [refreshOrdersTrigger, setRefreshOrdersTrigger] = useState(0);
   
   // Address form states
   const [ward, setWard] = useState('');
@@ -124,7 +125,7 @@ function Account() {
     }
   }, [authStatus, navigate]);
   
-  // Fetch order history when order history tab is active
+  // Fetch order history when order history tab is active or trigger changes
   useEffect(() => {
     const fetchOrderHistory = async () => {
       if (activeTab === 'order-history' && authStatus === 'signedIn') {
@@ -135,6 +136,7 @@ function Account() {
             throw new Error('No authentication token found');
           }
 
+          console.log('Fetching order history...');
           const response = await fetch('http://localhost:3001/api/orders/user/orders', {
             headers: {
               'Authorization': `Bearer ${token}`
@@ -146,6 +148,7 @@ function Account() {
           }
 
           const data = await response.json();
+          console.log('Order history fetched:', data);
           if (data.success) {
             setOrderHistory(data.orders);
           }
@@ -159,7 +162,7 @@ function Account() {
     };
 
     fetchOrderHistory();
-  }, [activeTab, authStatus]);
+  }, [activeTab, authStatus, refreshOrdersTrigger]);
   
   // Fetch favorite meals when favourite-orders tab is active
   useEffect(() => {
@@ -172,6 +175,7 @@ function Account() {
             throw new Error('No authentication token found');
           }
 
+          console.log('Fetching favorite meals...');
           const response = await fetch('http://localhost:3001/api/orders/user/favorite-meals', {
             headers: {
               'Authorization': `Bearer ${token}`
@@ -183,6 +187,7 @@ function Account() {
           }
 
           const data = await response.json();
+          console.log('Favorite meals fetched:', data);
           if (data.success) {
             setFavoriteMeals(data.favoriteMeals);
           }
@@ -201,6 +206,9 @@ function Account() {
   // Handlers
   const handleTabChange = (tab) => {
     setActiveTab(tab);
+    if (tab === 'order-history') {
+      setRefreshOrdersTrigger(prev => prev + 1);
+    }
   };
   
   const handleLogout = () => {
@@ -374,8 +382,10 @@ function Account() {
                               method: 'PUT',
                               headers: { 'Authorization': `Bearer ${token}` }
                             });
-                            // Refresh order history
+                            // Refresh order history locally after marking as complete
                             setOrderHistory((prev) => prev.map(o => o.sale_id === order.sale_id ? { ...o, status: 'Completed' } : o));
+                            // Also trigger a full re-fetch to be safe, although local update might be enough
+                            setRefreshOrdersTrigger(prev => prev + 1);
                           }}
                         >
                           Received the order
