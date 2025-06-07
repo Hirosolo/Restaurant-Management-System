@@ -618,4 +618,37 @@ router.get('/ingredients', async (req, res) => {
   }
 });
 
+// Mark guest order as completed (no auth, no loyalty points)
+router.put('/guest/complete/:orderId', async (req, res) => {
+  const { orderId } = req.params;
+  let connection;
+  try {
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+
+    // Only allow if order belongs to a guest (customer_name LIKE 'Guest_%')
+    const [order] = await connection.query(
+      `SELECT s.*, c.customer_name FROM sale s JOIN customer c ON s.customer_id = c.customer_id WHERE s.sale_id = ? AND c.customer_name LIKE 'Guest_%'`,
+      [orderId]
+    );
+    if (order.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({ success: false, message: 'Order not found or not a guest order' });
+    }
+
+    await connection.query(
+      `UPDATE sale SET status = 'Completed', completion_time = NOW() WHERE sale_id = ?`,
+      [orderId]
+    );
+
+    await connection.commit();
+    res.json({ success: true, message: 'Guest order marked as completed.' });
+  } catch (error) {
+    if (connection) await connection.rollback();
+    res.status(500).json({ success: false, message: error.message });
+  } finally {
+    if (connection) connection.release();
+  }
+});
+
 module.exports = router;
