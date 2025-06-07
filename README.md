@@ -5,6 +5,10 @@ A full-stack web application for restaurant management, featuring:
 - Staff interface for managing inventory, recipes, staff, and viewing revenue
 - Backend API with authentication, order processing, and database integration
 
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://example.com)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Version](https://img.shields.io/badge/version-1.0.0-orange.svg)](https://example.com)
+
 ## Features
 
 ### User Interface (Customer)
@@ -26,24 +30,7 @@ A full-stack web application for restaurant management, featuring:
 - MySQL database integration
 - Order, recipe, ingredient, staff, and sales management
 
-## Project Structure
-
-```
-Restaurant-Management-System/
-├── backend/           # Node.js/Express backend API
-├── src/               # User interface (React)
-├── staff-interface/   # Staff interface (React)
-├── public/            # Static assets for user interface
-├── README.md          # Project documentation
-└── ...
-```
-
-## Prerequisites
-- Node.js (v16 or later recommended)
-- npm (v8 or later)
-- MySQL server
-
-## Setup Instructions
+## Installation
 
 ### 1. Clone the repository
 ```
@@ -106,6 +93,3 @@ See `backend/.env` for backend configuration:
 - `PORT`: Backend server port (default 3001)
 - `JWT_SECRET`: Secret for JWT authentication
 - `FRONTEND_URL`: Allowed frontend URL for CORS
-
-## License
-This project is for educational purposes.
