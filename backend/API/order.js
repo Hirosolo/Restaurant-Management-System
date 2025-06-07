@@ -264,6 +264,7 @@ router.get('/all', auth.authenticateToken, async (req, res) => {
         s.status,
         s.delivery_address,
         c.customer_name,
+        c.phone,
         GROUP_CONCAT(
           JSON_OBJECT(
             'recipe_name', r.recipe_name,
@@ -348,19 +349,45 @@ router.get('/:orderId', auth.authenticateToken, async (req, res) => {
 });
 
 // Add an endpoint to mark an order as completed
-router.put('/complete/:orderId', auth.authenticateToken, async (req, res) => {
+router.put('/complete/:orderId', auth.authenticateCustomerToken, async (req, res) => {
   const { orderId } = req.params;
   let connection;
   try {
     connection = await db.getConnection();
     await connection.beginTransaction();
+    
+    // First verify that the order belongs to the customer
+    const [order] = await connection.query(
+      'SELECT * FROM sale WHERE sale_id = ? AND customer_id = ?',
+      [orderId, req.user.customer_id]
+    );
+
+    if (order.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({ success: false, message: 'Order not found or not authorized' });
+    }
+
+    // Calculate loyalty points (1 point per 1000 VND)
+    const loyaltyPointsEarned = Math.floor(order[0].total_amount / 1000);
+
     // Set status to Completed and completion_time to NOW()
     const [result] = await connection.query(
       `UPDATE sale SET status = 'Completed', completion_time = NOW() WHERE sale_id = ?`,
       [orderId]
     );
+
+    // Update customer's loyalty points
+    await connection.query(
+      `UPDATE customer SET loyalty_point = loyalty_point + ? WHERE customer_id = ?`,
+      [loyaltyPointsEarned, req.user.customer_id]
+    );
+
     await connection.commit();
-    res.json({ success: true, message: 'Order marked as completed.' });
+    res.json({ 
+      success: true, 
+      message: 'Order marked as completed.',
+      loyaltyPointsEarned
+    });
   } catch (error) {
     if (connection) await connection.rollback();
     res.status(500).json({ success: false, message: error.message });

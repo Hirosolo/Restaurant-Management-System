@@ -1,21 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
+const auth = require('../middleware/auth');
 
 // Get all ingredients
-router.get('/ingredients', async (req, res) => {
+router.get('/ingredients', auth.authenticateToken, async (req, res) => {
   try {
     // Select ingredient_id, ingredient_name, unit, quantity, minimum_threshold from ingredient and supplier_name from supplier
     const [ingredients] = await db.query(
-      'SELECT i.ingredient_id, i.ingredient_name, i.unit, i.quantity, i.minimum_threshold, s.supplier_name \
+      'SELECT i.ingredient_id, i.ingredient_name, i.unit, i.quantity, i.minimum_threshold, i.good_for, MAX(s.supplier_name) as supplier_name \
        FROM ingredient i \
        LEFT JOIN supplier_product sp ON i.ingredient_id = sp.ingredient_id \
-       LEFT JOIN supplier s ON sp.supplier_id = s.supplier_id'
+       LEFT JOIN supplier s ON sp.supplier_id = s.supplier_id \
+       GROUP BY i.ingredient_id, i.ingredient_name, i.unit, i.quantity, i.minimum_threshold, i.good_for'
     );
-    res.json(ingredients);
+    res.json({ success: true, ingredients: ingredients });
   } catch (error) {
     console.error('Error fetching ingredients:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
 
@@ -56,7 +58,7 @@ router.post('/ingredients', async (req, res) => {
 router.put('/ingredients/:id', async (req, res) => {
   try {
     const ingredientId = req.params.id;
-    const { ingredient_name, quantity, unit, minimum_threshold, supplier_id } = req.body;
+    const { ingredient_name, quantity, unit, minimum_threshold, supplier_id, good_for } = req.body;
 
     if (!ingredient_name || quantity === undefined || unit === undefined) {
       return res.status(400).json({ error: 'Ingredient name, quantity, and unit are required' });
@@ -64,8 +66,8 @@ router.put('/ingredients/:id', async (req, res) => {
 
     // Update ingredient table
     const [result] = await db.query(
-      'UPDATE ingredient SET ingredient_name = ?, quantity = ?, unit = ?, minimum_threshold = ? WHERE ingredient_id = ?',
-      [ingredient_name, quantity, unit, minimum_threshold, ingredientId]
+      'UPDATE ingredient SET ingredient_name = ?, quantity = ?, unit = ?, minimum_threshold = ?, good_for = ? WHERE ingredient_id = ?',
+      [ingredient_name, quantity, unit, minimum_threshold, good_for, ingredientId]
     );
 
     if (result.affectedRows === 0) {
@@ -118,6 +120,70 @@ router.delete('/ingredients/:id', async (req, res) => {
         return res.status(409).json({ error: 'Cannot delete ingredient because it is referenced by recipes, restock orders, or waste records.' });
     }
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get all ingredients and their stock (Existing route, keeping it here)
+router.get('/', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT * FROM ingredient ORDER BY ingredient_name');
+    res.json({ success: true, ingredients: rows });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Endpoint to get all waste details
+router.get('/waste', auth.authenticateToken, async (req, res) => {
+  try {
+    console.log('Fetching all waste details for authenticated staff...');
+    const [wasteData] = await db.query(`
+      SELECT 
+        w.waste_id,
+        w.waste_date,
+        i.ingredient_name,
+        wd.quantity as wasted_quantity,
+        i.unit
+      FROM waste w
+      JOIN waste_detail wd ON w.waste_id = wd.waste_id
+      JOIN ingredient i ON wd.ingredient_id = i.ingredient_id
+      ORDER BY w.waste_date DESC, w.waste_id, i.ingredient_name
+    `);
+    console.log('Waste details fetched.', wasteData.length);
+    res.json({ success: true, waste: wasteData });
+  } catch (error) {
+    console.error('Error fetching waste details:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// New endpoint to get restock details for a specific ingredient
+router.get('/ingredients/:ingredientId/restocks', auth.authenticateToken, async (req, res) => {
+  try {
+    const { ingredientId } = req.params;
+    console.log(`Fetching restock details for ingredient ID: ${ingredientId}`);
+
+    // Select restock details and restock date for a specific ingredient
+    const [restockDetails] = await db.query(`
+      SELECT
+        rd.restock_id,
+        r.restock_date,
+        rd.import_quantity,
+        rd.import_price,
+        i.unit
+      FROM restock_detail rd
+      JOIN restock r ON rd.restock_id = r.restock_id
+      JOIN ingredient i ON rd.ingredient_id = i.ingredient_id
+      WHERE rd.ingredient_id = ?
+      ORDER BY r.restock_date DESC
+    `, [ingredientId]);
+
+    console.log(`Restock details fetched for ingredient ${ingredientId}:`, restockDetails.length);
+    res.json({ success: true, restockDetails: restockDetails });
+
+  } catch (error) {
+    console.error(`Error fetching restock details for ingredient ${ingredientId}:`, error);
+    res.status(500).json({ success: false, message: 'Error fetching restock details' });
   }
 });
 

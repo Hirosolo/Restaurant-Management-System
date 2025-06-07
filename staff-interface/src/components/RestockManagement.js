@@ -10,13 +10,22 @@ const RestockManagement = ({ onViewDetails }) => {
   useEffect(() => {
     const fetchRestockOrders = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/restocks');
+        const token = localStorage.getItem('staffToken');
+        if (!token) {
+          throw new Error('No staff authentication token found');
+        }
+
+        const response = await fetch('http://localhost:3001/api/restocks', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
         if (!response.ok) {
           throw new Error('Failed to fetch restock orders');
         }
         const data = await response.json();
         console.log('Fetched restock orders data:', data);
-        setRestockOrders(data);
+        setRestockOrders(data.restocks);
       } catch (err) {
         console.error('Error fetching restock orders:', err);
         setError('Failed to load restock orders.');

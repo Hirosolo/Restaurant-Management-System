@@ -42,11 +42,11 @@ function Landingpage() {
             ref={navRef}
           >
             <div className="close-btn" onClick={toggleMenu}>✕</div>
-            <a href="#">About us</a>
+            <a href="">Home</a>
             <Link to="/menu" onClick={toggleMenu}>Menu</Link>
             <img src="/assets/logo.png" alt="Logo" className="logo" />
-            <a href="#">Delivery</a>
-            <a href="#">Support</a>
+            <a href="/discount">Discount</a>
+            <a href="/support">Support</a>
           </div>
         </div>
 

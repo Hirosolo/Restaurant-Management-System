@@ -36,7 +36,12 @@ const AddRecipe = ({ onSave, onCancel }) => {
         }
         const data = await response.json();
         console.log('Fetched ingredients data:', data);
-        setAvailableIngredients(data);
+        if (data.success && Array.isArray(data.ingredients)) {
+          setAvailableIngredients(data.ingredients);
+        } else {
+          console.error('Unexpected data format from ingredients API:', data);
+          setAvailableIngredients([]);
+        }
       } catch (err) {
         console.error('Error fetching ingredients:', err);
         // setError('Failed to load ingredients.'); // Consider showing this to the user

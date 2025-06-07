@@ -1,0 +1,122 @@
+.discount-page {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.discount-container {
+  flex: 1;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  height: calc(100vh - 80px); /* Adjust 80px based on your navbar height */
+}
+
+.discount-images {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  padding: 0 20px;
+  width: 100%;
+  height: 100%;
+  max-width: 1800px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.image-item {
+  width: 100%;
+  height: 100%;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  position: relative;
+  cursor: pointer;
+  transform-origin: center;
+}
+
+.image-item.expanded {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80vw;
+  height: 80vh;
+  z-index: 1000;
+  border-radius: 15px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.image-item.expanded::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.image-item.expanded::before {
+  opacity: 1;
+}
+
+.image-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transform-origin: center;
+}
+
+.image-item.expanded img {
+  transform: scale(1.05);
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .discount-images {
+    gap: 15px;
+    padding: 0 15px;
+  }
+}
+
+@media (max-width: 768px) {
+  .discount-container {
+    height: calc(100vh - 60px); /* Adjust for smaller navbar on mobile */
+  }
+  
+  .discount-images {
+    gap: 10px;
+    padding: 0 10px;
+  }
+
+  .image-item.expanded {
+    width: 90vw;
+    height: 70vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .discount-container {
+    height: calc(100vh - 50px); /* Adjust for even smaller navbar on mobile */
+  }
+  
+  .discount-images {
+    gap: 8px;
+    padding: 0 8px;
+  }
+
+  .image-item.expanded {
+    width: 95vw;
+    height: 60vh;
+  }
+} 

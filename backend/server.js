@@ -9,6 +9,7 @@ const ingredientRoutes = require('./API/ingredient');
 const restockRoutes = require('./API/restock');
 const supplierRoutes = require('./API/supplier');
 const salesRoutes = require('./API/sales'); // Import the new sales routes
+const scheduleRoutes = require('./API/schedule'); // Import the new schedule routes
 require('dotenv').config();
 
 // const testRoutes = require('./routes/test'); 
@@ -64,6 +65,9 @@ console.log('Supplier routes registered');
 
 app.use('/api', salesRoutes); // Use the new sales routes
 console.log('Sales routes registered');
+
+app.use('/api/schedules', scheduleRoutes); // Use the new schedule routes
+console.log('Schedule routes registered');
 
 // Error handling middleware
 app.use((err, req, res, next) => {

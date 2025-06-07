@@ -1,16 +1,37 @@
 export const fetchIngredients = async () => {
-  const response = await fetch('http://localhost:3001/api/ingredients');
-  if (!response.ok) {
-    throw new Error('Failed to fetch ingredients');
+  const token = localStorage.getItem('staffToken'); // Assuming staff token is stored as 'staffToken'
+  if (!token) {
+    throw new Error('No staff authentication token found');
   }
-  return response.json();
+  
+  const response = await fetch('http://localhost:3001/api/ingredients', {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ingredients: ${response.status}`);
+  }
+  const data = await response.json();
+  // Assuming the backend returns { success: true, ingredients: [...] }
+  if (data.success && Array.isArray(data.ingredients)) {
+    return data.ingredients;
+  } else {
+    throw new Error('Unexpected data format from ingredients API');
+  }
 };
 
 export const deleteIngredient = async (ingredientId) => {
+  const token = localStorage.getItem('staffToken'); // Assuming staff token is stored as 'staffToken'
+   if (!token) {
+     throw new Error('No staff authentication token found');
+   }
+
   const response = await fetch(`http://localhost:3001/api/ingredients/${ingredientId}`, {
     method: 'DELETE',
     headers: {
-      // TODO: Add authentication headers if needed
+      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
   });
@@ -24,10 +45,15 @@ export const deleteIngredient = async (ingredientId) => {
 };
 
 export const updateIngredient = async (ingredientId, ingredientData) => {
+  const token = localStorage.getItem('staffToken'); // Assuming staff token is stored as 'staffToken'
+   if (!token) {
+     throw new Error('No staff authentication token found');
+   }
+
   const response = await fetch(`http://localhost:3001/api/ingredients/${ingredientId}`, {
     method: 'PUT',
     headers: {
-      // TODO: Add authentication headers if needed
+      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(ingredientData),
@@ -43,7 +69,16 @@ export const updateIngredient = async (ingredientId, ingredientData) => {
 };
 
 export const fetchSuppliers = async () => {
-  const response = await fetch('http://localhost:3001/api/suppliers');
+   const token = localStorage.getItem('staffToken'); // Assuming staff token is stored as 'staffToken'
+    if (!token) {
+      throw new Error('No staff authentication token found');
+    }
+
+  const response = await fetch('http://localhost:3001/api/suppliers', {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
   if (!response.ok) {
     throw new Error('Failed to fetch suppliers');
   }

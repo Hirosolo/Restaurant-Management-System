@@ -45,15 +45,18 @@ router.get('/restocks', auth.authenticateToken, async (req, res) => { // Add aut
 // Get details for a specific restock order
 router.get('/restocks/:id', auth.authenticateToken, async (req, res) => { // Add auth middleware
   try {
+    // Join with the restock table to get the restock_date
     const [restockDetails] = await db.query(`
       SELECT
         rd.ingredient_id,
         i.ingredient_name,
         rd.import_quantity,
         rd.import_price,
-        i.unit
+        i.unit,
+        r.restock_date
       FROM restock_detail rd
       JOIN ingredient i ON rd.ingredient_id = i.ingredient_id
+      JOIN restock r ON rd.restock_id = r.restock_id
       WHERE rd.restock_id = ?
     `, [req.params.id]);
 

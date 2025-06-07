@@ -225,3 +225,273 @@
     padding: 15px;
   }
 }
+
+/* Add styles for the ingredients dashboard */
+.ingredients-container {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding: 24px;
+}
+
+.ingredients-content {
+  /* Add styles if needed for the overall content area */
+}
+
+.ingredients-sections {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive grid */
+  gap: 24px;
+  margin-top: 24px; /* Add some space below the header */
+}
+
+.ingredients-card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  /* Remove fixed height if it exists and causes overflow */
+  /* height: 300px; /* Example: Remove or adjust */ 
+  display: flex; /* Use flexbox for internal layout */
+  flex-direction: column; /* Stack content vertically */
+}
+
+.ingredients-card h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 16px;
+}
+
+.ingredients-section {
+  /* Styles for sections like Most Imported */
+   background: white;
+   border-radius: 12px;
+   padding: 16px;
+   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+   margin-bottom: 24px; /* Space between sections */
+}
+
+.bottom-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Two columns for waste and incomplete */
+    gap: 24px;
+    margin-bottom: 24px; /* Space below this section */
+}
+
+.waste-section,
+.incomplete-section {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: flex; /* Use flexbox */
+    flex-direction: column; /* Stack content vertically */
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 16px;
+}
+
+.subsection-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: #4b5563;
+    margin-top: 12px; /* Space above subsection title */
+    margin-bottom: 8px;
+}
+
+/* Table styles (for Most Imported and others) */
+.ingredients-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table-header,
+.table-row {
+  display: flex;
+  border-bottom: 1px solid #e5e7eb; /* Light gray border */
+  padding: 10px 0;
+  align-items: center;
+}
+
+.table-header {
+  font-weight: 600;
+  color: #4b5563;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.col-ingredients {
+  flex: 3;
+}
+
+.col-quantity,
+.col-unit,
+.col-supplier,
+.col-order-id,
+.col-reason {
+  flex: 1;
+  text-align: left;
+}
+
+/* Styles for the Waste table */
+.waste-table {
+  width: 100%; /* Make the table take full width */
+  border-collapse: collapse;
+  margin-top: 10px; /* Space above the table */
+  font-size: 14px;
+}
+
+.waste-table th,
+.waste-table td {
+  border: 1px solid #d1d5db; /* Light border */
+  padding: 10px;
+  text-align: left;
+}
+
+.waste-table th {
+  background-color: #f3f4f6; /* Light background for header */
+  color: #374151; /* Dark text color */
+  font-weight: 600;
+}
+
+.waste-table tbody tr:nth-child(even) {
+  background-color: #f9fafb; /* Very light background for even rows */
+}
+
+.waste-table tbody tr:hover {
+  background-color: #e5e7eb; /* Lighter gray background on hover */
+}
+
+/* Styles for Incomplete Orders table */
+.incomplete-table {
+  background-color: white;
+  border-collapse: collapse;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.incomplete-table th,
+.incomplete-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.incomplete-table th {
+  background-color: #F9FAFB;
+  color: #374151;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.incomplete-table tbody tr:nth-child(even) {
+  background-color: #F9FAFB; /* Light grey for even rows */
+}
+
+.incomplete-table tbody tr:hover {
+  background-color: #F3F4F6; /* Slightly darker grey on hover */
+}
+
+.incomplete-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Responsive adjustments for incomplete-table */
+@media (max-width: 768px) {
+  .incomplete-table th,
+  .incomplete-table td {
+    padding: 10px;
+    font-size: 12px;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .ingredients-card,
+  .ingredients-section,
+  .waste-section,
+  .incomplete-section {
+    padding: 12px;
+  }
+}
+
+/* Styles for the Show All Ingredients button */
+.show-more-button {
+  display: block; /* Make button take full width or center it */
+  margin: 20px auto; /* Add some space above and center */
+  padding: 10px 20px;
+  background-color: #4CAF50; /* Green background */
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+.show-more-button:hover {
+  background-color: #45a049; /* Darker green on hover */
+}
+
+/* Styles for the modal close button */
+.modal-close-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  color: #555; /* Dark gray color */
+  transition: color 0.3s ease;
+}
+
+.modal-close-button:hover {
+  color: #000; /* Black on hover */
+}
+
+/* Basic Modal Styles (add more as needed for overlay and content) */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Ensure it's on top of other content */
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%; /* Adjust width as needed */
+    max-width: 800px; /* Max width */
+    max-height: 90vh; /* Max height to allow scrolling */
+    overflow-y: auto; /* Enable vertical scrolling */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.modal-header h3 {
+    margin: 0;
+}
+
+.modal-body {
+    /* Padding and overflow handled in modal-content */
+}

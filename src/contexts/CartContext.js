@@ -47,9 +47,14 @@ export function CartProvider({ children, initialCart, setPropCart }) {
       const updatedCart = [...prevCart];
       
       if (existingItemIndex !== -1) {
-        updatedCart[existingItemIndex].quantity += 1;
+        // If item exists, increment its quantity by 1
+        updatedCart[existingItemIndex] = {
+          ...updatedCart[existingItemIndex],
+          quantity: updatedCart[existingItemIndex].quantity + 1
+        };
         console.log(`CartContext: Updated quantity for ${item.name}: ${updatedCart[existingItemIndex].quantity}`);
       } else {
+        // If item doesn't exist, add it with quantity 1
         const newItem = { 
           ...item, 
           quantity: 1, 

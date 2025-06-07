@@ -18,13 +18,22 @@ const RestockDetails = ({ order, onClose }) => {
       setError(null);
 
       try {
-        const response = await fetch(`http://localhost:3001/api/restocks/${order.restock_id}`);
+        const token = localStorage.getItem('staffToken'); // Retrieve staff token
+        if (!token) {
+          throw new Error('No staff authentication token found'); // Handle missing token
+        }
+
+        const response = await fetch(`http://localhost:3001/api/restocks/${order.restock_id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`, // Add Authorization header
+          },
+        });
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || 'Failed to fetch restock details');
         }
         const data = await response.json();
-        setRestockDetails(data);
+        setRestockDetails(data.restockDetails);
       } catch (err) {
         console.error('Error fetching restock details:', err);
         setError(`Failed to load restock details: ${err.message}`);

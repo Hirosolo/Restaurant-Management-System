@@ -2,10 +2,12 @@
   background: white;
   border-radius: 12px;
   padding: 24px;
-  max-width: 600px;
-  width: 90%;
+  /* Removed max-width, width, and margin to fill parent */
+  /* max-width: 600px; */
+  /* width: 90%; */
   max-height: 80vh;
   overflow-y: auto;
+  /* Removed margin: auto; */
 }
 
 .details-header {
@@ -66,7 +68,7 @@
 .table-header {
   background-color: #F3F4F6;
   display: grid;
-  grid-template-columns: 1fr 100px 80px 120px;
+  grid-template-columns: 1fr 110px 90px 130px;
   gap: 1px;
   font-weight: 600;
   font-size: 14px;
@@ -81,7 +83,7 @@
 
 .table-row {
   display: grid;
-  grid-template-columns: 1fr 100px 80px 120px;
+  grid-template-columns: 1fr 110px 90px 130px;
   gap: 1px;
   padding: 12px;
   border-bottom: 1px solid #E5E7EB;
@@ -96,12 +98,14 @@
 
 .col-ingredients {
   text-align: left;
+  word-break: break-word;
 }
 
 .col-quantity,
 .col-unit,
 .col-price {
   text-align: center;
+  word-break: break-word;
 }
 
 .total-section {

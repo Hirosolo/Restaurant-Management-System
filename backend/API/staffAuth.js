@@ -37,4 +37,25 @@ router.get('/salaries', authenticateToken, async (req, res) => {
   }
 });
 
+// New endpoint to get all staff members
+router.get('/all', authenticateToken, async (req, res) => {
+  try {
+    console.log('Fetching all staff members for authenticated staff...');
+    const [staffMembers] = await db.query(`
+      SELECT
+        staff_id,
+        staff_name,
+        staff_email,
+        role,
+        phone
+      FROM staff
+    `);
+    console.log('Staff members fetched.', staffMembers.length);
+    res.json({ success: true, staff: staffMembers });
+  } catch (error) {
+    console.error('Error fetching staff members:', error);
+    res.status(500).json({ success: false, message: 'Error fetching staff members' });
+  }
+});
+
 module.exports = router; 

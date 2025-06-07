@@ -90,6 +90,10 @@
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
 }
 
 .card-header h3 {
@@ -107,15 +111,21 @@
 
 .daily-sales-chart-area {
   position: relative; /* Needed for Chart.js responsiveness */
-  height: calc(100% - 40px); /* Allocate height within the card, leave space for header/padding */
+  height: 100%; /* Allocate height within the card, leave space for header/padding */
   width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* New style for Daily Revenue Chart Area */
 .daily-revenue-chart-area {
   position: relative; /* Needed for Chart.js responsiveness */
-  height: calc(100% - 40px); /* Allocate height within the card */
+  height: 100%; /* Allocate height within the card */
   width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .metric-value {
@@ -135,7 +145,10 @@
   background-color: #F8F5E9; /* Màu nền nhạt cho chart */
   border-radius: 8px;
   padding: 15px;
-  height: 200px;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .chart-title {
@@ -159,7 +172,8 @@
 .line-chart,
 .dual-line-chart {
   position: relative;
-  height: 120px;
+  height: 100%;
+  flex: 1;
 }
 
 .chart-svg {
@@ -217,7 +231,8 @@
 
 /* Revenue Card */
 .revenue-card {
-  height: 300px;
+  height: auto;
+  flex: 1;
 }
 
 .revenue-value {
@@ -230,8 +245,11 @@
 /* New style for Daily Import Price Chart Area */
 .daily-import-chart-area {
   position: relative; /* Needed for Chart.js responsiveness */
-  height: calc(100% - 40px); /* Allocate height within the card */
+  height: 100%; /* Allocate height within the card */
   width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* Responsive */
