@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import '../styles/EditRecipe.css'; // Ensure you have the correct path to your CSS file
+import { fetchIngredients } from '../api/ingredientApi';
 
 const EditRecipe = ({ recipe, onSave, onCancel }) => {
   const [title, setTitle] = useState('');
@@ -28,25 +29,24 @@ const EditRecipe = ({ recipe, onSave, onCancel }) => {
   // State for ingredient search
   const [ingredientSearchTerm, setIngredientSearchTerm] = useState('');
   const [ingredientSearchResults, setIngredientSearchResults] = useState([]);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
   // Fetch ingredients when component mounts
   useEffect(() => {
-    const fetchIngredients = async () => {
+    const loadIngredients = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/ingredients');
-        if (!response.ok) {
-          throw new Error('Failed to fetch ingredients');
-        }
-        const data = await response.json();
-        setAvailableIngredients(data);
+        const ingredients = await fetchIngredients();
+        console.log('Fetched ingredients data:', ingredients);
+        setAvailableIngredients(ingredients);
       } catch (err) {
+        console.error('Error fetching ingredients:', err);
         // setError('Failed to load ingredients.'); // Consider showing this to the user
       } finally {
         setFetchingIngredients(false);
       }
     };
 
-    fetchIngredients();
+    loadIngredients();
   }, []); // Fetch ingredients only once on mount
 
   // Load basic recipe data when recipe prop changes
@@ -152,6 +152,7 @@ const EditRecipe = ({ recipe, onSave, onCancel }) => {
   const handleIngredientSearchChange = (e) => {
     const term = e.target.value;
     setIngredientSearchTerm(term);
+    setHighlightedIndex(-1);
 
     if (term.length > 1) { // Only search if term is at least 2 characters
       const results = availableIngredients.filter(ing =>
@@ -160,6 +161,41 @@ const EditRecipe = ({ recipe, onSave, onCancel }) => {
       setIngredientSearchResults(results);
     } else {
       setIngredientSearchResults([]); // Clear results if search term is too short
+    }
+  };
+
+  const handleIngredientSearchKeyDown = (e) => {
+    if (ingredientSearchResults.length === 0) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setHighlightedIndex(prev => 
+          prev < ingredientSearchResults.length - 1 ? prev + 1 : 0
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setHighlightedIndex(prev => 
+          prev > 0 ? prev - 1 : ingredientSearchResults.length - 1
+        );
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (highlightedIndex >= 0 && highlightedIndex < ingredientSearchResults.length) {
+          handleSelectIngredient(ingredientSearchResults[highlightedIndex]);
+        } else if (ingredientSearchResults.length > 0) {
+          // If no item is highlighted, select the first one
+          handleSelectIngredient(ingredientSearchResults[0]);
+        }
+        break;
+      case 'Escape':
+        setIngredientSearchTerm('');
+        setIngredientSearchResults([]);
+        setHighlightedIndex(-1);
+        break;
+      default:
+        break;
     }
   };
 
@@ -183,6 +219,7 @@ const EditRecipe = ({ recipe, onSave, onCancel }) => {
     // Clear search bar and results
     setIngredientSearchTerm('');
     setIngredientSearchResults([]);
+    setHighlightedIndex(-1);
   };
 
   const handleSave = async () => {
@@ -364,14 +401,18 @@ const EditRecipe = ({ recipe, onSave, onCancel }) => {
               placeholder="Search for ingredients..."
               value={ingredientSearchTerm}
               onChange={handleIngredientSearchChange}
+              onKeyDown={handleIngredientSearchKeyDown}
               disabled={fetchingIngredients}
-              list="available-ingredients-list"
             />
             {/* Display Search Results as suggestions below the input */}
             {ingredientSearchResults.length > 0 && ingredientSearchTerm.length > 1 && (
                 <ul className="ingredient-search-results">
-                    {ingredientSearchResults.map(ing => (
-                        <li key={ing.ingredient_id} onClick={() => handleSelectIngredient(ing)}>
+                    {ingredientSearchResults.map((ing, index) => (
+                        <li 
+                            key={ing.ingredient_id} 
+                            className={index === highlightedIndex ? 'highlighted' : ''}
+                            onClick={() => handleSelectIngredient(ing)}
+                        >
                             {ing.ingredient_name}
                         </li>
                     ))}

@@ -95,7 +95,16 @@ const ShiftView = ({ onShiftClick, scheduleRefreshTrigger }) => {
   const weekDayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   const handleShiftClickInternal = (date, shift) => {
-    setSelectedShiftForDetail({ date: date, ...shift });
+    // Calculate the full date for the shift
+    const shiftFullDate = new Date(currentWeek);
+    const dayIndex = weekDates.findIndex(d => d.date === date);
+    shiftFullDate.setDate(currentWeek.getDate() + dayIndex);
+    
+    setSelectedShiftForDetail({ 
+      date: date, 
+      fullDate: shiftFullDate, // Add full date object
+      ...shift 
+    });
     setShowShiftDetailModal(true);
   };
 

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import FoodItem from '../components/FoodItem';
+import Footer from '../components/Footer';
 import './MenuPage.css';
 
 function MenuPage() {
@@ -991,6 +992,8 @@ function MenuPage() {
           </div>
         </div>
       )}
+      
+      <Footer />
     </div>
   );
 }

@@ -181,6 +181,7 @@
   .menu-page {
     display: flex;
     flex-direction: column;
+    min-height: 100vh;
     padding-top: 120px; /* Để tránh bị navbar + user-nav che (80px + 40px) */
   }
   
@@ -193,6 +194,8 @@
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    flex: 1;
+    margin-bottom: 20px;
   }
   
   /* Sidebar */
@@ -1084,11 +1087,13 @@
   
     /* Điều chỉnh menu cho mobile */
     .menu-page {
-      padding-top: 120px;
+    padding-top: 120px;
+    min-height: 100vh;
     }
-  
+    
     .menu-container {
-      flex-direction: column;
+    flex-direction: column;
+    flex: 1;
     }
     
     .sidebar, .menu-content, .cart-section {
@@ -1196,5 +1201,10 @@
       transform: translateX(100%);
       opacity: 0;
     }
+  }
+
+  /* Ensure footer sticks to bottom */
+  .menu-page .footer {
+    margin-top: auto;
   }
   

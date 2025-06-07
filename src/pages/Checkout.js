@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import Navbar from '../components/Navbar';
 import UserNav from '../components/UserNav';
+import Footer from '../components/Footer';
 import './Checkout.css';
 
 function Checkout() {
@@ -268,6 +269,13 @@ function Checkout() {
       setIsProcessingPayment(true);
       console.log('Attempting to process order...');
       
+      // Check if user is authenticated or guest
+      const authStatus = localStorage.getItem('authStatus');
+      const token = localStorage.getItem('token');
+      const isAuthenticated = authStatus === 'signedIn' && token;
+      
+      console.log('Order processing - Auth status:', authStatus, 'Has token:', !!token);
+      
       // Prepare order data
       const orderData = {
         items: cart.map(item => ({
@@ -279,18 +287,41 @@ function Checkout() {
         delivery_distance: 5, // This should be calculated based on actual distance
         delivery_charge: deliveryCharge,
         payment_method: selectedPaymentMethod,
-        status: (selectedPaymentMethod === 'momo' || selectedPaymentMethod === 'vietcombank') ? 'completed' : 'Pending',
-        loyalty_points_used: useLoyaltyPoints ? userData?.loyaltyPoints : 0,
-        loyalty_points_earned: Math.floor(calculateSubtotal() * 0.1) // 10% of subtotal
+        status: (selectedPaymentMethod === 'momo' || selectedPaymentMethod === 'vietcombank') ? 'completed' : 'Pending'
       };
 
+      // Add guest-specific or authenticated user-specific data
+      if (isAuthenticated) {
+        // For authenticated users, add loyalty points
+        orderData.loyalty_points_used = useLoyaltyPoints ? userData?.loyaltyPoints : 0;
+        orderData.loyalty_points_earned = Math.floor(calculateSubtotal() * 0.1); // 10% of subtotal
+      } else {
+        // For guest users, add contact information
+        orderData.guest_contact = userContact;
+      }
+
+      // Choose the appropriate endpoint
+      const endpoint = isAuthenticated 
+        ? 'http://localhost:3001/api/orders/create'
+        : 'http://localhost:3001/api/orders/create-guest';
+
+      // Prepare headers
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+
+      // Add authorization header only for authenticated users
+      if (isAuthenticated) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      console.log('Making order request to:', endpoint);
+      console.log('Order data:', orderData);
+
       // Create order
-      const response = await fetch('http://localhost:3001/api/orders/create', {
+      const response = await fetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
+        headers: headers,
         body: JSON.stringify(orderData)
       });
 
@@ -302,26 +333,31 @@ function Checkout() {
 
       console.log('Order API call successful. Response data:', data);
 
-      // If order is successful, refresh user data to update loyalty points
-      if (data.success) {
-        // Fetch updated user profile
-        const profileResponse = await fetch('http://localhost:3001/api/users/profile', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
+      // If order is successful and user is authenticated, refresh user data to update loyalty points
+      if (data.success && isAuthenticated) {
+        try {
+          // Fetch updated user profile
+          const profileResponse = await fetch('http://localhost:3001/api/users/profile', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
 
-        if (profileResponse.ok) {
-          const profileData = await profileResponse.json();
-          if (profileData.success) {
-            // Update userData in localStorage and context
-            localStorage.setItem('userData', JSON.stringify(profileData.user));
-            // Update the userData in the auth context
-            const event = new CustomEvent('userDataUpdated', { 
-              detail: { userData: profileData.user } 
-            });
-            window.dispatchEvent(event);
+          if (profileResponse.ok) {
+            const profileData = await profileResponse.json();
+            if (profileData.success) {
+              // Update userData in localStorage and context
+              localStorage.setItem('userData', JSON.stringify(profileData.user));
+              // Update the userData in the auth context
+              const event = new CustomEvent('userDataUpdated', { 
+                detail: { userData: profileData.user } 
+              });
+              window.dispatchEvent(event);
+            }
           }
+        } catch (profileError) {
+          console.error('Error updating user profile after order:', profileError);
+          // Don't fail the order if profile update fails
         }
       }
 
@@ -634,7 +670,10 @@ function Checkout() {
           </div>
         </div>
       )}
+      
+      <Footer />
     </div>
+    
   );
 }
 

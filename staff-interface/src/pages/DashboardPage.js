@@ -355,7 +355,8 @@ const DashboardPage = () => {
     if (pathname === '/recipe') return 'Recipe';
     if (pathname === '/inventory') return 'Inventory';
     if (pathname === '/staff') return 'Staff';
-    return ''; // Default or handle other cases
+    if (pathname === '/user') return 'User';
+    return 'Dashboard'; // Default to Dashboard
   };
 
   const handleMenuClick = (menuId) => {
@@ -372,7 +373,8 @@ const DashboardPage = () => {
         navigate('/staff');
         break;
       case 'User':
-        navigate('/user');
+        // For now, redirect to dashboard since User page doesn't exist
+        navigate('/dashboard');
         break;
       case 'Inventory':
         navigate('/inventory');

@@ -1,13 +1,10 @@
 .shift-detail {
   background: white;
   border-radius: 12px;
-  /* Added vertical padding */
   padding-top: 24px; 
   padding-bottom: 24px;
-  /* Removed padding to let inner content control width */
-  /* padding: 24px; */
-  max-width: 400px; /* Keep max-width as a constraint */
-  width: 352px; /* Set a specific width that matches the intended inner content width */
+  max-width: 400px;
+  width: 352px;
   max-height: 80vh;
   overflow-y: auto;
 }
@@ -28,8 +25,8 @@
 .shift-detail-form {
   display: flex;
   flex-direction: column;
-  gap: 20px; /* Space between form sections */
-  padding: 0 24px; /* Apply horizontal padding to the form */
+  gap: 20px;
+  padding: 0 24px;
 }
 
 .shift-input-group {
@@ -61,13 +58,12 @@
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
 }
 
-/* Adjust padding for inner sections if needed */
 .shift-detail-header,
 .shift-time-display,
 .staff-list,
 .shift-actions {
-  padding-left: 24px; /* Re-add padding to inner sections */
-  padding-right: 24px; /* Re-add padding to inner sections */
+  padding-left: 24px;
+  padding-right: 24px;
 }
 
 .shift-detail-header {
@@ -87,33 +83,26 @@
 .header-buttons {
   display: flex;
   align-items: center;
-  gap: 10px; /* Space between buttons */
+  gap: 10px;
 }
 
-.save-btn {
-  background-color: #10B981;
+.close-btn {
+  background-color: #6B7280;
   color: white;
   border: none;
-  border-radius: 6px;
-  padding: 8px 16px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
-  justify-content: center; /* Center content inside the button */
-  gap: 6px;
-  transition: background-color 0.2s ease;
-  width: 100%; /* Make button fill parent width */
-  box-sizing: border-box; /* Include padding and border in total width */
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 0.2s ease;
 }
 
-.save-btn:hover {
-  background-color: #059669;
-}
-
-.save-icon {
-  font-size: 12px;
+.close-btn:hover {
+  background-color: #4B5563;
 }
 
 .shift-time-display {
@@ -142,6 +131,15 @@
   background-color: #FED7AA;
   border-radius: 8px;
   transition: transform 0.2s ease;
+}
+
+.staff-item.removing {
+  background-color: #FEE2E2;
+  opacity: 0.7;
+}
+
+.staff-item.adding {
+  background-color: #D1FAE5;
 }
 
 .staff-item:hover {
@@ -199,6 +197,13 @@
   color: #6B7280;
 }
 
+.staff-debug {
+  font-size: 10px;
+  color: #EF4444;
+  font-weight: bold;
+  margin-top: 2px;
+}
+
 .remove-staff-btn {
   background-color: #EF4444;
   color: white;
@@ -224,530 +229,12 @@
   padding-top: 16px;
 }
 
-.add-staff-btn {
-  width: 100%;
-  background-color: #F3F4F6;
-  color: #374151;
-  border: 1px dashed #D1D5DB;
-  border-radius: 8px;
-  padding: 12px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-sizing: border-box; /* Include padding and border in the element's total width */
+.add-staff-section {
+  margin-bottom: 20px;
+  padding-left: 24px;
+  padding-right: 24px;
 }
 
-.add-staff-btn:hover {
-  background-color: #E5E7EB;
-  border-color: #9CA3AF;
-}
-
-.add-staff-dropdown {
-  width: 100%;
-  position: relative;
-  margin-bottom: 12px;
-}
-
-.add-staff-dropdown select {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #D1D5DB;
-  border-radius: 6px;
-  font-size: 14px;
-  color: #374151;
-  background-color: white;
-  cursor: pointer;
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 16px;
-  padding-right: 40px;
-  transition: all 0.2s ease;
-}
-
-.add-staff-dropdown ul {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background-color: white;
-  border: 1px solid #E5E7EB;
-  border-radius: 6px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  margin-top: 4px;
-  max-height: 300px;
-  overflow-y: auto;
-  z-index: 1000;
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.add-staff-dropdown li {
-  padding: 10px 12px;
-  border-bottom: 1px solid #E5E7EB;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.add-staff-dropdown li:last-child {
-  border-bottom: none;
-}
-
-.add-staff-dropdown li:hover {
-  background-color: #F9FAFB;
-}
-
-.add-staff-dropdown li.selected {
-  background-color: #ECFDF5;
-}
-
-.add-staff-dropdown li.selected:hover {
-  background-color: #D1FAE5;
-}
-
-.add-staff-dropdown select:hover {
-  border-color: #9CA3AF;
-}
-
-.add-staff-dropdown .staff-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
-}
-
-.add-staff-dropdown .staff-avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background-color: #E5E7EB;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  color: #4B5563;
-  font-size: 12px;
-}
-
-.add-staff-dropdown .staff-details {
-  display: flex;
-  flex-direction: column;
-}
-
-.add-staff-dropdown .staff-name {
-  font-weight: 500;
-  color: #374151;
-  font-size: 14px;
-}
-
-.add-staff-dropdown .staff-position {
-  font-size: 12px;
-  color: #6B7280;
-}
-
-.add-staff-dropdown .add-staff-btn {
-  background-color: #10B981;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  transition: all 0.2s ease;
-  opacity: 0;
-}
-
-.add-staff-dropdown li:hover .add-staff-btn {
-  opacity: 1;
-}
-
-.add-staff-dropdown .add-staff-btn:hover {
-  background-color: #059669;
-}
-
-.add-staff-dropdown .add-staff-btn:disabled {
-  background-color: #9CA3AF;
-  cursor: not-allowed;
-}
-
-.add-staff-dropdown select:focus {
-  outline: none;
-  border-color: #10B981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
-}
-
-.add-staff-dropdown ul::-webkit-scrollbar {
-  width: 6px;
-}
-
-.add-staff-dropdown ul::-webkit-scrollbar-track {
-  background: #F3F4F6;
-  border-radius: 3px;
-}
-
-.add-staff-dropdown ul::-webkit-scrollbar-thumb {
-  background: #D1D5DB;
-  border-radius: 3px;
-}
-
-.add-staff-dropdown ul::-webkit-scrollbar-thumb:hover {
-  background: #9CA3AF;
-}
-
-@media (max-width: 480px) {
-  .add-staff-dropdown li {
-    padding: 8px 10px;
-  }
-
-  .add-staff-dropdown .staff-avatar {
-    width: 24px;
-    height: 24px;
-    font-size: 11px;
-  }
-
-  .add-staff-dropdown .staff-name {
-    font-size: 13px;
-  }
-
-  .add-staff-dropdown .staff-position {
-    font-size: 11px;
-  }
-
-  .add-staff-dropdown .add-staff-btn {
-    padding: 3px 6px;
-    font-size: 11px;
-  }
-}
-
-/* Staff Dropdown Table */
-.staff-dropdown-table {
-  width: 100%;
-  border-collapse: collapse;
-  background-color: white;
-  border-radius: 6px;
-  overflow: hidden;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  margin-top: 4px;
-  border: 1px solid #E5E7EB;
-}
-
-.staff-dropdown-table th {
-  background-color: #F3F4F6;
-  padding: 10px 12px;
-  text-align: left;
-  font-size: 13px;
-  font-weight: 600;
-  color: #4B5563;
-  border-bottom: 1px solid #E5E7EB;
-}
-
-.staff-dropdown-table td {
-  padding: 10px 12px;
-  font-size: 14px;
-  color: #374151;
-  border-bottom: 1px solid #E5E7EB;
-  cursor: pointer;
-}
-
-.staff-dropdown-table tr:last-child td {
-  border-bottom: none;
-}
-
-.staff-dropdown-table tr:hover {
-  background-color: #F9FAFB;
-}
-
-.staff-dropdown-table tr:hover td {
-  background-color: #F9FAFB;
-}
-
-/* Staff Info in Dropdown */
-.staff-dropdown-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.staff-dropdown-avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background-color: #E5E7EB;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  color: #4B5563;
-  font-size: 12px;
-}
-
-.staff-dropdown-details {
-  display: flex;
-  flex-direction: column;
-}
-
-.staff-dropdown-name {
-  font-weight: 500;
-  color: #374151;
-  font-size: 14px;
-}
-
-.staff-dropdown-position {
-  font-size: 12px;
-  color: #6B7280;
-}
-
-/* Selected Staff Highlight */
-.staff-dropdown-table tr.selected {
-  background-color: #ECFDF5;
-}
-
-.staff-dropdown-table tr.selected td {
-  background-color: #ECFDF5;
-}
-
-.staff-dropdown-table tr.selected:hover {
-  background-color: #D1FAE5;
-}
-
-.staff-dropdown-table tr.selected:hover td {
-  background-color: #D1FAE5;
-}
-
-/* Responsive Styles */
-@media (max-width: 480px) {
-  .staff-dropdown-table th,
-  .staff-dropdown-table td {
-    padding: 8px 10px;
-    font-size: 13px;
-  }
-
-  .staff-dropdown-avatar {
-    width: 24px;
-    height: 24px;
-    font-size: 11px;
-  }
-
-  .staff-dropdown-name {
-    font-size: 13px;
-  }
-
-  .staff-dropdown-position {
-    font-size: 11px;
-  }
-}
-
-.no-available-staff,
-.no-staff-assigned {
-  font-size: 14px;
-  color: #6B7280;
-  text-align: center;
-  margin-top: 10px;
-}
-
-/* Responsive */
-@media (max-width: 480px) {
-  .shift-detail {
-    padding: 20px;
-    max-width: 90vw;
-  }
-  
-  .staff-item {
-    padding: 10px;
-  }
-  
-  .staff-avatar-container {
-    width: 35px;
-    height: 35px;
-  }
-  
-  .staff-name {
-    font-size: 13px;
-  }
-  
-  .staff-position {
-    font-size: 11px;
-  }
-}
-
-.delete-shift-btn {
-  background-color: #EF4444;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 16px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  transition: background-color 0.2s ease;
-}
-
-.delete-shift-btn:hover {
-  background-color: #DC2626;
-}
-
-.delete-icon {
-  font-size: 12px;
-}
-
-.shift-actions-bottom {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  margin-top: 20px;
-  padding: 0 24px 24px; /* Apply horizontal and bottom padding */
-}
-
-.shift-actions-bottom .save-btn {
-  flex: 1;
-}
-
-.shift-actions-bottom .delete-shift-btn {
-  flex: 1;
-}
-
-/* Create New Shift Form Styles */
-.create-shift-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  padding: 0 24px;
-}
-
-.create-shift-form .shift-input-group {
-  margin-bottom: 0;
-}
-
-.create-shift-form .shift-input-label {
-  font-size: 14px;
-  font-weight: 600;
-  color: #4B5563;
-  margin-bottom: 8px;
-}
-
-.create-shift-form .shift-time-input {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #D1D5DB;
-  border-radius: 6px;
-  font-size: 14px;
-  color: #374151;
-  background-color: white;
-  transition: all 0.2s ease;
-}
-
-.create-shift-form .shift-time-input:hover {
-  border-color: #9CA3AF;
-}
-
-.create-shift-form .shift-time-input:focus {
-  outline: none;
-  border-color: #10B981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
-}
-
-.create-shift-form .shift-time-input::placeholder {
-  color: #9CA3AF;
-}
-
-.create-shift-form .create-btn {
-  background-color: #10B981;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 12px 24px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: all 0.2s ease;
-  margin-top: 10px;
-}
-
-.create-shift-form .create-btn:hover {
-  background-color: #059669;
-  transform: translateY(-1px);
-}
-
-.create-shift-form .create-btn:active {
-  transform: translateY(0);
-}
-
-.create-shift-form .create-icon {
-  font-size: 16px;
-}
-
-/* Date and Time Input Specific Styles */
-.create-shift-form input[type="date"],
-.create-shift-form input[type="time"] {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 16px;
-  padding-right: 40px;
-}
-
-.create-shift-form input[type="date"]::-webkit-calendar-picker-indicator,
-.create-shift-form input[type="time"]::-webkit-calendar-picker-indicator {
-  opacity: 0;
-  cursor: pointer;
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-}
-
-/* Error Message Styles */
-.create-shift-form .error-message {
-  color: #EF4444;
-  font-size: 12px;
-  margin-top: 4px;
-  display: none;
-}
-
-.create-shift-form .error-message.show {
-  display: block;
-}
-
-/* Responsive Styles */
-@media (max-width: 480px) {
-  .create-shift-form {
-    padding: 0 16px;
-  }
-
-  .create-shift-form .shift-time-input {
-    padding: 8px 10px;
-  }
-
-  .create-shift-form .create-btn {
-    padding: 10px 20px;
-  }
-}
-
-/* Add Staff Toggle Button */
 .add-staff-toggle-btn {
   width: 100%;
   background-color: #F3F4F6;
@@ -770,16 +257,37 @@
   border-color: #9CA3AF;
 }
 
-.add-staff-toggle-btn .toggle-icon {
-  font-size: 16px;
-  transition: transform 0.2s ease;
+.add-staff-dropdown {
+  margin-top: 12px;
+  background-color: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 6px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-.add-staff-toggle-btn:hover .toggle-icon {
-  transform: rotate(180deg);
+.add-staff-dropdown ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 200px;
+  overflow-y: auto;
 }
 
-/* Save Shift Button */
+.add-staff-dropdown li {
+  padding: 10px 12px;
+  border-bottom: 1px solid #E5E7EB;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-staff-dropdown li:last-child {
+  border-bottom: none;
+}
+
+.add-staff-dropdown li:hover {
+  background-color: #F9FAFB;
+}
+
 .save-shift-btn {
   background-color: #10B981;
   color: white;
@@ -799,39 +307,15 @@
 
 .save-shift-btn:hover {
   background-color: #059669;
-  transform: translateY(-1px);
-}
-
-.save-shift-btn:active {
-  transform: translateY(0);
-}
-
-.save-shift-btn .save-icon {
-  font-size: 16px;
 }
 
 .save-shift-btn:disabled {
   background-color: #9CA3AF;
   cursor: not-allowed;
-  transform: none;
 }
 
-/* Staff Selection Container */
-.staff-selection-container {
-  margin-top: 12px;
-  padding: 16px;
-  background-color: #F9FAFB;
-  border-radius: 8px;
-  border: 1px solid #E5E7EB;
-}
-
-.staff-selection-container .add-staff-dropdown {
-  margin-bottom: 12px;
-}
-
-.staff-selection-container .add-staff-btn {
-  width: 100%;
-  background-color: #10B981;
+.delete-shift-btn {
+  background-color: #EF4444;
   color: white;
   border: none;
   border-radius: 6px;
@@ -843,193 +327,79 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease;
 }
 
-.staff-selection-container .add-staff-btn:hover {
-  background-color: #059669;
+.delete-shift-btn:hover {
+  background-color: #DC2626;
 }
 
-.staff-selection-container .add-staff-btn:disabled {
-  background-color: #9CA3AF;
-  cursor: not-allowed;
+.new-shift-form {
+  padding: 0 24px;
 }
 
-/* Responsive Styles */
-@media (max-width: 480px) {
-  .add-staff-toggle-btn,
-  .save-shift-btn,
-  .add-staff-dropdown {
-    padding: 10px;
-    font-size: 13px;
-  }
-
-  .staff-selection-container {
-    padding: 12px;
-  }
-}
-
-/* Staff Selection Table */
-.staff-selection-table {
-  width: 100%;
-  border-collapse: collapse;
+.form-group {
   margin-bottom: 16px;
-  background-color: white;
-  border-radius: 6px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.staff-selection-table th {
-  background-color: #F3F4F6;
-  padding: 12px;
-  text-align: left;
-  font-size: 13px;
+.form-group label {
+  display: block;
+  font-size: 14px;
   font-weight: 600;
-  color: #4B5563;
-  border-bottom: 1px solid #E5E7EB;
-}
-
-.staff-selection-table td {
-  padding: 12px;
-  font-size: 14px;
   color: #374151;
-  border-bottom: 1px solid #E5E7EB;
+  margin-bottom: 6px;
 }
 
-.staff-selection-table tr:last-child td {
-  border-bottom: none;
-}
-
-.staff-selection-table tr:hover {
-  background-color: #F9FAFB;
-}
-
-/* Staff Info Cell */
-.staff-info-cell {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.staff-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background-color: #E5E7EB;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  color: #4B5563;
-  font-size: 14px;
-}
-
-.staff-details {
-  display: flex;
-  flex-direction: column;
-}
-
-.staff-name {
-  font-weight: 500;
-  color: #374151;
-}
-
-.staff-position {
-  font-size: 12px;
-  color: #6B7280;
-}
-
-/* Action Buttons */
-.staff-action-cell {
-  text-align: right;
-}
-
-.add-staff-btn {
-  background-color: #10B981;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 6px 12px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.2s ease;
-}
-
-.add-staff-btn:hover {
-  background-color: #059669;
-}
-
-.add-staff-btn:disabled {
-  background-color: #9CA3AF;
-  cursor: not-allowed;
-}
-
-.add-staff-btn .add-icon {
-  font-size: 14px;
-}
-
-/* Search Input */
-.staff-search-input {
+.form-input,
+.form-select {
   width: 100%;
-  padding: 8px 12px;
+  padding: 10px 12px;
   border: 1px solid #D1D5DB;
   border-radius: 6px;
   font-size: 14px;
   color: #374151;
-  margin-bottom: 12px;
-  transition: all 0.2s ease;
+  background-color: white;
+  box-sizing: border-box;
 }
 
-.staff-search-input:focus {
+.form-input:focus,
+.form-select:focus {
   outline: none;
   border-color: #10B981;
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
 }
 
-.staff-search-input::placeholder {
-  color: #9CA3AF;
+.error-message {
+  color: #EF4444;
+  font-size: 12px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background-color: #FEE2E2;
+  border-radius: 4px;
+  border: 1px solid #FECACA;
 }
 
-/* No Results Message */
-.no-staff-message {
-  text-align: center;
-  padding: 24px;
-  color: #6B7280;
-  font-size: 14px;
-  background-color: white;
-  border-radius: 6px;
-  border: 1px dashed #D1D5DB;
-}
-
-/* Responsive Styles */
 @media (max-width: 480px) {
-  .staff-selection-table th,
-  .staff-selection-table td {
-    padding: 8px;
-    font-size: 13px;
+  .shift-detail {
+    padding: 20px;
+    max-width: 90vw;
+    width: auto;
   }
-
-  .staff-avatar {
-    width: 28px;
-    height: 28px;
-    font-size: 12px;
+  
+  .staff-item {
+    padding: 10px;
   }
-
+  
+  .staff-avatar-container {
+    width: 35px;
+    height: 35px;
+  }
+  
   .staff-name {
     font-size: 13px;
   }
-
+  
   .staff-position {
     font-size: 11px;
-  }
-
-  .add-staff-btn {
-    padding: 4px 8px;
-    font-size: 12px;
   }
 }

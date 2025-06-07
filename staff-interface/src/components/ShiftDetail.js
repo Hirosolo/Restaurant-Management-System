@@ -100,8 +100,8 @@ const ShiftDetail = ({ shift, onClose, onShiftUpdate, isNewShift }) => {
   const [staffToAdd, setStaffToAdd] = useState([]); // Array of staff objects
 
   // State for new shifts
-  const [newShiftDate, setNewShiftDate] = useState(shift?.date ? formatDate(shift.date) : '');
-  const [newShiftTime, setNewShiftTime] = useState(shift?.time || '');
+  const [newShiftDate, setNewShiftDate] = useState(shift?.fullDate ? formatDate(shift.fullDate) : '');
+  const [newShiftTime, setNewShiftTime] = useState(shift?.shift || '');
   const [selectedStaffForNewShift, setSelectedStaffForNewShift] = useState([]);
 
   const [isSaving, setIsSaving] = useState(false);
@@ -132,6 +132,19 @@ const ShiftDetail = ({ shift, onClose, onShiftUpdate, isNewShift }) => {
         // Initialize staffToRemove and staffToAdd when modal opens for an existing shift
         setStaffToRemove(new Set());
         setStaffToAdd([]);
+        
+        // Debug: Log the shift data structure
+        console.log('Shift data:', shift);
+        if (shift.staff) {
+          console.log('Staff in shift:', shift.staff);
+          shift.staff.forEach((person, index) => {
+            console.log(`Staff ${index}:`, {
+              id: person.id,
+              name: person.name,
+              schedule_id: person.schedule_id
+            });
+          });
+        }
     } else if (isNewShift) {
         // Reset states for a new shift
         setNewShiftDate('');
@@ -141,8 +154,24 @@ const ShiftDetail = ({ shift, onClose, onShiftUpdate, isNewShift }) => {
 
   }, [shift, isNewShift]);
 
-  const handleRemoveStaff = (scheduleId) => {
-    setStaffToRemove(prev => new Set(prev).add(scheduleId));
+  const handleRemoveStaff = (person) => {
+    console.log('Attempting to remove staff:', person);
+    
+    // Try to get schedule_id from the person object
+    const scheduleId = person.schedule_id || person.id;
+    
+    if (scheduleId !== undefined && scheduleId !== null) {
+      console.log('Using schedule_id:', scheduleId);
+      setStaffToRemove(prev => {
+        const newSet = new Set(prev);
+        newSet.add(scheduleId);
+        console.log('Updated staffToRemove set:', Array.from(newSet));
+        return newSet;
+      });
+    } else {
+      console.error('Cannot remove staff: no valid ID found', person);
+      alert('Error: Cannot remove staff member. Missing schedule ID.');
+    }
   };
 
   const handleAddStaffClick = () => {
@@ -166,9 +195,9 @@ const ShiftDetail = ({ shift, onClose, onShiftUpdate, isNewShift }) => {
             alert('This staff member is already selected for the new shift.');
         }
     } else {
-        // For existing shift
+        // For existing shift - check against staff IDs properly
         const isCurrentlyAssigned = shift?.staff.some(person => 
-            person.id === staffId && !staffToRemove.has(person.schedule_id)
+            person.id === staffId && !staffToRemove.has(person.schedule_id || person.id)
         );
         
         const isAlreadyAdding = staffToAdd.some(person => person.staff_id === staffId);
@@ -233,7 +262,7 @@ const ShiftDetail = ({ shift, onClose, onShiftUpdate, isNewShift }) => {
           actions.push(removeStaffFromShiftAPI(scheduleId, token));
         });
 
-        const shiftDateFormatted = shift?.date ? formatDate(shift.date) : null;
+        const shiftDateFormatted = shift?.fullDate ? formatDate(shift.fullDate) : null;
         const shiftType = shift?.shift;
 
         if (!shiftDateFormatted || !shiftType) {
@@ -265,8 +294,8 @@ const ShiftDetail = ({ shift, onClose, onShiftUpdate, isNewShift }) => {
   };
 
   const handleDeleteShift = async () => {
-    if (!shift?.id) {
-        alert('Cannot delete: Shift ID is missing.');
+    if (!shift?.staff || shift.staff.length === 0) {
+        alert('Cannot delete: No staff assignments found for this shift.');
         return;
     }
 
@@ -283,10 +312,20 @@ const ShiftDetail = ({ shift, onClose, onShiftUpdate, isNewShift }) => {
     }
 
     try {
-        // Delete the main schedule entry. This should cascade delete staff assignments if foreign keys are set up.
-        // If not, you might need to iterate and delete each staff assignment first.
-        await deleteShiftAPI(shift.id, token); 
-        console.log('Shift deleted successfully.');
+        // Delete each individual schedule entry for this shift
+        const deletePromises = shift.staff.map(person => {
+            const scheduleId = person.schedule_id || person.id;
+            if (scheduleId) {
+                console.log('Deleting schedule entry:', scheduleId);
+                return deleteShiftAPI(scheduleId, token);
+            } else {
+                console.warn('Skipping staff member with no schedule_id:', person);
+                return Promise.resolve();
+            }
+        });
+
+        await Promise.all(deletePromises);
+        console.log('All shift assignments deleted successfully.');
         if (onShiftUpdate) onShiftUpdate();
         onClose();
     } catch (err) {
@@ -297,8 +336,14 @@ const ShiftDetail = ({ shift, onClose, onShiftUpdate, isNewShift }) => {
     }
   };
 
+  // Filter staff to display (excluding those marked for removal)
   const staffToDisplay = shift && shift.staff
-    ? shift.staff.filter(person => !staffToRemove.has(person.schedule_id))
+    ? shift.staff.filter(person => {
+        const scheduleId = person.schedule_id || person.id;
+        const shouldRemove = staffToRemove.has(scheduleId);
+        console.log(`Staff ${person.name || person.staff_name} (schedule_id: ${scheduleId}): shouldRemove = ${shouldRemove}`);
+        return !shouldRemove;
+      })
     : [];
     
   const finalStaffList = [...staffToDisplay, ...staffToAdd.map(person => ({ 
@@ -306,6 +351,7 @@ const ShiftDetail = ({ shift, onClose, onShiftUpdate, isNewShift }) => {
       isPendingAddition: true
     }))];
 
+   // Fix the staff ID mapping issue - use consistent field names
    const allAssignedOrAddingStaffIds = new Set([
        ...(shift && shift.staff ? shift.staff.map(s => s.id) : []),
        ...staffToAdd.map(s => s.staff_id)
@@ -360,7 +406,7 @@ const ShiftDetail = ({ shift, onClose, onShiftUpdate, isNewShift }) => {
                     <div className="staff-avatar-container">
                       <img 
                         src={person.avatar} 
-                        alt={person.name}
+                        alt={person.staff_name}
                         className="staff-photo"
                         onError={(e) => {
                           e.target.style.display = 'none';
@@ -377,7 +423,7 @@ const ShiftDetail = ({ shift, onClose, onShiftUpdate, isNewShift }) => {
                           display: person.avatar ? 'none' : 'flex'
                         }}
                       >
-                        {person.name ? person.name.charAt(0) : '?'}
+                        {person.staff_name ? person.staff_name.charAt(0) : '?'}
                       </div>
                     </div>
                     <div className="staff-details">
@@ -403,7 +449,7 @@ const ShiftDetail = ({ shift, onClose, onShiftUpdate, isNewShift }) => {
       ) : (
         <>
           <div className="shift-time-display">
-            {shift?.date ? `${new Date(shift.date).toLocaleDateString()} - ${shift?.time || 'N/A'}` : 'N/A'}
+            {shift?.fullDate ? `${shift.fullDate.toLocaleDateString()} - ${shift?.time || 'N/A'}` : 'N/A'}
           </div>
 
           {saveError && <div className="error-message">{saveError}</div>}
@@ -411,12 +457,12 @@ const ShiftDetail = ({ shift, onClose, onShiftUpdate, isNewShift }) => {
           <div className="staff-list">
             {finalStaffList.length > 0 ? (
               finalStaffList.map((person) => (
-                <div key={person.id || person.staff_id} className={`staff-item ${staffToRemove.has(person.schedule_id) ? 'removing' : ''} ${person.isPendingAddition ? 'adding' : ''}`}>
+                <div key={person.id || person.staff_id} className={`staff-item ${staffToRemove.has(person.schedule_id || person.id) ? 'removing' : ''} ${person.isPendingAddition ? 'adding' : ''}`}>
                   <div className="staff-info">
                     <div className="staff-avatar-container">
                       <img 
                         src={person.avatar} 
-                        alt={person.name}
+                        alt={person.name || person.staff_name}
                         className="staff-photo"
                         onError={(e) => {
                           e.target.style.display = 'none';
@@ -433,18 +479,23 @@ const ShiftDetail = ({ shift, onClose, onShiftUpdate, isNewShift }) => {
                            display: person.avatar ? 'none' : 'flex'
                         }}
                       >
-                        {person.name ? person.name.charAt(0) : '?'}
+                        {(person.name || person.staff_name) ? (person.name || person.staff_name).charAt(0) : '?'}
                       </div>
                     </div>
                     <div className="staff-details">
-                      <div className="staff-name">{person.name} {person.isPendingAddition && '(Adding)'}</div>
+                      <div className="staff-name">
+                        {person.name || person.staff_name} 
+                        {person.isPendingAddition && ' (Adding)'}
+                        {staffToRemove.has(person.schedule_id || person.id) && ' (Removing)'}
+                      </div>
                       <div className="staff-position">{person.role}</div>
+                      <div className="staff-debug">Schedule ID: {person.schedule_id || person.id || 'MISSING'}</div>
                     </div>
                   </div>
                   {!person.isPendingAddition && (
                       <button 
                         className="remove-staff-btn"
-                        onClick={() => handleRemoveStaff(person.schedule_id)}
+                        onClick={() => handleRemoveStaff(person)}
                         title="Remove from shift"
                         disabled={isSaving}
                       >

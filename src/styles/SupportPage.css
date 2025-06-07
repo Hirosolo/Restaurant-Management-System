@@ -1,12 +1,18 @@
 .support-page {
-  min-height: calc(100vh - 100px); /* Adjust based on your header/footer height */
+  min-height: 100vh;
   background-color: #f7f7f7;
-  padding: 20px;
   display: flex;
   flex-direction: column;
-  align-items: center; /* Center horizontally */
-  justify-content: center; /* Center vertically */
   box-sizing: border-box;
+}
+
+.support-page > .support-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
 }
 
 .support-container {
@@ -17,6 +23,7 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   padding: 30px;
   box-sizing: border-box;
+  margin: auto;
 }
 
 .support-heading {
@@ -93,9 +100,14 @@
   }
 }
 
+/* Ensure footer sticks to bottom */
+.support-page .footer {
+  margin-top: auto;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
-  .support-container {
+  .support-page > .support-container {
     padding: 80px 15px 30px 15px;
   }
   
@@ -113,7 +125,7 @@
 }
 
 @media (max-width: 480px) {
-  .support-container {
+  .support-page > .support-container {
     padding: 70px 10px 20px 10px;
   }
   

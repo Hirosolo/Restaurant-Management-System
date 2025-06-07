@@ -229,6 +229,7 @@
 /* Add styles for the ingredients dashboard */
 .ingredients-container {
   min-height: 100vh;
+  min-width: 80vw;
   background-color: #f5f5f5;
   padding: 24px;
 }

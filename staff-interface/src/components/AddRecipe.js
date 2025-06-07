@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import '../styles/AddRecipe.css'; // Assuming you have a CSS file for styles
+import { fetchIngredients } from '../api/ingredientApi';
 
 const AddRecipe = ({ onSave, onCancel }) => {
   const [title, setTitle] = useState('');
@@ -23,34 +24,26 @@ const AddRecipe = ({ onSave, onCancel }) => {
   // State for ingredient search
   const [ingredientSearchTerm, setIngredientSearchTerm] = useState('');
   const [ingredientSearchResults, setIngredientSearchResults] = useState([]);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
   // Ref for the file input
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    const fetchIngredients = async () => {
+    const loadIngredients = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/ingredients');
-        if (!response.ok) {
-          throw new Error('Failed to fetch ingredients');
-        }
-        const data = await response.json();
-        console.log('Fetched ingredients data:', data);
-        if (data.success && Array.isArray(data.ingredients)) {
-          setAvailableIngredients(data.ingredients);
-        } else {
-          console.error('Unexpected data format from ingredients API:', data);
-          setAvailableIngredients([]);
-        }
+        const ingredients = await fetchIngredients();
+        console.log('Fetched ingredients data:', ingredients);
+        setAvailableIngredients(ingredients);
       } catch (err) {
         console.error('Error fetching ingredients:', err);
-        // setError('Failed to load ingredients.'); // Consider showing this to the user
+        setError('Failed to load ingredients. Please make sure you are logged in.');
       } finally {
         setFetchingIngredients(false);
       }
     };
 
-    fetchIngredients();
+    loadIngredients();
   }, []);
 
   const handleFileSelect = (event) => {
@@ -117,6 +110,7 @@ const AddRecipe = ({ onSave, onCancel }) => {
   const handleIngredientSearchChange = (e) => {
     const term = e.target.value;
     setIngredientSearchTerm(term);
+    setHighlightedIndex(-1);
     console.log('Search term:', term);
     console.log('Available ingredients for search:', availableIngredients);
 
@@ -129,6 +123,41 @@ const AddRecipe = ({ onSave, onCancel }) => {
     } else {
       setIngredientSearchResults([]);
       console.log('Search results cleared.');
+    }
+  };
+
+  const handleIngredientSearchKeyDown = (e) => {
+    if (ingredientSearchResults.length === 0) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setHighlightedIndex(prev => 
+          prev < ingredientSearchResults.length - 1 ? prev + 1 : 0
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setHighlightedIndex(prev => 
+          prev > 0 ? prev - 1 : ingredientSearchResults.length - 1
+        );
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (highlightedIndex >= 0 && highlightedIndex < ingredientSearchResults.length) {
+          handleSelectIngredient(ingredientSearchResults[highlightedIndex]);
+        } else if (ingredientSearchResults.length > 0) {
+          // If no item is highlighted, select the first one
+          handleSelectIngredient(ingredientSearchResults[0]);
+        }
+        break;
+      case 'Escape':
+        setIngredientSearchTerm('');
+        setIngredientSearchResults([]);
+        setHighlightedIndex(-1);
+        break;
+      default:
+        break;
     }
   };
 
@@ -148,6 +177,7 @@ const AddRecipe = ({ onSave, onCancel }) => {
 
     setIngredientSearchTerm('');
     setIngredientSearchResults([]);
+    setHighlightedIndex(-1);
   };
 
   const handleSave = async () => {
@@ -272,7 +302,7 @@ const AddRecipe = ({ onSave, onCancel }) => {
         </div>
       </div>
 
-      {/* {error && <div className="error-message">{error}</div>} // Error will be handled by parent */}
+      {error && <div className="error-message">{error}</div>}
       {/* {successMessage && <div className="success-message">{successMessage}</div>} // Success message handled by parent */}
       {fetchingIngredients && <div className="loading-message">Loading ingredients...</div>}
 
@@ -373,12 +403,17 @@ const AddRecipe = ({ onSave, onCancel }) => {
               placeholder="Search for ingredients..."
               value={ingredientSearchTerm}
               onChange={handleIngredientSearchChange}
+              onKeyDown={handleIngredientSearchKeyDown}
               disabled={fetchingIngredients}
             />
             {ingredientSearchResults.length > 0 && ingredientSearchTerm.length > 1 && (
                 <ul className="ingredient-search-results">
-                    {ingredientSearchResults.map(ing => (
-                        <li key={ing.ingredient_id} onClick={() => handleSelectIngredient(ing)}>
+                    {ingredientSearchResults.map((ing, index) => (
+                        <li 
+                            key={ing.ingredient_id} 
+                            className={index === highlightedIndex ? 'highlighted' : ''}
+                            onClick={() => handleSelectIngredient(ing)}
+                        >
                             {ing.ingredient_name}
                         </li>
                     ))}

@@ -69,6 +69,7 @@ router.get('/week', auth.authenticateToken, async (req, res) => {
         id: shift.staff_id,
         name: shift.staff_name,
         role: shift.role,
+        schedule_id: shift.schedule_id, // Include schedule_id for removal operations
         // You might add avatar/color logic here or in frontend
         // For now, using a placeholder structure similar to the old data
         avatar: '👤', // Placeholder avatar
@@ -81,7 +82,6 @@ router.get('/week', auth.authenticateToken, async (req, res) => {
         date: parseInt(dateKey, 10), // Day of the month
         shifts: Object.values(scheduleData[dateKey]) // Array of shift blocks for the day
     }));
-
 
     console.log('Shift data fetched and formatted.', formattedSchedule.length);
     res.json({ success: true, schedule: formattedSchedule });
@@ -153,4 +153,4 @@ router.delete('/:scheduleId', auth.authenticateToken, async (req, res) => {
   }
 });
 
-module.exports = router; 
+module.exports = router;
