@@ -9,6 +9,7 @@ const EditIngredientModal = ({ show, onClose, ingredient, onIngredientUpdated })
     unit: '',
     minimum_threshold: '',
     supplier_id: '',
+    good_for: ''
   });
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -23,6 +24,7 @@ const EditIngredientModal = ({ show, onClose, ingredient, onIngredientUpdated })
         unit: ingredient.unit || '',
         minimum_threshold: ingredient.minimum_threshold || '',
         supplier_id: ingredient.supplier_id || '',
+        good_for: ingredient.good_for !== null ? ingredient.good_for : ''
       });
     }
   }, [ingredient]);
@@ -55,7 +57,8 @@ const EditIngredientModal = ({ show, onClose, ingredient, onIngredientUpdated })
     setError(null);
 
     try {
-      await updateIngredient(ingredient.ingredient_id, formData);
+      const dataToUpdate = { ...formData, good_for: parseInt(formData.good_for, 10) || null };
+      await updateIngredient(ingredient.ingredient_id, dataToUpdate);
       onIngredientUpdated(); // Notify parent component to refresh data
       onClose(); // Close modal on success
     } catch (err) {
@@ -115,6 +118,16 @@ const EditIngredientModal = ({ show, onClose, ingredient, onIngredientUpdated })
               id="minimum_threshold"
               name="minimum_threshold"
               value={formData.minimum_threshold}
+              onChange={handleChange}
+            />
+          </div>
+           <div className="form-group">
+            <label htmlFor="good_for">Good For (days):</label>
+            <input
+              type="number"
+              id="good_for"
+              name="good_for"
+              value={formData.good_for}
               onChange={handleChange}
             />
           </div>

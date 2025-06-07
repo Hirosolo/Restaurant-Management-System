@@ -50,10 +50,7 @@ const Revenue = ({ onTabChange, dailySalesData, selectedMonth, selectedYear, dai
 
   // Map fetched revenue data for easy lookup - Corrected and ensure number type
   const revenueDataMap = dailyRevenueData.reduce((map, revenueRecord) => {
-    const recordDate = new Date(revenueRecord.date_recorded);
-    const day = recordDate.getDate();
-    // Ensure daily_revenue is treated as a number
-    map[day] = parseFloat(revenueRecord.daily_revenue) || 0; 
+    map[revenueRecord.day] = parseFloat(revenueRecord.count) || 0; 
     return map;
   }, {});
 

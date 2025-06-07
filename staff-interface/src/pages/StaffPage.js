@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import ShiftView from '../components/ShiftView';
 import ShiftDetail from '../components/ShiftDetail';
+import StaffManagement from '../components/StaffManagement';
 import '../styles/StaffPage.css';
 
 const StaffPage = () => {
@@ -11,13 +12,21 @@ const StaffPage = () => {
   const location = useLocation();
   const [showShiftDetail, setShowShiftDetail] = useState(false);
   const [selectedShift, setSelectedShift] = useState(null);
+  const [scheduleRefreshTrigger, setScheduleRefreshTrigger] = useState(false);
+  const [activeTab, setActiveTab] = useState('shifts');
+
+  const triggerScheduleRefresh = () => {
+    console.log('Triggering schedule refresh...');
+    setScheduleRefreshTrigger(prev => !prev);
+  };
 
   const getActiveMenu = (pathname) => {
     if (pathname === '/dashboard') return 'Dashboard';
     if (pathname === '/recipe') return 'Recipe';
     if (pathname === '/inventory') return 'Inventory';
     if (pathname === '/staff') return 'Staff';
-    return '';
+    if (pathname === '/user') return 'User';
+    return 'Staff'; // Default to Staff for this page
   };
 
   const handleMenuClick = (menuId) => {
@@ -34,7 +43,8 @@ const StaffPage = () => {
         navigate('/inventory');
         break;
       case 'User':
-        navigate('/user');
+        // For now, redirect to dashboard since User page doesn't exist
+        navigate('/dashboard');
         break;
       case 'Staff':
       default:
@@ -44,7 +54,7 @@ const StaffPage = () => {
 
   const handleShiftClick = (date, shift) => {
     console.log('Shift clicked:', date, shift);
-    setSelectedShift({ date, ...shift });
+    setSelectedShift({ date: date, ...shift });
     setShowShiftDetail(true);
   };
 
@@ -59,6 +69,10 @@ const StaffPage = () => {
     setSelectedShift(null);
   };
 
+  const handleTabClick = (tab) => {
+    setActiveTab(tab);
+  };
+
   return (
     <div className="staff-page">
       <Sidebar 
@@ -70,7 +84,37 @@ const StaffPage = () => {
         <Navbar />
         <div className="content-area">
           <div className="staff-content">
-            <ShiftView onShiftClick={handleShiftClick} />
+
+            <div className="tab-navigation">
+              <button 
+                className={`tab-button ${activeTab === 'shifts' ? 'active' : ''}`}
+                onClick={() => handleTabClick('shifts')}
+              >
+                Shift View
+              </button>
+              <button 
+                className={`tab-button ${activeTab === 'staff' ? 'active' : ''}`}
+                onClick={() => handleTabClick('staff')}
+              >
+                Staff Management
+              </button>
+            </div>
+
+            <div className="tab-content">
+              {activeTab === 'shifts' && (
+                <div className="shift-management-section">
+                  <h2>Shift Schedule</h2>
+                  <ShiftView onShiftClick={handleShiftClick} scheduleRefreshTrigger={scheduleRefreshTrigger} />
+                </div>
+              )}
+              {activeTab === 'staff' && (
+                <div className="staff-list-section" style={{ marginTop: '30px' }}>
+                  <h2>All Staff Members</h2>
+                  <StaffManagement />
+                </div>
+              )}
+            </div>
+
           </div>
         </div>
       </div>
@@ -82,6 +126,7 @@ const StaffPage = () => {
               shift={selectedShift}
               onSave={handleSaveShift}
               onClose={handleCloseShiftDetail}
+              onShiftUpdate={triggerScheduleRefresh}
             />
           </div>
         </div>

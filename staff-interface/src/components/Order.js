@@ -1,27 +1,25 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import '../styles/Order.css';
 
 const Order = ({ onTabChange, allOrdersData, isLoadingAllOrders }) => {
-  const sections = [
-    {
-      title: "Most ordered food",
-      items: [
-        { name: "Chicken Noodle Soup", image: "🍜" },
-        { name: "Chicken Noodle Soup", image: "🍜" },
-        { name: "Chicken Noodle Soup", image: "🍜" },
-        { name: "Chicken Noodle Soup", image: "🍜" }
-      ]
-    },
-    {
-      title: "Least ordered food", 
-      items: [
-        { name: "Chicken Noodle Soup", image: "🍜" },
-        { name: "Chicken Noodle Soup", image: "🍜" },
-        { name: "Chicken Noodle Soup", image: "🍜" },
-        { name: "Chicken Noodle Soup", image: "🍜" }
-      ]
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredOrders, setFilteredOrders] = useState([]);
+
+  useEffect(() => {
+    if (allOrdersData) {
+      const lowerCaseSearchTerm = searchTerm.toLowerCase();
+      const results = allOrdersData.filter(order => {
+        const customerName = order.customer_name ? order.customer_name.toLowerCase() : '';
+        const customerPhone = order.phone ? order.phone.toLowerCase() : ''; // Assuming phone exists in order object
+        
+        return (
+          customerName.includes(lowerCaseSearchTerm) ||
+          customerPhone.includes(lowerCaseSearchTerm)
+        );
+      });
+      setFilteredOrders(results);
     }
-  ];
+  }, [searchTerm, allOrdersData]);
 
   const handleTabClick = (tab) => {
     if (onTabChange) {
@@ -58,9 +56,17 @@ const Order = ({ onTabChange, allOrdersData, isLoadingAllOrders }) => {
       {/* Order Table */}
       <div className="order-table-container">{/* Add a container for styling */}
         <h2>All Orders</h2>
+        <div className="order-search-bar">
+          <input
+            type="text"
+            placeholder="Search by customer name or phone..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
         {isLoadingAllOrders ? (
           <div className="loading">Loading orders...</div>
-        ) : allOrdersData && allOrdersData.length > 0 ? (
+        ) : filteredOrders && filteredOrders.length > 0 ? (
           <table className="orders-table">{/* Add a class for styling */}
             <thead>
               <tr>
@@ -69,11 +75,12 @@ const Order = ({ onTabChange, allOrdersData, isLoadingAllOrders }) => {
                 <th>Order Details</th>
                 <th>Status</th>
                 <th>Customer Name</th>
+                <th>Customer Phone</th>
                 <th>Delivery Address</th>
               </tr>
             </thead>
             <tbody>
-              {allOrdersData.map((order) => (
+              {filteredOrders.map((order) => (
                 <tr key={order.order_id}> {/* Use order_id as key */}
                   <td>{order.order_id}</td>
                   <td>{formatDateTime(order.time)}</td>{/* Format time */}
@@ -84,6 +91,7 @@ const Order = ({ onTabChange, allOrdersData, isLoadingAllOrders }) => {
                   </td>
                   <td>{order.status}</td>
                   <td>{order.customer_name}</td>
+                  <td>{order.phone}</td>
                   <td>{order.delivery_address}</td>
                 </tr>
               ))}

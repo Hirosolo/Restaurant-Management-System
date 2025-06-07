@@ -48,7 +48,8 @@ CREATE TABLE ingredient(
     ingredient_name VARCHAR(100),
     quantity FLOAT,
     unit VARCHAR(20),
-    minimum_threshold FLOAT
+    minimum_threshold FLOAT,
+    good_for INT
 );
 
 CREATE TABLE recipe_detail(

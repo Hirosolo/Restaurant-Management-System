@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import CreateAccountForm from './CreateAccountForm';
 import SignInForm from './SignInForm';
@@ -9,6 +9,7 @@ import styles from '../styles/Navbar.module.css';
 /* Component thanh điều hướng */
 function Navbar({ menuOpen, setMenuOpen }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { authStatus } = useAuth();
   const navRef = useRef(null);
   const overlayRef = useRef(null);
@@ -25,21 +26,17 @@ function Navbar({ menuOpen, setMenuOpen }) {
   };
 
   /* Xử lý nhấn liên kết tài khoản */
-  /* Xử lý nhấn liên kết tài khoản */
-/* Xử lý nhấn liên kết tài khoản */
-const handleAccountClick = (e) => {
-  e.preventDefault();
-  
-  // Kiểm tra từ localStorage thay vì state
-  if (localStorage.getItem('authStatus') === 'signedIn') {
-    console.log('Navbar: User is signed in, navigating to account');
-    window.location.href = '/account'; // Force reload
-  } else {
-    console.log('Navbar: User is not signed in, showing auth modal');
-    // Hiển thị modal thay vì chuyển hướng
-    setShowAuthModal(true);
-  }
-};
+  const handleAccountClick = (e) => {
+    e.preventDefault();
+    
+    if (localStorage.getItem('authStatus') === 'signedIn') {
+      console.log('Navbar: User is signed in, navigating to account');
+      window.location.href = '/account';
+    } else {
+      console.log('Navbar: User is not signed in, showing auth modal');
+      setShowAuthModal(true);
+    }
+  };
 
   /* Xử lý điều hướng */
   const handleNavigation = (path) => {
@@ -81,6 +78,13 @@ const handleAccountClick = (e) => {
         >
           <div 
             className={styles.navItem} 
+            onClick={() => handleNavigation('/')}
+          >
+            Home
+          </div>
+          
+          <div 
+            className={styles.navItem} 
             onClick={() => handleNavigation('/menu')}
           >
             Menu
@@ -90,23 +94,7 @@ const handleAccountClick = (e) => {
             className={styles.navItem} 
             onClick={() => handleNavigation('/discount')}
           >
-            Discount 
-          </div>
-          
-          <div className={styles.logoContainer}>
-            <img 
-              src="/assets/logo.png" 
-              alt="Logo" 
-              className={styles.desktopLogo} 
-              onClick={() => handleNavigation('/')}
-            />
-          </div>
-          
-          <div 
-            className={styles.navItem} 
-            onClick={handleAccountClick} // Sử dụng handler mới
-          >
-            Account
+            Discount
           </div>
           
           <div 
@@ -116,12 +104,31 @@ const handleAccountClick = (e) => {
             Support
           </div>
 
+          <div className={styles.logoContainer}>
+            <img 
+              src="/assets/logo.png" 
+              alt="Logo" 
+              className={styles.desktopLogo} 
+              onClick={() => handleNavigation('/')}
+            />
+          </div>
+
+          {/* Account and Dashboard links */}
           <div 
             className={styles.navItem} 
-            onClick={() => handleNavigation('/dashboard')}
+            onClick={handleAccountClick}
           >
-            Dashboard
+            Account
           </div>
+          
+          {authStatus === 'staff' && (
+            <div 
+              className={styles.navItem} 
+              onClick={() => handleNavigation('/dashboard')}
+            >
+              Dashboard
+            </div>
+          )}
         </div>
       </div>
 

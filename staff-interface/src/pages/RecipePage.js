@@ -55,7 +55,8 @@ const RecipePage = () => {
     if (pathname === '/recipe') return 'Recipe';
     if (pathname === '/inventory') return 'Inventory';
     if (pathname === '/staff') return 'Staff';
-    return ''; // Default or handle other cases
+    if (pathname === '/user') return 'User';
+    return 'Recipe'; // Default to Recipe for this page
   };
 
   // Navigation logic - chỉ thêm phần này
@@ -73,7 +74,8 @@ const RecipePage = () => {
         navigate('/staff');
         break;
       case 'User':
-        navigate('/user');
+        // For now, redirect to dashboard since User page doesn't exist
+        navigate('/dashboard');
         break;
       case 'Recipe':
       default:

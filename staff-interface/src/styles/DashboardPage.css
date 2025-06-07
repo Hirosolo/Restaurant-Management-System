@@ -115,6 +115,38 @@
   color: #9CA3AF;
 }
 
+.month-picker,
+.year-picker {
+  padding: 8px 12px;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  background-color: #FFFFFF;
+  color: #374151;
+  font-size: 14px;
+  cursor: pointer;
+  appearance: none; /* Remove default browser styling */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236B7280%22%20d%3D%22M287%20197.3l-131.7-131.7c-4.7-4.7-12.3-4.7-17%200L5.3%20197.3c-4.7%204.7-4.7%2012.3%200%2017l17%2017c4.7%204.7%2012.3%204.7%2017%200l94.7-94.7L248%20231.3c4.7%204.7%2012.3%204.7%2017%200l17-17c4.7-4.7%204.7-12.3%200-17z%22%2F%3E%3C%2Fsvg%3E');
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 12px;
+  padding-right: 30px; /* Make space for the custom arrow */
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.month-picker:hover,
+.year-picker:hover {
+  border-color: #A0AEC0;
+}
+
+.month-picker:focus,
+.year-picker:focus {
+  outline: none;
+  border-color: #F59E0B;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+}
+
 /* Tab Content */
 .tab-content {
   flex: 1;

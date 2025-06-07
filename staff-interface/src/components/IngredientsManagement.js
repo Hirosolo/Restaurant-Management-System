@@ -10,19 +10,96 @@ const IngredientsManagement = ({ onAddIngredientClick }) => {
   const [error, setError] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false); // State to control modal visibility
   const [ingredientToEdit, setIngredientToEdit] = useState(null); // State to hold ingredient data for editing
+  const [latestRestockDates, setLatestRestockDates] = useState({}); // New state for latest restock dates
+  const [loadingRestockDates, setLoadingRestockDates] = useState({}); // Loading state for restock dates
 
   useEffect(() => {
     loadIngredients();
   }, []);
 
+  useEffect(() => {
+      // Fetch latest restock date for each ingredient after ingredients are loaded
+      const fetchLatestRestockDates = async () => {
+          if (!ingredients || ingredients.length === 0) {
+              setLatestRestockDates({});
+              setLoadingRestockDates({});
+              return;
+          }
+
+          const token = localStorage.getItem('staffToken');
+          if (!token) {
+              console.error('No staff authentication token found');
+              setLatestRestockDates({});
+              setLoadingRestockDates({});
+              return;
+          }
+
+          const initialLoadingState = {};
+          ingredients.forEach(ingredient => { initialLoadingState[ingredient.ingredient_id] = true; });
+          setLoadingRestockDates(initialLoadingState);
+
+          const fetchPromises = ingredients.map(async (ingredient) => {
+              try {
+                  // Fetch restock details for this ingredient, ordered by date DESC
+                  const response = await fetch(`http://localhost:3001/api/ingredients/${ingredient.ingredient_id}/restocks`, {
+                      headers: {
+                          'Authorization': `Bearer ${token}`,
+                      },
+                  });
+
+                  if (!response.ok) {
+                      console.error(`Error fetching restock details for ingredient ${ingredient.ingredient_id}:`, response.status);
+                       // Return null or handle error appropriately
+                      return { ingredientId: ingredient.ingredient_id, latestDate: null };
+                  }
+
+                  const data = await response.json();
+
+                  // Assuming the backend returns restock details ordered by date DESC, the first is the latest
+                  const latestRestock = data.restockDetails && data.restockDetails.length > 0 ? data.restockDetails[0] : null;
+
+                  return { ingredientId: ingredient.ingredient_id, latestDate: latestRestock ? latestRestock.restock_date : null };
+
+              } catch (error) {
+                  console.error(`Error fetching restock details for ingredient ${ingredient.ingredient_id}:`, error);
+                  return { ingredientId: ingredient.ingredient_id, latestDate: null };
+              }
+          });
+
+          const results = await Promise.all(fetchPromises);
+
+          const newLatestRestockDates = {};
+          const finalLoadingState = {};
+          results.forEach(result => {
+              newLatestRestockDates[result.ingredientId] = result.latestDate;
+              finalLoadingState[result.ingredientId] = false;
+          });
+
+          setLatestRestockDates(newLatestRestockDates);
+          setLoadingRestockDates(finalLoadingState);
+      };
+
+      fetchLatestRestockDates();
+
+  }, [ingredients]); // Rerun when ingredients data changes
+
+
   const loadIngredients = async () => {
     try {
       setLoading(true);
-      const data = await fetchIngredients();
+      const fetchedIngredients = await fetchIngredients(); // Now directly returns the array
+
+      // Check if fetchedIngredients is an array before processing
+      if (!fetchedIngredients || !Array.isArray(fetchedIngredients)) {
+          console.error('Fetched data is not an array:', fetchedIngredients);
+          setError(new Error('Received data in unexpected format.'));
+          setLoading(false);
+          return;
+      }
 
       // Process data to group by ingredient and collect all suppliers
       const groupedIngredients = {};
-      data.forEach(item => {
+      fetchedIngredients.forEach(item => { // Iterate over the ingredients array
         if (!groupedIngredients[item.ingredient_id]) {
           groupedIngredients[item.ingredient_id] = {
             ingredient_id: item.ingredient_id,
@@ -30,6 +107,7 @@ const IngredientsManagement = ({ onAddIngredientClick }) => {
             quantity: item.quantity,
             unit: item.unit,
             minimum_threshold: item.minimum_threshold,
+            good_for: item.good_for, // Include good_for from fetched data
             suppliers: []
           };
         }
@@ -91,6 +169,7 @@ const IngredientsManagement = ({ onAddIngredientClick }) => {
   };
 
   const handleIngredientUpdated = () => {
+    console.log('Ingredient updated, reloading ingredients...'); // Add console log
     loadIngredients(); // Refresh the ingredient list after an update
   };
 
@@ -98,13 +177,46 @@ const IngredientsManagement = ({ onAddIngredientClick }) => {
     ingredient.ingredient_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (loading) {
+  if (loading || Object.values(loadingRestockDates).some(isLoading => isLoading)) {
     return <div className="loading-message">Loading ingredients...</div>;
   }
 
   if (error) {
     return <div className="error-message">{error.message}</div>;
   }
+
+   // Helper to calculate days before expiration
+   const calculateDaysBeforeExpired = (ingredient) => {
+      const latestRestockDateString = latestRestockDates[ingredient.ingredient_id];
+      const goodFor = ingredient.good_for;
+
+      if (!latestRestockDateString || goodFor === null || goodFor === undefined) {
+          return 'N/A';
+      }
+
+      // Parse the date string manually to avoid timezone issues with new Date(string)
+      const [year, month, day] = latestRestockDateString.split('-').map(Number);
+      // Month is 0-indexed in JavaScript Date objects, so subtract 1
+      const restockDate = new Date(year, month - 1, day);
+
+      const expirationDate = new Date(restockDate);
+      expirationDate.setDate(expirationDate.getDate() + goodFor);
+
+      const today = new Date();
+      // Set time to midnight for accurate day comparison
+      today.setHours(0, 0, 0, 0);
+      expirationDate.setHours(0, 0, 0, 0);
+
+      const timeDiff = expirationDate.getTime() - today.getTime();
+      const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+
+      if (daysDiff < 0) {
+          return `Expired (${Math.abs(daysDiff)} days ago)`;
+      } else {
+          return daysDiff;
+      }
+   };
+
 
   return (
     <div className="ingredients-management">
@@ -135,6 +247,7 @@ const IngredientsManagement = ({ onAddIngredientClick }) => {
               <th>Stock</th>
               <th>Unit</th>
               <th>Min Threshold</th>
+              <th>Good For (days)</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -147,6 +260,10 @@ const IngredientsManagement = ({ onAddIngredientClick }) => {
                 <td>{ingredient.quantity}</td>
                 <td>{ingredient.unit}</td>
                 <td>{ingredient.minimum_threshold}</td>
+                <td>
+                    {/* Display the raw good_for value */}
+                    {ingredient.good_for !== null && ingredient.good_for !== undefined ? ingredient.good_for : 'N/A'}
+                </td>
                 <td>
                   <button onClick={() => handleEditIngredient(ingredient)}>Edit</button>
                   <button onClick={() => handleDeleteIngredient(ingredient.ingredient_id)}>Delete</button>

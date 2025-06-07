@@ -20,6 +20,10 @@ const DashboardPage = () => {
   const [employeeData, setEmployeeData] = useState([]); // New state for employee data
   const [allOrdersData, setAllOrdersData] = useState([]); // New state for all orders data
   const [isLoadingAllOrders, setIsLoadingAllOrders] = useState(false); // Loading state for all orders
+  const [wasteData, setWasteData] = useState([]); // New state for waste data
+  const [isLoadingWaste, setIsLoadingWaste] = useState(false); // Loading state for waste data
+  const [allIngredients, setAllIngredients] = useState([]); // New state for all ingredients
+  const [isLoadingIngredients, setIsLoadingIngredients] = useState(false); // Loading state for ingredients
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -42,6 +46,7 @@ const DashboardPage = () => {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
+        console.log('Daily sales data fetched:', data);
         setDailySalesData(data);
       } catch (error) {
         console.error('Error fetching daily sales data:', error);
@@ -89,7 +94,7 @@ const DashboardPage = () => {
         const dailyAggregatedRevenue = filteredRevenue.reduce((acc, record) => {
             const recordDate = new Date(record.date_recorded);
             const day = recordDate.getDate();
-            acc[day] = (acc[day] || 0) + parseFloat(record.amount);
+            acc[day] = (acc[day] || 0) + parseFloat(record.daily_revenue);
             return acc;
         }, {});
 
@@ -97,7 +102,7 @@ const DashboardPage = () => {
         const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
         const revenueDataForChart = Array.from({ length: daysInMonth }, (_, i) => ({
             day: i + 1,
-            amount: dailyAggregatedRevenue[i + 1] || 0
+            count: dailyAggregatedRevenue[i + 1] || 0
         }));
 
         setDailyRevenueData(revenueDataForChart);
@@ -238,13 +243,120 @@ const DashboardPage = () => {
 
   }, [activeTab]); // Depend on activeTab
 
+  // Effect to fetch waste data when the Ingredients tab is active
+  useEffect(() => {
+    const fetchWasteData = async () => {
+      if (activeTab === 'Ingredients') {
+        setIsLoadingWaste(true);
+        try {
+          console.log('Fetching waste data...');
+          const token = localStorage.getItem('staffToken'); // Assuming staff token is needed
+          if (!token) {
+              throw new Error('No staff authentication token found');
+          }
+
+          const response = await fetch(`http://localhost:3001/api/waste`, {
+               headers: {
+                  'Authorization': `Bearer ${token}` // Include the token in the headers
+              }
+          });
+
+          if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const data = await response.json();
+          console.log('Waste data fetched:', data);
+
+          if (data.success && data.waste) { 
+            setWasteData(data.waste);
+          } else {
+            setWasteData([]); 
+          }
+
+        } catch (error) {
+          console.error('Error fetching waste data:', error);
+          setWasteData([]); 
+        } finally {
+          setIsLoadingWaste(false);
+        }
+      }
+    };
+
+    fetchWasteData();
+
+  }, [activeTab]); // Depend on activeTab
+
+  // Effect to fetch all ingredients when the Ingredients tab is active
+  useEffect(() => {
+    const fetchAllIngredients = async () => {
+      if (activeTab === 'Ingredients') {
+        setIsLoadingIngredients(true);
+        try {
+          console.log('Fetching all ingredients...');
+          const token = localStorage.getItem('staffToken'); // Assuming staff token is needed
+          if (!token) {
+              throw new Error('No staff authentication token found');
+          }
+
+          const response = await fetch(`http://localhost:3001/api/ingredients`, {
+               headers: {
+                  'Authorization': `Bearer ${token}` // Include the token in the headers
+              }
+          });
+
+          if (!response.ok) {
+              // Check if the error is because the other /api/ingredients route is hit
+              // This is a temporary check until the redundant route is removed
+              const errorText = await response.text();
+              console.error('Error fetching all ingredients:', response.status, errorText);
+              if (response.status === 200 && errorText.startsWith('[{\n')) { // Check if it looks like the old array response
+                  console.log('Likely hit the old /api/ingredients route. Data received:', errorText);
+                   // Attempt to parse and set the data if it's the old format
+                   try {
+                        const oldData = JSON.parse(errorText);
+                        if (Array.isArray(oldData)) {
+                             console.warn('Using data from the old /api/ingredients route. Update backend.');
+                             setAllIngredients(oldData);
+                             return; // Exit if data was successfully set
+                        }
+                   } catch (parseError) {
+                       console.error('Failed to parse response from old route:', parseError);
+                       // Continue to throw error if parsing fails
+                   }
+
+              }
+              throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const data = await response.json();
+          console.log('All ingredients fetched:', data);
+
+          if (data.success && data.ingredients) { 
+            setAllIngredients(data.ingredients);
+          } else {
+            setAllIngredients([]); 
+          }
+
+        } catch (error) {
+          console.error('Error fetching all ingredients:', error);
+          setAllIngredients([]); 
+        } finally {
+          setIsLoadingIngredients(false);
+        }
+      }
+    };
+
+    fetchAllIngredients();
+
+  }, [activeTab]); // Depend on activeTab
+
   // Determine activeMenu based on current location.pathname
   const getActiveMenu = (pathname) => {
     if (pathname === '/dashboard') return 'Dashboard';
     if (pathname === '/recipe') return 'Recipe';
     if (pathname === '/inventory') return 'Inventory';
     if (pathname === '/staff') return 'Staff';
-    return ''; // Default or handle other cases
+    if (pathname === '/user') return 'User';
+    return 'Dashboard'; // Default to Dashboard
   };
 
   const handleMenuClick = (menuId) => {
@@ -261,7 +373,8 @@ const DashboardPage = () => {
         navigate('/staff');
         break;
       case 'User':
-        navigate('/user');
+        // For now, redirect to dashboard since User page doesn't exist
+        navigate('/dashboard');
         break;
       case 'Inventory':
         navigate('/inventory');
@@ -291,7 +404,19 @@ const DashboardPage = () => {
       case 'Order':
         return <Order {...commonProps} allOrdersData={allOrdersData} isLoadingAllOrders={isLoadingAllOrders} />;
       case 'Ingredients':
-        return <Ingredients {...commonProps} />;
+        return <Ingredients 
+                  {...commonProps} 
+                  wasteData={wasteData} 
+                  isLoadingWaste={isLoadingWaste}
+                  allIngredients={allIngredients} // Pass all ingredients data
+                  isLoadingIngredients={isLoadingIngredients} // Pass loading state
+                />;
+      case 'Import':
+        return (
+          <div className="import-data">
+            {/* Import data content */}
+          </div>
+        );
       default:
         return <Revenue {...commonProps} />;
     }

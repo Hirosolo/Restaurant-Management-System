@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../styles/Sidebar.css';
 
-const Sidebar = ({ onMenuClick }) => {
-  const [activeMenu, setActiveMenu] = useState('Dashboard');
+const Sidebar = ({ onMenuClick, activeMenu: propActiveMenu }) => {
+  const [activeMenu, setActiveMenu] = useState(propActiveMenu || 'Dashboard');
 
   const menuItems = [
     { id: 'Dashboard', label: 'Dashboard', icon: '📊' },
@@ -11,6 +11,13 @@ const Sidebar = ({ onMenuClick }) => {
     { id: 'Staff', label: 'Staff', icon: '👥' },
     { id: 'User', label: 'User', icon: '⚙️' }
   ];
+
+  // Update internal state when prop changes
+  useEffect(() => {
+    if (propActiveMenu) {
+      setActiveMenu(propActiveMenu);
+    }
+  }, [propActiveMenu]);
 
   const handleMenuClick = (menuId) => {
     setActiveMenu(menuId);

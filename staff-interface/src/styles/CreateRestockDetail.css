@@ -167,6 +167,10 @@
   background-color: #F3F4F6;
 }
 
+.ingredient-search-results li.highlighted {
+  background-color: #e3f2fd;
+}
+
 /* Style for the table of added ingredients within the modal */
 .create-restock-detail table {
   width: 100%; /* Make table take full width */

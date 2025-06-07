@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useCart } from '../contexts/CartContext';
 import AccountSidebar from '../components/AccountSidebar';
 import './Account.css';
 
 function Account() {
   const navigate = useNavigate();
-  const { authStatus, userData, userAddress, handleSignOut } = useAuth();
+  const { authStatus, userData, userAddress, handleSignOut, setUserData } = useAuth();
+  const { addToCart } = useCart();
   
   // States
   const [activeTab, setActiveTab] = useState('account');
@@ -377,15 +379,53 @@ function Account() {
                         <button
                           className="received-order-btn"
                           onClick={async () => {
-                            const token = localStorage.getItem('token');
-                            await fetch(`http://localhost:3001/api/orders/complete/${order.sale_id}`, {
-                              method: 'PUT',
-                              headers: { 'Authorization': `Bearer ${token}` }
-                            });
-                            // Refresh order history locally after marking as complete
-                            setOrderHistory((prev) => prev.map(o => o.sale_id === order.sale_id ? { ...o, status: 'Completed' } : o));
-                            // Also trigger a full re-fetch to be safe, although local update might be enough
-                            setRefreshOrdersTrigger(prev => prev + 1);
+                            try {
+                              const token = localStorage.getItem('token');
+                              const response = await fetch(`http://localhost:3001/api/orders/complete/${order.sale_id}`, {
+                                method: 'PUT',
+                                headers: { 
+                                  'Authorization': `Bearer ${token}`,
+                                  'Content-Type': 'application/json'
+                                }
+                              });
+
+                              if (!response.ok) {
+                                throw new Error('Failed to mark order as completed');
+                              }
+
+                              const data = await response.json();
+                              if (data.success) {
+                                // Refresh order history locally after marking as complete
+                                setOrderHistory((prev) => prev.map(o => 
+                                  o.sale_id === order.sale_id ? { ...o, status: 'Completed' } : o
+                                ));
+                                // Also trigger a full re-fetch to be safe
+                                setRefreshOrdersTrigger(prev => prev + 1);
+
+                                // Update user's loyalty points in the UI
+                                if (data.loyaltyPointsEarned) {
+                                  // Update userData with new loyalty points
+                                  setUserData(prev => ({
+                                    ...prev,
+                                    loyaltyPoints: (prev.loyaltyPoints || 0) + data.loyaltyPointsEarned
+                                  }));
+                                  // Update localStorage
+                                  const updatedUserData = {
+                                    ...userData,
+                                    loyaltyPoints: (userData.loyaltyPoints || 0) + data.loyaltyPointsEarned
+                                  };
+                                  localStorage.setItem('userData', JSON.stringify(updatedUserData));
+                                  
+                                  // Show success message with points earned
+                                  alert(`Order marked as completed! You earned ${data.loyaltyPointsEarned} loyalty points.`);
+                                }
+                              } else {
+                                throw new Error(data.message || 'Failed to mark order as completed');
+                              }
+                            } catch (error) {
+                              console.error('Error marking order as completed:', error);
+                              alert('Failed to mark order as completed. Please try again.');
+                            }
                           }}
                         >
                           Received the order
@@ -443,7 +483,18 @@ function Account() {
                       </div>
                       <button 
                         className="reorder-btn"
-                        onClick={() => navigate('/menu')}
+                        onClick={() => {
+                          // Add the meal to cart
+                          addToCart({
+                            id: meal.recipe_id,
+                            name: meal.recipe_name,
+                            price: meal.price,
+                            image_url: meal.image_url,
+                            description: meal.description
+                          });
+                          // Navigate to menu page
+                          navigate('/menu');
+                        }}
                       >
                         Order Again
                       </button>

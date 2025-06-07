@@ -13,6 +13,7 @@ const CreateRestockDetail = ({ onSave, onCancel }) => {
   // State for ingredient search
   const [ingredientSearchTerm, setIngredientSearchTerm] = useState('');
   const [ingredientSearchResults, setIngredientSearchResults] = useState([]);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
   const [suppliers, setSuppliers] = useState([]);
   const [loadingSuppliers, setLoadingSuppliers] = useState(true);
@@ -114,6 +115,7 @@ const CreateRestockDetail = ({ onSave, onCancel }) => {
   const handleIngredientSearchChange = (e) => {
     const term = e.target.value;
     setIngredientSearchTerm(term);
+    setHighlightedIndex(-1);
 
     if (term.length > 1) { // Only search if term is at least 2 characters
       const results = ingredients.filter(ing =>
@@ -122,6 +124,41 @@ const CreateRestockDetail = ({ onSave, onCancel }) => {
       setIngredientSearchResults(results);
     } else {
       setIngredientSearchResults([]); // Clear results if search term is too short
+    }
+  };
+
+  const handleIngredientSearchKeyDown = (e) => {
+    if (ingredientSearchResults.length === 0) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setHighlightedIndex(prev => 
+          prev < ingredientSearchResults.length - 1 ? prev + 1 : 0
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setHighlightedIndex(prev => 
+          prev > 0 ? prev - 1 : ingredientSearchResults.length - 1
+        );
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (highlightedIndex >= 0 && highlightedIndex < ingredientSearchResults.length) {
+          handleSelectIngredient(ingredientSearchResults[highlightedIndex]);
+        } else if (ingredientSearchResults.length > 0) {
+          // If no item is highlighted, select the first one
+          handleSelectIngredient(ingredientSearchResults[0]);
+        }
+        break;
+      case 'Escape':
+        setIngredientSearchTerm('');
+        setIngredientSearchResults([]);
+        setHighlightedIndex(-1);
+        break;
+      default:
+        break;
     }
   };
 
@@ -154,6 +191,7 @@ const CreateRestockDetail = ({ onSave, onCancel }) => {
     // Clear search bar and results
     setIngredientSearchTerm('');
     setIngredientSearchResults([]);
+    setHighlightedIndex(-1);
   };
 
   // Handle input change for items in the restockItems table
@@ -213,14 +251,19 @@ const CreateRestockDetail = ({ onSave, onCancel }) => {
               placeholder="Search for ingredients..."
               value={ingredientSearchTerm}
               onChange={handleIngredientSearchChange}
+              onKeyDown={handleIngredientSearchKeyDown}
             />
           )}
 
           {/* Display Search Results */}
           {ingredientSearchResults.length > 0 && ingredientSearchTerm.length > 1 && (
             <ul className="ingredient-search-results">
-              {ingredientSearchResults.map(ingredient => (
-                <li key={ingredient.ingredient_id} onClick={() => handleSelectIngredient(ingredient)}>
+              {ingredientSearchResults.map((ingredient, index) => (
+                <li 
+                  key={ingredient.ingredient_id} 
+                  className={index === highlightedIndex ? 'highlighted' : ''}
+                  onClick={() => handleSelectIngredient(ingredient)}
+                >
                   {ingredient.ingredient_name}
                 </li>
               ))}

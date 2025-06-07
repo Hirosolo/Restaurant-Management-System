@@ -1,0 +1,143 @@
+.support-page {
+  min-height: 100vh;
+  background-color: #f7f7f7;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.support-page > .support-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.support-container {
+  width: 100%;
+  max-width: 900px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  box-sizing: border-box;
+  margin: auto;
+}
+
+.support-heading {
+  text-align: center;
+  color: #333;
+  margin-bottom: 30px;
+  font-size: 2.5em;
+}
+
+.support-content {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 30px;
+}
+
+.support-section {
+  background-color: #f9f9f9;
+  border-left: 5px solid #6a994e;
+  padding: 20px;
+  border-radius: 5px;
+}
+
+.support-section h2 {
+  color: #6a994e;
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.8em;
+}
+
+.support-section p {
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+
+.faq-item {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.faq-item:last-child {
+  border-bottom: none;
+}
+
+.faq-item h3 {
+  color: #444;
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 1.3em;
+}
+
+.faq-item p {
+  color: #666;
+}
+
+@media (min-width: 768px) {
+  .support-content {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .support-section:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 1024px) {
+  .support-content {
+    grid-template-columns: 1fr 1fr 1.5fr; /* More space for FAQ */
+  }
+
+  .support-section:nth-child(3) {
+    grid-column: auto;
+  }
+}
+
+/* Ensure footer sticks to bottom */
+.support-page .footer {
+  margin-top: auto;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .support-page > .support-container {
+    padding: 80px 15px 30px 15px;
+  }
+  
+  .support-container h1 {
+    font-size: 2rem;
+  }
+  
+  .support-section {
+    padding: 20px;
+  }
+  
+  .support-section h2 {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .support-page > .support-container {
+    padding: 70px 10px 20px 10px;
+  }
+  
+  .support-container h1 {
+    font-size: 1.8rem;
+  }
+  
+  .support-section {
+    padding: 15px;
+  }
+  
+  .support-section h2 {
+    font-size: 1.3rem;
+  }
+} 

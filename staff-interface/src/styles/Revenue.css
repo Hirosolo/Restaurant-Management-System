@@ -6,6 +6,7 @@
   padding: 20px;
   background-color: #F8F5E9; 
   min-height: 100vh;
+  width: 83vw;
   font-family: 'Bubblegum Sans', sans-serif; 
 }
 
@@ -70,18 +71,21 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
+  height: calc(100vh - 120px); /* Ensure content takes available height */
 }
 
 .dashboard-left {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  height: 100%;
 }
 
 .dashboard-right {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  height: 100%;
 }
 
 /* Cards */
@@ -90,32 +94,74 @@
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  min-height: 300px; /* Minimum height for cards */
+}
+
+.card-header {
+  margin-bottom: 15px;
+  flex-shrink: 0; /* Prevent header from shrinking */
 }
 
 .card-header h3 {
   font-size: 16px;
   font-weight: 600;
   color: #3A7D44; /* Xanh lá đậm cho tiêu đề card */
-  margin-bottom: 15px;
+  margin: 0;
+}
+
+.card-content {
+  flex: 1; /* Take remaining space */
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* Allow content to shrink */
 }
 
 /* Sale Card */
 .sale-card {
-  /* Remove fixed height */
-  /* height: 400px; */
+  flex: 1; /* Take equal space in left column */
+  min-height: 400px;
 }
 
 .daily-sales-chart-area {
-  position: relative; /* Needed for Chart.js responsiveness */
-  height: calc(100% - 40px); /* Allocate height within the card, leave space for header/padding */
+  position: relative;
+  height: 100%;
   width: 100%;
+  min-height: 300px; /* Minimum height for chart visibility */
 }
 
-/* New style for Daily Revenue Chart Area */
+.daily-sales-chart-area canvas {
+  max-height: 100% !important;
+  width: 100% !important;
+}
+
+/* Daily Revenue Chart Area */
 .daily-revenue-chart-area {
-  position: relative; /* Needed for Chart.js responsiveness */
-  height: calc(100% - 40px); /* Allocate height within the card */
+  position: relative;
+  height: 100%;
   width: 100%;
+  min-height: 300px; /* Minimum height for chart visibility */
+}
+
+.daily-revenue-chart-area canvas {
+  max-height: 100% !important;
+  width: 100% !important;
+}
+
+/* Daily Import Chart Area */
+.daily-import-chart-area {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  min-height: 300px; /* Minimum height for chart visibility */
+}
+
+.daily-import-chart-area canvas {
+  max-height: 100% !important;
+  width: 100% !important;
 }
 
 .metric-value {
@@ -135,7 +181,10 @@
   background-color: #F8F5E9; /* Màu nền nhạt cho chart */
   border-radius: 8px;
   padding: 15px;
-  height: 200px;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .chart-title {
@@ -159,7 +208,8 @@
 .line-chart,
 .dual-line-chart {
   position: relative;
-  height: 120px;
+  height: 100%;
+  flex: 1;
 }
 
 .chart-svg {
@@ -177,21 +227,23 @@
 
 /* Salaries Card */
 .salaries-card {
-  /* Keep height flexible for the table */
+  flex: 1; /* Take equal space in left column */
+  min-height: 300px;
 }
 
 .salaries-table {
   width: 100%;
-  border-collapse: collapse; /* Remove space between borders */
+  border-collapse: collapse;
   margin-top: 10px;
   font-size: 14px;
+  height: auto;
 }
 
 .salaries-table th,
 .salaries-table td {
   border: 1px solid #3A7D44; /* Dark green border */
   padding: 10px;
-  text-align: left; /* Align text to the left */
+  text-align: left;
 }
 
 .salaries-table th {
@@ -201,7 +253,7 @@
 }
 
 .salaries-table tbody tr:nth-child(even) {
-  background-color: #9DC08B; /* Light green background for even rows */
+  background-color: #F8F5E9; /* Light background for even rows */
 }
 
 .salaries-table tbody tr:hover {
@@ -211,13 +263,14 @@
 
 /* Import Price Card */
 .import-card {
-  /* Remove fixed height */
-  /* height: 120px; */
+  flex: 1; /* Take equal space in right column */
+  min-height: 350px;
 }
 
 /* Revenue Card */
 .revenue-card {
-  height: 300px;
+  flex: 1; /* Take equal space in right column */
+  min-height: 350px;
 }
 
 .revenue-value {
@@ -227,17 +280,50 @@
   margin-bottom: 5px;
 }
 
-/* New style for Daily Import Price Chart Area */
-.daily-import-chart-area {
-  position: relative; /* Needed for Chart.js responsiveness */
-  height: calc(100% - 40px); /* Allocate height within the card */
-  width: 100%;
+/* Chart.js specific overrides */
+.dashboard-card canvas {
+  max-height: none !important;
+  height: auto !important;
+}
+
+/* Ensure charts are responsive and visible */
+.daily-sales-chart-area > div,
+.daily-revenue-chart-area > div,
+.daily-import-chart-area > div {
+  position: relative !important;
+  height: 100% !important;
+  width: 100% !important;
+}
+
+/* No data message styling */
+.dashboard-card p {
+  color: #3A7D44;
+  text-align: center;
+  font-size: 14px;
+  margin: auto;
+  padding: 20px;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
   .dashboard-content {
     grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .dashboard-left,
+  .dashboard-right {
+    height: auto;
+  }
+
+  .dashboard-card {
+    min-height: 250px;
+  }
+
+  .daily-sales-chart-area,
+  .daily-revenue-chart-area,
+  .daily-import-chart-area {
+    min-height: 200px;
   }
 
   .dashboard-header {
@@ -253,5 +339,14 @@
   .tab {
     padding: 10px 16px;
     font-size: 12px;
+  }
+
+  .salaries-table {
+    font-size: 12px;
+  }
+
+  .salaries-table th,
+  .salaries-table td {
+    padding: 8px;
   }
 }
