@@ -100,6 +100,15 @@ router.post('/', auth.authenticateToken, async (req, res) => {
         return res.status(400).json({ success: false, message: 'Invalid shift type. Must be \'Morning\' or \'Evening\'' });
     }
 
+    // Prevent creating a shift before today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to midnight
+    const shiftDateObj = new Date(shift_date);
+    shiftDateObj.setHours(0, 0, 0, 0);
+    if (shiftDateObj < today) {
+      return res.status(400).json({ success: false, message: 'Cannot create a shift before today.' });
+    }
+
     // If staff_id is provided, assign staff to shift
     if (staff_id) {
       console.log(`Adding staff ${staff_id} to ${shift} shift on ${shift_date}`);

@@ -31,6 +31,10 @@ const UserNav = () => {
   };
   const handleTrackOrderClick = (e) => {
     e.preventDefault();
+    if (authStatus === 'signedIn') {
+      navigate('/account?tab=order-history');
+      return;
+    }
     setShowTrackOrderPopup(true);
     setTrackOrderId('');
     setTrackOrderResult(null);

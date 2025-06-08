@@ -455,23 +455,25 @@ const DashboardPage = () => {
               </div>
             </div>
             
-            <div className="content-date">
-              <label htmlFor="month-select">Month:</label>
-              <select id="month-select" value={selectedMonth} onChange={handleMonthChange} className="month-picker">
-                {[...Array(12)].map((_, i) => (
-                  <option key={i + 1} value={i + 1}>{i + 1}</option>
-                ))}
-              </select>
+            {activeTab === 'Revenue' && (
+              <div className="content-date">
+                <label htmlFor="month-select">Month:</label>
+                <select id="month-select" value={selectedMonth} onChange={handleMonthChange} className="month-picker">
+                  {[...Array(12)].map((_, i) => (
+                    <option key={i + 1} value={i + 1}>{i + 1}</option>
+                  ))}
+                </select>
 
-              <label htmlFor="year-select">Year:</label>
-              <select id="year-select" value={selectedYear} onChange={handleYearChange} className="year-picker">
-                {/* Provide a range of years, e.g., current year +/- 5 */}
-                {[...Array(11)].map((_, i) => {
-                  const year = today.getFullYear() - 5 + i;
-                  return <option key={year} value={year}>{year}</option>;
-                })}
-              </select>
-            </div>
+                <label htmlFor="year-select">Year:</label>
+                <select id="year-select" value={selectedYear} onChange={handleYearChange} className="year-picker">
+                  {/* Provide a range of years, e.g., current year +/- 5 */}
+                  {[...Array(11)].map((_, i) => {
+                    const year = today.getFullYear() - 5 + i;
+                    return <option key={year} value={year}>{year}</option>;
+                  })}
+                </select>
+              </div>
+            )}
           </div>
 
           {/* Tab Content */}
