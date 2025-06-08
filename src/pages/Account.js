@@ -267,8 +267,9 @@ function Account() {
     }
   };
   
-  const calculateTotalAmount = (items) => {
-    return items.reduce((total, item) => total + item.price * item.quantity, 0);
+  const calculateTotalAmount = (items, deliveryCharge = 0) => {
+    const subtotal = items.reduce((total, item) => total + item.price * item.quantity, 0);
+    return subtotal + (deliveryCharge || 0);
   };
 
   // Render content based on active tab
@@ -369,7 +370,7 @@ function Account() {
                     <div className="order-footer">
                       <div className="order-total">
                         <span>Total:</span>
-                        <span>{formatCurrency(calculateTotalAmount(order.items))}</span>
+                        <span>{formatCurrency(calculateTotalAmount(order.items, order.delivery_charge))}</span>
                       </div>
                       <div className="order-address">
                         <span>Delivered to:</span>
@@ -424,7 +425,6 @@ function Account() {
                               }
                             } catch (error) {
                               console.error('Error marking order as completed:', error);
-                              alert('Failed to mark order as completed. Please try again.');
                             }
                           }}
                         >

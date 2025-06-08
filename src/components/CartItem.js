@@ -28,11 +28,6 @@ function CartItem({ item, index }) {
           <span>{formattedPrice}</span>
           <span>Qty: {item.quantity || 1}</span>
         </div>
-        {item.note && (
-          <div className={styles.note}>
-            <span>Note: {item.note}</span>
-          </div>
-        )}
       </div>
     </div>
   );

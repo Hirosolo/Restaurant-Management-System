@@ -1,64 +1,64 @@
 USE restaurant_db;
 
 -- Insert into ingredient (from Ingredients.csv)
-INSERT INTO ingredient (ingredient_id, ingredient_name, quantity, unit, minimum_threshold) VALUES
-(1, 'Salmon Fillet', 0, 'kg', 2),
-(2, 'Chicken Breast Fillet', 0, 'kg', 5),
-(3, 'Tofu', 0, 'piece', 10),
-(4, 'Salt', 0, 'kg', 0.5),
-(5, 'Sugar', 0, 'kg', 0.5),
-(6, 'Honey', 0, 'liter', 0.5),
-(7, 'Parmesan', 0, 'kg', 1),
-(8, 'Panko', 0, 'kg', 1),
-(9, 'Paprika', 0, 'kg', 0.2),
-(10, 'Onion powder', 0, 'kg', 0.2),
-(11, 'Garlic powder', 0, 'kg', 0.2),
-(12, 'Oregano', 0, 'kg', 0.2),
-(13, 'Butter', 0, 'kg', 1),
-(14, 'Olive oil', 0, 'liter', 1),
-(15, 'Lemon', 0, 'kg', 10),
-(16, 'Parsley', 0, 'kg', 0.2),
-(17, 'Mayonnaise', 0, 'kg', 1),
-(18, 'Bun', 0, 'piece', 50),
-(19, 'Tomato', 0, 'kg', 3),
-(20, 'Lettuce', 0, 'kg', 3),
-(21, 'Onion', 0, 'kg', 3),
-(22, 'Chili sauce', 0, 'kg', 1),
-(23, 'Tomato sauce', 0, 'liter', 1),
-(24, 'Cans tuna', 0, 'can', 10),
-(25, 'Eggs', 0, 'piece', 50),
-(26, 'Shrimp', 0, 'kg', 2),
-(27, 'Bell pepper', 0, 'kg', 2),
-(28, 'Hoisin sauce', 0, 'liter', 1),
-(29, 'Soy sauce', 0, 'liter', 1),
-(30, 'Vinegar', 0, 'liter', 1),
-(31, 'Cornstarch', 0, 'kg', 1),
-(32, 'Ginger', 0, 'kg', 0.5),
-(33, 'Spring onion', 0, 'kg', 1),
-(34, 'Carrot', 0, 'kg', 3),
-(35, 'Eggplant', 0, 'kg', 2),
-(36, 'Basil', 0, 'kg', 0.5),
-(37, 'Mozzarella', 0, 'kg', 1),
-(38, 'Heavy cream', 0, 'liter', 1),
-(39, 'Milk', 0, 'liter', 2),
-(40, 'Cucumber', 0, 'kg', 1),
-(41, 'Avocado', 0, 'kg', 1),
-(42, 'Spaghetti noodles', 0, 'kg', 2),
-(43, 'Penne', 0, 'kg', 2),
-(44, 'All-purpose flour', 0, 'kg', 5),
-(45, 'Scallop', 0, 'kg', 1),
-(46, 'Cabbage', 0, 'kg', 2),
-(47, 'Rice', 0, 'kg', 10),
-(48, 'Pea', 0, 'kg', 1),
-(49, 'Fish sauce', 0, 'liter', 1),
-(50, 'Kidney bean', 0, 'kg', 1),
-(51, 'Navy bean', 0, 'kg', 1),
-(52, 'Mushroom', 0, 'kg', 1),
-(53, 'Spinach', 0, 'kg', 1),
-(54, 'Chicken Thigh', 0, 'kg', 2),
-(55, 'Garlic', 0, 'kg', 0.5),
-(56, 'Pecan', 0, 'kg', 0.5),
-(57, 'Pepper', 0, 'kg', 0.5);
+INSERT INTO ingredient (ingredient_id, ingredient_name, quantity, unit, minimum_threshold, good_for) VALUES
+(1, 'Salmon Fillet', 0, 'kg', 2, 3),
+(2, 'Chicken Breast Fillet', 0, 'kg', 5, 7),
+(3, 'Tofu', 0, 'piece', 10, 14),
+(4, 'Salt', 0, 'kg', 0.5, 365),
+(5, 'Sugar', 0, 'kg', 0.5, 365),
+(6, 'Honey', 0, 'liter', 0.5, 365),
+(7, 'Parmesan', 0, 'kg', 1, 180),
+(8, 'Panko', 0, 'kg', 1, 365),
+(9, 'Paprika', 0, 'kg', 0.2, 365),
+(10, 'Onion powder', 0, 'kg', 0.2, 365),
+(11, 'Garlic powder', 0, 'kg', 0.2, 365),
+(12, 'Oregano', 0, 'kg', 0.2, 365),
+(13, 'Butter', 0, 'kg', 1, 30),
+(14, 'Olive oil', 0, 'liter', 1, 365),
+(15, 'Lemon', 0, 'kg', 10, 30),
+(16, 'Parsley', 0, 'kg', 0.2, 7),
+(17, 'Mayonnaise', 0, 'kg', 1, 180),
+(18, 'Bun', 0, 'piece', 50, 7),
+(19, 'Tomato', 0, 'kg', 3, 14),
+(20, 'Lettuce', 0, 'kg', 3, 3),
+(21, 'Onion', 0, 'kg', 3, 30),
+(22, 'Chili sauce', 0, 'kg', 1, 365),
+(23, 'Tomato sauce', 0, 'liter', 1, 365),
+(24, 'Cans tuna', 0, 'can', 10, 365),
+(25, 'Eggs', 0, 'piece', 50, 30),
+(26, 'Shrimp', 0, 'kg', 2, 7),
+(27, 'Bell pepper', 0, 'kg', 2, 14),
+(28, 'Hoisin sauce', 0, 'liter', 1, 365),
+(29, 'Soy sauce', 0, 'liter', 1, 365),
+(30, 'Vinegar', 0, 'liter', 1, 365),
+(31, 'Cornstarch', 0, 'kg', 1, 365),
+(32, 'Ginger', 0, 'kg', 0.5, 30),
+(33, 'Spring onion', 0, 'kg', 1, 7),
+(34, 'Carrot', 0, 'kg', 3, 30),
+(35, 'Eggplant', 0, 'kg', 2, 14),
+(36, 'Basil', 0, 'kg', 0.5, 7),
+(37, 'Mozzarella', 0, 'kg', 1, 30),
+(38, 'Heavy cream', 0, 'liter', 1, 14),
+(39, 'Milk', 0, 'liter', 2, 14),
+(40, 'Cucumber', 0, 'kg', 1, 14),
+(41, 'Avocado', 0, 'kg', 1, 7),
+(42, 'Spaghetti noodles', 0, 'kg', 2, 365),
+(43, 'Penne', 0, 'kg', 2, 365),
+(44, 'All-purpose flour', 0, 'kg', 5, 365),
+(45, 'Scallop', 0, 'kg', 1, 7),
+(46, 'Cabbage', 0, 'kg', 2, 30),
+(47, 'Rice', 0, 'kg', 10, 365),
+(48, 'Pea', 0, 'kg', 1, 180),
+(49, 'Fish sauce', 0, 'liter', 1, 365),
+(50, 'Kidney bean', 0, 'kg', 1, 365),
+(51, 'Navy bean', 0, 'kg', 1, 365),
+(52, 'Mushroom', 0, 'kg', 1, 7),
+(53, 'Spinach', 0, 'kg', 1, 3),
+(54, 'Chicken Thigh', 0, 'kg', 2, 7),
+(55, 'Garlic', 0, 'kg', 0.5, 30),
+(56, 'Pecan', 0, 'kg', 0.5, 365),
+(57, 'Pepper', 0, 'kg', 0.5, 365);
 
 -- Insert into supplier (from Supplier.csv)
 INSERT INTO supplier (supplier_id, supplier_name, phone, address) VALUES
@@ -133,7 +133,7 @@ INSERT INTO recipe (recipe_id, recipe_name, category, calories, protein, fat, ca
 (29, 'Tofu Soup with Spinach', 'Soup', 232, 16.5, 9.9, 22.6, 7.2, 23000, '/assets/RCP-029.jpg'),
 (30, 'Carrot Soup', 'Soup', 209, 3.2, 11.5, 25.7, 5.2, 18000, '/assets/RCP-030.jpg'),
 (31, 'Classic Tomato Soup', 'Soup', 178, 2.7, 13.4, 14.9, 3.7, 17000, '/assets/RCP-031.jpg'),
-(32, 'Garlic Butter Salmon', 'Soup', 474, 51.2, 29.2, 3.4, 0.4, 135000, '/assets/RCP-032.jpg');
+(32, 'Garlic Butter Salmon', 'Main Dishes', 474, 51.2, 29.2, 3.4, 0.4, 135000, '/assets/RCP-032.jpg');
 
 -- Insert into recipe_detail (from recipe_detail.csv)
 INSERT INTO recipe_detail (recipe_id, ingredient_id, weight) VALUES
@@ -149,7 +149,7 @@ INSERT INTO recipe_detail (recipe_id, ingredient_id, weight) VALUES
 (10, 2, 0.25), (10, 4, 0.003), (10, 10, 0.00075), (10, 11, 0.00075), (10, 12, 0.0005), (10, 13, 0.007), (10, 14, 0.015), (10, 15, 0.05), (10, 16, 0.0025), (10, 38, 0.09), (10, 39, 0.03), (10, 57, 0.00075),
 (11, 2, 0.25), (11, 4, 0.003375), (11, 9, 0.00075), (11, 10, 0.00075), (11, 11, 0.00075), (11, 12, 0.0005), (11, 14, 0.015), (11, 57, 0.00075),
 (12, 4, 0.003), (12, 9, 0.0015), (12, 10, 0.0015), (12, 11, 0.0015), (12, 54, 0.35),
-(13, 2, 0.25), (13, 4, 0.003), (13, 8, 0.045), (13, 9, 0.0015), (13, 10, 0.0015), (13, 11, 0.0015), (13, 14, 0.0075), (13, 23, 0.0075), (13, 25, 1),
+(13, 2, 0.25), (13, 4-savory), (13, 4, 0.003), (13, 8, 0.045), (13, 9, 0.0015), (13, 10, 0.0015), (13, 11, 0.0015), (13, 14, 0.0075), (13, 23, 0.0075), (13, 25, 1),
 (14, 4, 0.002), (14, 6, 0.015), (14, 9, 0.001), (14, 10, 0.005), (14, 11, 0.005), (14, 14, 0.015), (14, 29, 0.0075), (14, 30, 0.003), (14, 31, 0.002), (14, 32, 0.00025), (14, 54, 0.25),
 (15, 2, 0.15), (15, 4, 0.002), (15, 7, 0.02), (15, 8, 0.015), (15, 9, 0.000375), (15, 10, 0.000375), (15, 11, 0.000375), (15, 14, 0.01), (15, 15, 0.05), (15, 20, 0.15), (15, 57, 0.0005),
 (16, 2, 0.15), (16, 4, 0.002), (16, 5, 0.001), (16, 7, 0.00625), (16, 10, 0.00075), (16, 11, 0.00075), (16, 12, 0.00075), (16, 14, 0.025), (16, 19, 0.0125), (16, 20, 0.125), (16, 21, 0.0125), (16, 30, 0.0075), (16, 36, 0.00025), (16, 40, 0.075), (16, 41, 0.0375), (16, 57, 0.002),
@@ -170,21 +170,21 @@ INSERT INTO recipe_detail (recipe_id, ingredient_id, weight) VALUES
 (31, 4, 0.0005), (31, 10, 0.00075), (31, 11, 0.00075), (31, 13, 0.0075), (31, 14, 0.0075), (31, 19, 0.2),
 (32, 1, 0.2), (32, 4, 0.0005), (32, 13, 0.007), (32, 14, 0.0075), (32, 15, 0.1), (32, 16, 0.00125), (32, 57, 0.00075);
 
--- Insert into customer (updated with email and address fields, customer_id omitted due to trigger)
+-- Insert into customer (updated with JSON address format, customer_id omitted due to trigger)
 INSERT INTO customer (customer_name, phone, password, loyalty_point, email, address) VALUES
-('John Doe', '1234567890', 'pass123', 50.5, 'john.doe@email.com', '123 Nguyen Hue, District 1, HCMC, Vietnam'),
-('Jane Smith', '2345678901', 'pass456', 30.0, 'jane.smith@email.com', '456 Le Loi, District 3, HCMC, Vietnam'),
-('Alice Johnson', '3456789012', 'pass789', 20.75, 'alice.johnson@email.com', '789 Tran Hung Dao, District 5, HCMC, Vietnam'),
-('Bob Wilson', '4567890123', 'pass101', 15.25, 'bob.wilson@email.com', '321 Vo Van Tan, District 3, HCMC, Vietnam'),
-('Emma Brown', '5678901234', 'pass202', 10.0, 'emma.brown@email.com', '654 Nguyen Thi Minh Khai, District 1, HCMC, Vietnam');
+('John Doe', '1234567890', 'pass123', 50.5, 'john.doe@email.com', '{"ward":"Ben Nghe Ward","district":"District 1","street":"Nguyen Hue","houseNumber":"123","buildingName":"Sunrise","block":"","floor":"1","roomNumber":"101","deliveryInstructions":"Leave at reception"}'),
+('Jane Smith', '2345678901', 'pass456', 30.0, 'jane.smith@email.com', '{"ward":"Ward 6","district":"District 3","street":"Le Loi","houseNumber":"456","buildingName":"Moonlight","block":"A","floor":"2","roomNumber":"213","deliveryInstructions":""}'),
+('Alice Johnson', '3456789012', 'pass789', 20.75, 'alice.johnson@email.com', '{"ward":"Ward 1","district":"District 5","street":"Tran Hung Dao","houseNumber":"789","buildingName":"Starlight","block":"","floor":"3","roomNumber":"305","deliveryInstructions":"Call upon arrival"}'),
+('Bob Wilson', '4567890123', 'pass101', 15.25, 'bob.wilson@email.com', '{"ward":"Ward 7","district":"District 3","street":"Vo Van Tan","houseNumber":"321","buildingName":"Sunset","block":"B","floor":"4","roomNumber":"410","deliveryInstructions":""}'),
+('Emma Brown', '5678901234', 'pass202', 10.0, 'emma.brown@email.com', '{"ward":"Ben Thanh Ward","district":"District 1","street":"Nguyen Thi Minh Khai","houseNumber":"654","buildingName":"Skyview","block":"","floor":"5","roomNumber":"512","deliveryInstructions":"Leave at door"}');
 
--- Insert into staff (corrected pay_rates to pay_rate)
-INSERT INTO staff (staff_name, role, phone, pay_rate) VALUES
-('Michael Green', 'Manager', '6789012345', 50000),
-('Sarah Davis', 'Chef', '7890123456', 40000),
-('Tom Clark', 'Order Staff', '8901234567', 30000),
-('Lisa Adams', 'Kitchen Supervisor', '9012345678', 35000),
-('David Lee', 'Shipper', '0123456789', 25000);
+-- Insert into staff (corrected pay_rates to pay_rate, added staff_email and password)
+INSERT INTO staff (staff_name, staff_email, password, role, phone, pay_rates) VALUES
+('Michael Green', 'michael.green@restaurant.com', '$2a$12$6pe85m5bssvGNtI6PwIwcuReNeFl.4.rJxd4Iyod2Ez37z88P1wrm', 'Manager', '6789012345', 50000),
+('Sarah Davis', 'sarah.davis@restaurant.com', '$2a$12$6pe85m5bssvGNtI6PwIwcuReNeFl.4.rJxd4Iyod2Ez37z88P1wrm', 'Chef', '7890123456', 40000),
+('Tom Clark', 'tom.clark@restaurant.com', '$2a$12$6pe85m5bssvGNtI6PwIwcuReNeFl.4.rJxd4Iyod2Ez37z88P1wrm', 'Order Staff', '8901234567', 30000),
+('Lisa Adams', 'lisa.adams@restaurant.com', '$2a$12$6pe85m5bssvGNtI6PwIwcuReNeFl.4.rJxd4Iyod2Ez37z88P1wrm', 'Kitchen Supervisor', '9012345678', 35000),
+('David Lee', 'david.lee@restaurant.com', '$2a$12$6pe85m5bssvGNtI6PwIwcuReNeFl.4.rJxd4Iyod2Ez37z88P1wrm', 'Shipper', '0123456789', 25000);
 
 -- Insert into schedule
 INSERT INTO schedule (shift_date, shift, staff_id) VALUES
@@ -226,7 +226,7 @@ INSERT INTO restock_detail (restock_id, ingredient_id, import_quantity, import_p
 (7, 38, 3, 400000), (7, 39, 5, 35000),
 (8, 7, 3, 512000), (8, 37, 3, 250000), (8, 38, 3, 400000), (8, 39, 5, 35000),
 (9, 1, 5, 618000), (9, 26, 5, 300000), (9, 45, 3, 240000),
-(10, 4, 5, 9000), (10, 5, 5, 32000), (10, 9, 1, 500000), (10, 10, 1, 150000), (10, 11, 1, 550000), (10, 12, 1, 40000), (10, 29, 3, 50000), (10, 31, 3, 47000), (10, 47, 10, 35000), (10, 48, 3, 70000),
+(10 scripting, 4, 5, 9000), (10, 5, 5, 32000), (10, 9, 1, 500000), (10, 10, 1, 150000), (10, 11, 1, 550000), (10, 12, 1, 40000), (10, 29, 3, 50000), (10, 31, 3, 47000), (10, 47, 10, 35000), (10, 48, 3, 70000),
 (10, 49, 3, 15000), (10, 50, 3, 70000), (10, 51, 3, 160000),
 (11, 2, 10, 91200), (11, 3, 50, 3000), (11, 4, 5, 9000), (11, 5, 5, 32000), (11, 13, 5, 300000), (11, 15, 20, 180000), (11, 16, 1, 100000), (11, 19, 10, 34000), (11, 20, 10, 32000), (11, 21, 10, 25000),
 (11, 25, 100, 2500), (11, 26, 5, 300000), (11, 27, 5, 55000), (11, 32, 2, 66000), (11, 33, 5, 30000), (11, 34, 10, 28000), (11, 35, 5, 30000), (11, 36, 1, 70000), (11, 40, 5, 23000), (11, 41, 5, 55000),
@@ -253,15 +253,15 @@ INSERT INTO waste_detail (waste_id, ingredient_id, quantity, reason) VALUES
 (1, 20, 3, 'Lettuce outdated, spoiled after 3 days'),
 (2, 53, 2, 'Spinach outdated, wilted after 3 days');
 
--- Insert into sale (realistic sales from June 2024, using calculated recipe prices, added delivery fields)
+-- Insert into sale (realistic sales from June 2024, using calculated recipe prices, updated payment_method)
 INSERT INTO sale (sale_time, total_amount, payment_method, completion_time, status, customer_id, delivery_address, delivery_distance, delivery_charge) VALUES
-('2024-06-01 12:30:00', 200000, 'Cash', '2024-06-01 13:00:00', 'Completed', 1, '123 Nguyen Hue, District 1, HCMC, Vietnam', 2.5, 10000),
-('2024-06-05 18:45:00', 42000, 'Online Transfer', '2024-06-05 19:15:00', 'Completed', 2, '456 Le Loi, District 3, HCMC, Vietnam', 3.0, 12000),
-('2024-06-10 13:00:00', 54000, 'Cash', '2024-06-10 13:30:00', 'Completed', 3, '789 Tran Hung Dao, District 5, HCMC, Vietnam', 4.0, 15000),
-('2024-07-01 19:00:00', 23000, 'Online Transfer', '2024-07-01 19:30:00', 'Completed', 4, '321 Vo Van Tan, District 3, HCMC, Vietnam', 2.0, 8000),
-('2024-07-15 12:15:00', 69000, 'Cash', '2024-07-15 12:45:00', 'Completed', 5, '654 Nguyen Thi Minh Khai, District 1, HCMC, Vietnam', 1.5, 6000),
-('2024-08-01 17:30:00', 103000, 'Online Transfer', '2024-08-01 18:00:00', 'Completed', 1, '123 Nguyen Hue, District 1, HCMC, Vietnam', 2.5, 10000),
-('2024-08-10 14:00:00', 82000, 'Cash', '2024-08-10 14:30:00', 'Completed', 2, '456 Le Loi, District 3, HCMC, Vietnam', 3.0, 12000);
+('2024-06-01 12:30:00', 200000, 'cash', '2024-06-01 13:00:00', 'Completed', 1, '{"ward":"Ben Nghe Ward","district":"District 1","street":"Nguyen Hue","houseNumber":"123","buildingName":"Sunrise","block":"","floor":"1","roomNumber":"101","deliveryInstructions":"Leave at reception"}', 2.5, 10000),
+('2024-06-05 18:45:00', 42000, 'momo', '2024-06-05 19:15:00', 'Completed', 2, '{"ward":"Ward 6","district":"District 3","street":"Le Loi","houseNumber":"456","buildingName":"Moonlight","block":"A","floor":"2","roomNumber":"213","deliveryInstructions":""}', 3.0, 12000),
+('2024-06-10 13:00:00', 54000, 'cash', '2024-06-10 13:30:00', 'Completed', 3, '{"ward":"Ward 1","district":"District 5","street":"Tran Hung Dao","houseNumber":"789","buildingName":"Starlight","block":"","floor":"3","roomNumber":"305","deliveryInstructions":"Call upon arrival"}', 4.0, 15000),
+('2024-07-01 19:00:00', 23000, 'momo', '2024-07-01 19:30:00', 'Completed', 4, '{"ward":"Ward 7","district":"District 3","street":"Vo Van Tan","houseNumber":"321","buildingName":"Sunset","block":"B","floor":"4","roomNumber":"410","deliveryInstructions":""}', 2.0, 8000),
+('2024-07-15 12:15:00', 69000, 'cash', '2024-07-15 12:45:00', 'Completed', 5, '{"ward":"Ben Thanh Ward","district":"District 1","street":"Nguyen Thi Minh Khai","houseNumber":"654","buildingName":"Skyview","block":"","floor":"5","roomNumber":"512","deliveryInstructions":"Leave at door"}', 1.5, 6000),
+('2024-08-01 17:30:00', 103000, 'momo', '2024-08-01 18:00:00', 'Completed', 1, '{"ward":"Ben Nghe Ward","district":"District 1","street":"Nguyen Hue","houseNumber":"123","buildingName":"Sunrise","block":"","floor":"1","roomNumber":"101","deliveryInstructions":"Leave at reception"}', 2.5, 10000),
+('2024-08-10 14:00:00', 82000, 'cash', '2024-08-10 14:30:00', 'Completed', 2, '{"ward":"Ward 6","district":"District 3","street":"Le Loi","houseNumber":"456","buildingName":"Moonlight","block":"A","floor":"2","roomNumber":"213","deliveryInstructions":""}', 3.0, 12000);
 
 -- Insert into order_detail
 INSERT INTO order_detail (sale_id, recipe_id, quantity) VALUES

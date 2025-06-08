@@ -1,11 +1,13 @@
 import React from 'react';
 import Navbar from '../components/Navbar';
+import UserNav from '../components/UserNav';
 import Footer from '../components/Footer';
 import '../styles/SupportPage.css';
 
 const SupportPage = () => {
   return (
     <div className="support-page">
+      <UserNav />
       <div className="navbar menu-navbar">
         <div className="nav-links" >
           <a href="/">Home</a>

@@ -384,7 +384,7 @@ const EditRecipe = ({ recipe, onSave, onCancel }) => {
                 <div className="form-group"><label>Fiber (g):</label><input type="number" className="form-input" value={fiber} onChange={(e) => setFiber(e.target.value)} /></div>
                 
                 {/* Price Input */}
-                 <div className="form-group"><label>Price ($):</label><input type="number" className="form-input" value={cost} onChange={(e) => setCost(e.target.value)} /></div>
+                 <div className="form-group"><label>Price (vnd):</label><input type="number" className="form-input" value={cost} onChange={(e) => setCost(e.target.value)} /></div>
            </div>
       </div>
 

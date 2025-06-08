@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Delivery.css';
+import Navbar from '../components/Navbar';
 
 function Delivery({ cart, setCart, userAddress, setUserAddress }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -19,6 +20,7 @@ function Delivery({ cart, setCart, userAddress, setUserAddress }) {
   const [floor, setFloor] = useState('');
   const [roomNumber, setRoomNumber] = useState('');
   const [deliveryInstructions, setDeliveryInstructions] = useState('');
+  const [deliveryNote, setDeliveryNote] = useState('');
 
   // Dropdown state
   const [wardDropdownOpen, setWardDropdownOpen] = useState(false);
@@ -97,7 +99,8 @@ function Delivery({ cart, setCart, userAddress, setUserAddress }) {
     // Save both the object (for UI) and string (for DB) versions
     const finalAddress = {
       ...addressInfo,
-      formattedAddress
+      formattedAddress,
+      delivery_note: deliveryNote
     };
     
     console.log('Saving address:', finalAddress);
@@ -122,7 +125,7 @@ function Delivery({ cart, setCart, userAddress, setUserAddress }) {
         </div>
       )}
 
-      {/* Header with class menu-navbar */}
+      {/* Navbar like Menu Page */}
       <div className="navbar menu-navbar">
         <div className={`menu-icon ${menuOpen ? 'open' : ''}`} onClick={toggleMenu}>
           <div className="bar"></div>
@@ -132,37 +135,14 @@ function Delivery({ cart, setCart, userAddress, setUserAddress }) {
         <div className="mobile-logo">
           <img src="/assets/logo.png" alt="Logo" className="logo" />
         </div>
-
-        <div
-          className={`overlay ${menuOpen ? 'active' : ''}`}
-          ref={overlayRef}
-          onClick={toggleMenu}
-        ></div>
-
-        <div
-          className={`nav-links ${menuOpen ? 'active' : ''}`}
-          ref={navRef}
-        >
+        <div className={`overlay ${menuOpen ? 'active' : ''}`} ref={overlayRef} onClick={toggleMenu}></div>
+        <div className={`nav-links ${menuOpen ? 'active' : ''}`} ref={navRef}>
           <div className="close-btn" onClick={toggleMenu}>✕</div>
-          <a href="#">Menu</a>
-          <a href="#">Discount</a>
+          <a href="/">Home</a>
+          <a href="/menu">Menu</a>
           <img src="/assets/logo.png" alt="Logo" className="logo" />
-          <a href="#">Account</a>
-          <a href="#">Support</a>
-        </div>
-      </div>
-
-      {/* User navigation bar */}
-      <div className="user-nav">
-        <div className="user-nav-container">
-          <div className="user-nav-left">
-            <span className="user-icon">👤</span>
-            <span className="user-nav-item">Sign in</span>
-            <span className="separator">|</span>
-            <span className="user-nav-item">Guest Order</span>
-            <span className="separator">|</span>
-            <span className="user-nav-item">Track Your Order</span>
-          </div>
+          <a href="/discount">Discount</a>
+          <a href="/support">Support</a>
         </div>
       </div>
 
@@ -279,6 +259,15 @@ function Delivery({ cart, setCart, userAddress, setUserAddress }) {
               </div>
             </div>
             
+            <div className="delivery-field single-row">
+              <label>Note for Delivery:</label>
+              <textarea 
+                value={deliveryNote}
+                onChange={(e) => setDeliveryNote(e.target.value)}
+                rows={3}
+                placeholder="Add any special instructions for the rider"
+              />
+            </div>
             <div className="delivery-field single-row">
               <label>Delivery Instruction to Rider:</label>
               <textarea 

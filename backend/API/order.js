@@ -119,6 +119,19 @@ router.post('/create-guest', async (req, res) => {
     const saleId = saleResult.insertId;
     console.log('Guest sale inserted with ID:', saleId);
 
+    // Auto-complete order after 15 seconds
+    setTimeout(async () => {
+      try {
+        await db.query(
+          `UPDATE sale SET status = 'Completed', completion_time = NOW() WHERE sale_id = ? AND status = 'Pending'`,
+          [saleId]
+        );
+        console.log(`Order ${saleId} status auto-updated to Completed`);
+      } catch (err) {
+        console.error('Auto-complete order error:', err);
+      }
+    }, 15000);
+
     // Insert order details
     for (const item of items) {
       console.log('Inserting order detail:', { saleId, recipeId: item.id, quantity: item.quantity });
@@ -246,6 +259,19 @@ router.post('/create', auth.authenticateCustomerToken, async (req, res) => {
 
     const saleId = saleResult.insertId;
     console.log('Sale inserted with ID:', saleId);
+
+    // Auto-complete order after 15 seconds
+    setTimeout(async () => {
+      try {
+        await db.query(
+          `UPDATE sale SET status = 'Completed', completion_time = NOW() WHERE sale_id = ? AND status = 'Pending'`,
+          [saleId]
+        );
+        console.log(`Order ${saleId} status auto-updated to Completed`);
+      } catch (err) {
+        console.error('Auto-complete order error:', err);
+      }
+    }, 15000);
 
     // Insert order details
     for (const item of items) {
@@ -455,7 +481,7 @@ router.get('/all', auth.authenticateToken, async (req, res) => {
 });
 
 // Get details for a specific order
-router.get('/:orderId', auth.authenticateToken, async (req, res) => {
+router.get('/:orderId', async (req, res) => {
   const { orderId } = req.params;
   
   try {
@@ -487,10 +513,23 @@ router.get('/:orderId', auth.authenticateToken, async (req, res) => {
       });
     }
 
-    // Parse items JSON string to array
+    // Parse items JSON string to array, handle empty/null items
+    let itemsArr = [];
+    try {
+      if (orderDetails[0].items && orderDetails[0].items.trim() !== '') {
+        itemsArr = JSON.parse(`[${orderDetails[0].items}]`);
+      }
+    } catch (err) {
+      console.error('Error parsing order items:', err, orderDetails[0].items);
+      return res.status(500).json({
+        success: false,
+        message: 'Error parsing order items',
+        error: err.message
+      });
+    }
     const order = {
       ...orderDetails[0],
-      items: JSON.parse(`[${orderDetails[0].items}]`)
+      items: itemsArr
     };
 
     res.json({

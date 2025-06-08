@@ -1,0 +1,22 @@
+
+.auth-form-modal.track-order-modal .back-btn,
+.auth-form-modal.track-order-modal .search-again-btn {
+  background: #fff;
+  color: #DF6D14;
+  border: 1.5px solid #DF6D14;
+  border-radius: 5px;
+  padding: 8px 20px;
+  font-size: 15px;
+  margin: 10px 0 0 0;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s, color 0.2s, border 0.2s;
+  outline: none;
+}
+
+.auth-form-modal.track-order-modal .back-btn:hover,
+.auth-form-modal.track-order-modal .search-again-btn:hover {
+  background: #DF6D14;
+  color: #fff;
+  border: 1.5px solid #DF6D14;
+}

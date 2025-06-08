@@ -276,6 +276,14 @@ const Revenue = ({ onTabChange, dailySalesData, selectedMonth, selectedYear, dai
     }
   };
 
+  // Calculate today's sales, import, and revenue
+  const today = new Date();
+  const isCurrentMonth = today.getFullYear() === selectedYear && (today.getMonth() + 1) === selectedMonth;
+  const todayDay = today.getDate();
+  const todaySales = isCurrentMonth ? (salesDataMap[todayDay] || 0) : 0;
+  const todayImport = isCurrentMonth ? (importDataMap[todayDay] || 0) : 0;
+  const todayRevenue = isCurrentMonth ? (revenueDataMap[todayDay] || 0) : 0;
+
   return (
     <div className="dashboard-container">
       {/* Header with tabs and date */}
@@ -289,6 +297,10 @@ const Revenue = ({ onTabChange, dailySalesData, selectedMonth, selectedYear, dai
           <div className="dashboard-card sale-card">
             <div className="card-header">
               <h3>Daily Orders Count</h3>
+            </div>
+            {/* Today sales line */}
+            <div style={{ padding: '0 1.5rem 0.5rem 1.5rem', fontWeight: 500, color: '#1E3A8A' }}>
+              Today sales: {todaySales}
             </div>
             <div className="card-content">
               <div className="daily-sales-chart-area">
@@ -313,7 +325,7 @@ const Revenue = ({ onTabChange, dailySalesData, selectedMonth, selectedYear, dai
                     <tr>
                       <th>Name</th>
                       <th>Role</th>
-                      <th>Pay Rate</th>
+                      <th>Salaries</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -321,7 +333,7 @@ const Revenue = ({ onTabChange, dailySalesData, selectedMonth, selectedYear, dai
                       <tr key={index}> {/* Use a unique key if possible, like employee ID */}
                         <td>{employee.name}</td>
                         <td>{employee.role}</td>
-                        <td>{formatCurrency(employee.pay_rate)}</td>{/* Format pay rate as currency */}
+                        <td>{formatCurrency(employee.total_pay)}</td>{/* Show calculated salary */}
                       </tr>
                     ))}
                   </tbody>
@@ -339,6 +351,10 @@ const Revenue = ({ onTabChange, dailySalesData, selectedMonth, selectedYear, dai
           <div className="dashboard-card import-card">
             <div className="card-header">
               <h3>Daily Import Price</h3>{/* Updated title */}
+            </div>
+            {/* Today import line */}
+            <div style={{ padding: '0 1.5rem 0.5rem 1.5rem', fontWeight: 500, color: '#F59E0B' }}>
+              Today import: {formatCurrency(todayImport)}
             </div>
             <div className="card-content">
               {/* Display daily import price chart */}
@@ -366,6 +382,10 @@ const Revenue = ({ onTabChange, dailySalesData, selectedMonth, selectedYear, dai
           <div className="dashboard-card revenue-card">
             <div className="card-header">
               <h3>Daily Revenue</h3>{/* Updated title */}
+            </div>
+            {/* Today revenue line */}
+            <div style={{ padding: '0 1.5rem 0.5rem 1.5rem', fontWeight: 500, color: '#047857' }}>
+              Today revenue: {formatCurrency(todayRevenue)}
             </div>
             <div className="card-content">
               {/* Display daily revenue chart */}

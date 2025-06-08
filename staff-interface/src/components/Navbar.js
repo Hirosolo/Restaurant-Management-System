@@ -19,7 +19,7 @@ const Navbar = () => {
             </div>
           </div>
           <div className="user-details">
-            <div className="user-name">{user?.name || 'User'}</div>
+            <div className="user-name">{user?.name || user?.staff_name || user?.email || 'User'}</div>
             <div className="user-role">{user?.role || 'Admin'}</div>
           </div>
         </div>
@@ -33,8 +33,8 @@ const Navbar = () => {
             day: 'numeric' 
           })}
         </div>
-        <button className="logout-btn" onClick={handleLogout}>
-          ⋯
+        <button className="logout-btn delete-btn" onClick={handleLogout}>
+          Log out
         </button>
       </div>
     </div>

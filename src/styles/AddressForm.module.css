@@ -27,7 +27,18 @@
 }
 
 .deliveryFieldSingle {
+  /* Use the same style as .formGroup for consistency */
   margin-bottom: 15px;
+}
+
+/* Building Name field styling */
+.buildingNameField label {
+  color: #2d8cff;
+  font-weight: 600;
+}
+.buildingNameField input {
+  all: unset;
+  display: initial;
 }
 
 .deliveryField label {
@@ -44,6 +55,13 @@
   border-radius: 5px;
   background-color: #f5f5f5;
   font-size: 13px;
+  box-sizing: border-box;
+  transition: border 0.2s, background 0.2s;
+}
+.deliveryField input:focus, .deliveryField textarea:focus {
+  border: 1.5px solid #DF6D14;
+  background: #fffbe6;
+  outline: none;
 }
 
 /* Dropdown tùy chỉnh */

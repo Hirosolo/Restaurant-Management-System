@@ -1,16 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import '../styles/Sidebar.css';
+import AuthContext from '../contexts/AuthContext';
 
 const Sidebar = ({ onMenuClick, activeMenu: propActiveMenu }) => {
   const [activeMenu, setActiveMenu] = useState(propActiveMenu || 'Dashboard');
 
-  const menuItems = [
-    { id: 'Dashboard', label: 'Dashboard', icon: '📊' },
-    { id: 'Recipe', label: 'Recipe', icon: '👨‍🍳' },
-    { id: 'Inventory', label: 'Inventory', icon: '📦' },
-    { id: 'Staff', label: 'Staff', icon: '👥' },
-    { id: 'User', label: 'User', icon: '⚙️' }
-  ];
+  const { user } = useContext(AuthContext);
+  const isManager = user && user.role === 'Manager';
+
+  const menuItems = isManager
+    ? [
+        { id: 'Dashboard', label: 'Dashboard', icon: '📊' },
+        { id: 'Recipe', label: 'Recipe', icon: '👨‍🍳' },
+        { id: 'Inventory', label: 'Inventory', icon: '📦' },
+        { id: 'Staff', label: 'Staff', icon: '👥' },
+      ]
+    : [
+        { id: 'Staff', label: 'Staff', icon: '👥' },
+      ];
 
   // Update internal state when prop changes
   useEffect(() => {

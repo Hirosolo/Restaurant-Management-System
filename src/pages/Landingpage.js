@@ -1,5 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import React, { useState, useRef } from 'react';
+import Navbar from '../components/Navbar';
+import UserNav from '../components/UserNav';
 import './Landingpage.css';
 import Footer from '../components/Footer';
 
@@ -8,6 +10,8 @@ function Landingpage() {
   const navRef = useRef(null);
   const overlayRef = useRef(null);
   const navigate = useNavigate();
+
+  // Navbar now handles all auth/account popups globally
 
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
@@ -19,6 +23,8 @@ function Landingpage() {
 
   return (
     <div className="landing-page">
+      <UserNav />
+      <Navbar />
       <div className="container">
         {/* Navbar */}
         <div className="navbar">

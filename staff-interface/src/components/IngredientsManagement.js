@@ -247,7 +247,6 @@ const IngredientsManagement = ({ onAddIngredientClick }) => {
               <th>Stock</th>
               <th>Unit</th>
               <th>Min Threshold</th>
-              <th>Good For (days)</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -261,11 +260,6 @@ const IngredientsManagement = ({ onAddIngredientClick }) => {
                 <td>{ingredient.unit}</td>
                 <td>{ingredient.minimum_threshold}</td>
                 <td>
-                    {/* Display the raw good_for value */}
-                    {ingredient.good_for !== null && ingredient.good_for !== undefined ? ingredient.good_for : 'N/A'}
-                </td>
-                <td>
-                  <button onClick={() => handleEditIngredient(ingredient)}>Edit</button>
                   <button onClick={() => handleDeleteIngredient(ingredient.ingredient_id)}>Delete</button>
                 </td>
               </tr>

@@ -172,7 +172,7 @@ const DashboardPage = () => {
         // You will need to create a backend endpoint to fetch employee name, role, and pay_rate.
         // The response should be an array of objects like: 
         // [{ name: 'Employee Name', role: 'Role', pay_rate: 50000 }, ...]
-        const response = await fetch(`http://localhost:3001/api/staff/salaries`, {
+        const response = await fetch(`http://localhost:3001/api/staff/salaries?month=${selectedMonth}&year=${selectedYear}` , {
              headers: {
                 'Authorization': `Bearer ${token}` // Include the token in the headers
             }

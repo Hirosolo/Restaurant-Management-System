@@ -19,10 +19,6 @@ function Footer() {
 <div className="footer-right">
   <div className="update-info">Always updated</div>
   <div className="about-text">About information and new products</div>
-  <div className="newsletter">
-    <input type="email" placeholder="email" />
-    <button className="signup-btn">Sign up</button>
-  </div>
 </div>
 </div>
 );
