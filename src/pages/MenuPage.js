@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import FoodItem from '../components/FoodItem';
 import Footer from '../components/Footer';
+import UserNav from '../components/UserNav';
 import './MenuPage.css';
 
 function MenuPage() {
@@ -23,9 +24,9 @@ function MenuPage() {
   const { cart, addToCart, removeFromCart, increaseQuantity, decreaseQuantity, updateNote } = useCart();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState({});
   const [categoriesOpen, setCategoriesOpen] = useState({});
   const [noteOpen, setNoteOpen] = useState({});
+  const [sortOrder, setSortOrder] = useState('low-to-high');
   const navRef = useRef(null);
   const overlayRef = useRef(null);
   const [showDetailPopup, setShowDetailPopup] = useState(false);
@@ -72,10 +73,7 @@ function MenuPage() {
   const districts = ['District 1', 'District 2', 'District 3', 'District 4', 'District 5'];
   const streets = ['Street 1', 'Street 2', 'Street 3', 'Street 4', 'Street 5'];
 
-  const [selectedFilters, setSelectedFilters] = useState({
-    calories: '',
-    protein: ''
-  });
+  // Remove all filters, only use sort by price
 
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
 
@@ -83,22 +81,13 @@ function MenuPage() {
     if (userAddress) setUserAddress(userAddress);
   }, [userAddress, setUserAddress]);
 
-  useEffect(() => {
-    if (userAddress !== userAddress && setUserAddress) setUserAddress(userAddress);
-  }, [userAddress, setUserAddress, userAddress]);
+  // Removed all filter state and logic
 
   useEffect(() => {
     const fetchRecipes = async () => {
       try {
         setLoading(true);
-        const queryParams = new URLSearchParams();
-        if (selectedFilters.calories) {
-          queryParams.append('calories', selectedFilters.calories);
-        }
-        if (selectedFilters.protein) {
-          queryParams.append('protein', selectedFilters.protein);
-        }
-        const response = await fetch(`http://localhost:3001/api/recipes?${queryParams.toString()}`);
+        const response = await fetch(`http://localhost:3001/api/recipes`);
         if (!response.ok) {
           throw new Error('Failed to fetch recipes');
         }
@@ -127,16 +116,12 @@ function MenuPage() {
       }
     };
     fetchRecipes();
-  }, [selectedFilters]);
+  }, []);
 
-  useEffect(() => {
-    if (authStatus === 'guest' && !showAuthModal && !hasContinuedAsGuest) {
-      setShowAuthModal(true);
-    }
-  }, [authStatus, showAuthModal, hasContinuedAsGuest]);
+  // Removed auto-show auth modal on page load. Modal will only show when user clicks Sign In in user-nav.
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
-  const toggleFilter = (filterId) => setFiltersOpen(prev => ({ ...prev, [filterId]: !prev[filterId] }));
+  // Removed toggleFilter and setFiltersOpen
   const toggleCategory = (categoryId) => setCategoriesOpen(prev => ({ ...prev, [categoryId]: !prev[categoryId] }));
   const toggleNote = (itemId) => setNoteOpen(prev => ({ ...prev, [itemId]: !prev[itemId] }));
   const showRecipeDetails = (recipeId) => { setSelectedRecipe(recipeId); setShowDetailPopup(true); };
@@ -154,43 +139,18 @@ function MenuPage() {
     else if (authStatus === 'signedIn') { navigate('/checkout'); }
     else { setShowAuthModal(true); }
   };
-  const handleFilterChange = (filterType, value) => {
-    setSelectedFilters(prev => {
-      if (value === 'All' || prev[filterType] === value) {
-        const newFilters = { ...prev };
-        delete newFilters[filterType];
-        return newFilters;
-      }
-      return { ...prev, [filterType]: value };
-    });
-  };
-  const renderFilterOptions = (filter) => {
-    const isOpen = filtersOpen[filter.id] !== false;
-    return (
-      <div className="filter-block">
-        <div className="filter-header">
-          <h4>{filter.name}</h4>
-          <span className={`filter-toggle ${isOpen ? 'open' : 'closed'}`} onClick={() => toggleFilter(filter.id)}>▼</span>
-        </div>
-        {isOpen && (
-          <div className="filter-options">
-            {filter.options.map((option) => (
-              <label key={option} className="filter-option">
-                <input type="radio" name={filter.id} value={option} checked={selectedFilters[filter.id] === option} onChange={() => handleFilterChange(filter.id, option)} />
-                <span>{option}</span>
-              </label>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  };
+  // Removed handleFilterChange and setSelectedFilters
+  // Remove renderFilterOptions and all filter UI
   const renderCategoryItems = (items) => {
     if (loading) return <div className="loading">Loading...</div>;
     if (error) return <div className="error">Error: {error}</div>;
+    // Sort items by price
+    const sortedItems = [...items].sort((a, b) =>
+      sortOrder === 'low-to-high' ? a.price - b.price : b.price - a.price
+    );
     return (
       <div className="category-items">
-        {items.map(item => {
+        {sortedItems.map(item => {
           const recipeId = `RCP-${String(item.id).padStart(3, '0')}`;
           const formattedPrice = formatCurrency(item.price);
           return (
@@ -253,9 +213,7 @@ function MenuPage() {
 
   return (
     <div className="menu-page">
-      {notification.show && (
-        <div className={`notification ${notification.type}`}>{notification.message}</div>
-      )}
+      <UserNav />
       <div className="navbar menu-navbar">
         <div className={`menu-icon ${menuOpen ? 'open' : ''}`} onClick={toggleMenu}>
           <div className="bar"></div>
@@ -275,104 +233,20 @@ function MenuPage() {
           <a href="/support">Support</a>
         </div>
       </div>
-      <div className="user-nav">
-        <div className="user-nav-container">
-          <div className="user-nav-left">
-            <span className="user-icon">👤</span>
-            {authStatus === 'signedIn' ? (
-              <span className="user-nav-item" onClick={handleAccountClick}>My Account</span>
-            ) : (
-              <span className="user-nav-item" onClick={() => { setShowSignInForm(true); setShowAuthModal(false); }}>Sign In</span>
-            )}
-
-      {/* Ensure the auth modal and sign-in modal rendering is present */}
-      {showAuthModal && (
-        <div className="auth-modal-overlay">
-          <div className="auth-modal">
-            <h3>Sign in to Greedible and start Green today</h3>
-            <div className="auth-options">
-              <button className="auth-option-btn sign-in-btn" onClick={() => { setShowSignInForm(true); setShowAuthModal(false); }}>
-                SIGN IN
-              </button>
-              <div className="auth-separator"></div>
-              <button className="auth-option-btn create-account-btn" onClick={() => { setShowCreateAccountForm(true); setShowAuthModal(false); }}>
-                CREATE AN ACCOUNT
-                <span className="account-time">in less than 2 minutes</span>
-                <span className="account-benefits">To enjoy member benefits</span>
-              </button>
-              <div className="auth-separator"></div>
-              <button className="auth-option-btn guest-btn" onClick={() => {
-                continueAsGuest();
-                setHasContinuedAsGuest(true);
-                setShowAuthModal(false);
-              }}>
-                CONTINUE AS GUEST
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showSignInForm && (
-        <div className="auth-modal-overlay">
-          <div className="auth-form-modal">
-            <h3>Sign In</h3>
-            <button className="close-modal-btn" onClick={() => setShowSignInForm(false)}>✕</button>
-            <form onSubmit={async (e) => {
-              e.preventDefault();
-              // Validate email
-              const emailInput = e.target.querySelector('input[type="email"]');
-              if (!emailInput.value) {
-                emailInput.setCustomValidity('This field is required');
-                emailInput.reportValidity();
-                return;
-              }
-              emailInput.setCustomValidity('');
-              // Validate password
-              const passwordInput = e.target.querySelector('input[type="password"]');
-              if (!passwordInput.value) {
-                passwordInput.setCustomValidity('This field is required');
-                passwordInput.reportValidity();
-                return;
-              }
-              passwordInput.setCustomValidity('');
-              try {
-                showNotification('Signing in...', 'info');
-                await handleSignIn(userEmail, userPassword);
-                showNotification('Successfully signed in! Welcome back!', 'success');
-                setShowSignInForm(false);
-                setShowAuthModal(false);
-                setUserEmail('');
-                setUserPassword('');
-              } catch (error) {
-                showNotification(error.message || 'Invalid email or password. Please try again.', 'error');
-              }
-            }}>
-              <div className="form-group">
-                <label>Email</label>
-                <input type="email" value={userEmail} onChange={(e) => setUserEmail(e.target.value)} required />
-              </div>
-              <div className="form-group">
-                <label>Password</label>
-                <input type="password" value={userPassword} onChange={(e) => setUserPassword(e.target.value)} required />
-              </div>
-              <button type="submit" className="form-submit-btn">SIGN IN</button>
-            </form>
-          </div>
-        </div>
-      )}
-            <span className="separator">|</span>
-            <span className="user-nav-item" onClick={handleTrackOrderClick}>Track Your Order</span>
-          </div>
-        </div>
-      </div>
-      <div className="menu-container">
+            <div className="menu-container">
         <div className="sidebar">
           <h3>Menu</h3>
-          <div className="filters">
-            {filters.map(filter => (
-              <div className="filter" key={filter.id}>{renderFilterOptions(filter)}</div>
-            ))}
+          <div className="sort-section" style={{ marginBottom: '20px' }}>
+            <label htmlFor="sortOrder">Sort by Price: </label>
+            <select
+              id="sortOrder"
+              value={sortOrder}
+              onChange={e => setSortOrder(e.target.value)}
+              style={{ padding: '6px 12px', borderRadius: '4px', border: '1px solid #ccc' }}
+            >
+              <option value="low-to-high">Low to High</option>
+              <option value="high-to-low">High to Low</option>
+            </select>
           </div>
         </div>
         <div className="menu-content">
@@ -416,10 +290,7 @@ function MenuPage() {
                         </div>
                       </div>
                       <div className="cart-item-footer">
-                        <div className="note-section">
-                          <div className="note-label">Note:</div>
-                          <input type="text" className="note-input" placeholder="Note something for store" value={item.note || ''} onChange={(e) => updateNote(index, e.target.value)} />
-                        </div>
+                        {/* Note section removed */}
                         <div className="cart-item-price">{formatCurrency(item.price)}</div>
                       </div>
                     </div>

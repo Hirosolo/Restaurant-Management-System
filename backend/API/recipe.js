@@ -345,7 +345,10 @@ router.delete('/recipes/:id', async (req, res) => {
         const [recipeRows] = await db.query('SELECT image_url FROM recipe WHERE recipe_id = ?', [recipeId]);
         const imageUrl = recipeRows.length > 0 ? recipeRows[0].image_url : null;
 
-        // Delete from recipe_detail table first
+        // Delete from order_detail table first to avoid foreign key constraint
+        await db.query('DELETE FROM order_detail WHERE recipe_id = ?', [recipeId]);
+
+        // Delete from recipe_detail table
         await db.query('DELETE FROM recipe_detail WHERE recipe_id = ?', [recipeId]);
 
         // Delete from recipe table

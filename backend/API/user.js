@@ -31,17 +31,24 @@ router.post('/users/register', async (req, res) => {
         }
 
         console.log('Checking for existing user with email:', email);
-        // Check if email already exists
+        // Check if email or contact mobile already exists
         const [existingUsers] = await db.query(
-            'SELECT * FROM customer WHERE email = ?',
-            [email]
+            'SELECT * FROM customer WHERE email = ? OR phone = ?',
+            [email, contactMobile]
         );
 
         if (existingUsers.length > 0) {
-            console.log('Email already exists:', email);
+            const duplicate = existingUsers[0];
+            let message = 'User with this information already exists';
+            if (duplicate.email === email) {
+                message = 'Email already registered';
+            } else if (duplicate.phone === contactMobile) {
+                message = 'Contact mobile already registered';
+            }
+            console.log('Duplicate user found:', duplicate);
             return res.status(400).json({
                 success: false,
-                message: 'Email already registered'
+                message
             });
         }
 

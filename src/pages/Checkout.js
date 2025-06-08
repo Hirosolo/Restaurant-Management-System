@@ -8,6 +8,7 @@ import Footer from '../components/Footer';
 import './Checkout.css';
 
 function Checkout() {
+  const [menuOpen, setMenuOpen] = useState(false);
   console.log('Checkout component rendered');
   const { cart, setCart } = useCart();
   const { 
@@ -31,6 +32,21 @@ function Checkout() {
   const [notification, setNotification] = useState(null);
   const [useLoyaltyPoints, setUseLoyaltyPoints] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [deliveryNote, setDeliveryNote] = useState(() => {
+    // If guest user, prefill from userAddress.delivery_note
+    const authStatus = localStorage.getItem('authStatus');
+    const storedUserAddress = localStorage.getItem('userAddress');
+    if (authStatus !== 'signedIn' && storedUserAddress) {
+      try {
+        const parsed = JSON.parse(storedUserAddress);
+        return parsed.delivery_note || '';
+      } catch {
+        return '';
+      }
+    }
+    return '';
+  });
+  const [lastOrderId, setLastOrderId] = useState(null);
 
   // Update notes array when cart changes
   useEffect(() => {
@@ -61,7 +77,13 @@ function Checkout() {
     console.log('Formatted address:', formattedAddr);
     setTempAddress(formattedAddr);
     // Initialize tempContact based on user login status
-    setTempContact(userData?.contactMobile || userContact || '');
+    // Only auto-fill contact for signed-in users
+      const authStatus = localStorage.getItem('authStatus');
+      if (authStatus === 'signedIn') {
+        setTempContact(userData?.contactMobile || userContact || '');
+      } else {
+        setTempContact('');
+      }
   }, [userAddress, userContact, userData]);
 
   // Load auth data from localStorage when component mounts
@@ -150,10 +172,10 @@ function Checkout() {
   };
 
   // Calculate delivery charge
-  const deliveryCharge = 2.50;
+  const deliveryCharge = 20000;
 
   // Calculate loyalty points earned for this order
-  const loyaltyPointsEarned = calculateSubtotal() * 0.1;
+  const loyaltyPointsEarned = Math.floor(calculateSubtotal() / 1000);
 
   // Calculate total
   const calculateTotal = () => {
@@ -253,14 +275,9 @@ function Checkout() {
       return;
     }
 
-    // If payment method is cash, proceed with order
-    if (selectedPaymentMethod === 'cash') {
-      await processOrder();
-      return;
-    }
-
-    // For online payments, show QR code modal
-    setShowPaymentModal(true);
+    // For all payment methods, just process the order and show confirmation
+    await processOrder();
+    return;
   };
 
   // Process order after payment confirmation
@@ -287,7 +304,8 @@ function Checkout() {
         delivery_distance: 5, // This should be calculated based on actual distance
         delivery_charge: deliveryCharge,
         payment_method: selectedPaymentMethod,
-        status: (selectedPaymentMethod === 'momo' || selectedPaymentMethod === 'vietcombank') ? 'completed' : 'Pending'
+        status: (selectedPaymentMethod === 'momo' || selectedPaymentMethod === 'vietcombank') ? 'completed' : 'Pending',
+        delivery_note: deliveryNote
       };
 
       // Add guest-specific or authenticated user-specific data
@@ -331,6 +349,7 @@ function Checkout() {
         throw new Error(data.message || 'Failed to create order');
       }
 
+      setLastOrderId(data.orderId || data.sale_id || data.order_id || null);
       console.log('Order API call successful. Response data:', data);
 
       // If order is successful and user is authenticated, refresh user data to update loyalty points
@@ -367,6 +386,7 @@ function Checkout() {
       // Close payment modal and show confirmation modal
       setShowPaymentModal(false);
       setShowConfirmationModal(true);
+      // Optionally, you can setShowPaymentModal(false); here, but it's not needed anymore
 
     } catch (error) {
       console.error('Error processing order:', error);
@@ -407,8 +427,26 @@ function Checkout() {
 
   return (
     <div className="checkout-page">
-      <Navbar />
-      <UserNav />
+      {/* Navbar like Menu Page */}
+      <div className="navbar menu-navbar">
+        <div className={`menu-icon ${menuOpen ? 'open' : ''}`} onClick={() => setMenuOpen(!menuOpen)}>
+          <div className="bar"></div>
+          <div className="bar"></div>
+          <div className="bar"></div>
+        </div>
+        <div className="mobile-logo">
+          <img src="/assets/logo.png" alt="Logo" className="logo" />
+        </div>
+        <div className={`overlay ${menuOpen ? 'active' : ''}`} onClick={() => setMenuOpen(false)}></div>
+        <div className={`nav-links ${menuOpen ? 'active' : ''}`}>
+          <div className="close-btn" onClick={() => setMenuOpen(false)}>✕</div>
+          <a href="/">Home</a>
+          <a href="/menu">Menu</a>
+          <img src="/assets/logo.png" alt="Logo" className="logo" />
+          <a href="/discount">Discount</a>
+          <a href="/support">Support</a>
+        </div>
+      </div>
       
       <div className="checkout-container">
         <div className="checkout-header">
@@ -476,21 +514,28 @@ function Checkout() {
                   </div>
                   <div className="item-details">
                     <div className="item-name">{item.name}</div>
-                    <div className="item-note">
-                      <input
-                        type="text"
-                        placeholder="Note something for order"
-                        value={notes[index] || ''}
-                        onChange={(e) => handleNoteChange(index, e.target.value)}
-                        className="note-input"
-                      />
-                    </div>
                   </div>
                   <div className="item-price">
                     {formatCurrency(((item.price || 0) * (item.quantity || 1)))}
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* Note for Delivery Section */}
+          <div className="checkout-section">
+            <div className="section-header">
+              <span className="section-label">Note for Delivery:</span>
+            </div>
+            <div className="section-content">
+              <textarea
+                className="edit-input"
+                value={deliveryNote}
+                onChange={e => setDeliveryNote(e.target.value)}
+                placeholder="Add any special instructions for the rider"
+                rows={3}
+              />
             </div>
           </div>
 
@@ -505,10 +550,12 @@ function Checkout() {
                 <span>Delivery Charge:</span>
                 <span>{formatCurrency(deliveryCharge)}</span>
               </div>
-              <div className="summary-row loyalty">
-                <span>Loyalty points:</span>
-                <span>+ {Math.floor(loyaltyPointsEarned)}</span>
-              </div>
+              {userData && userData.loyaltyPoints !== undefined && (
+                <div className="summary-row loyalty">
+                  <span>Loyalty points:</span>
+                  <span>+ {Math.floor(loyaltyPointsEarned)}</span>
+                </div>
+              )}
               <div className="summary-row discount">
                 <span>Discount:</span>
                 <span>{useLoyaltyPoints && userData?.loyaltyPoints > 0 ? formatCurrency(Math.min(calculateSubtotal() + deliveryCharge, userData.loyaltyPoints)) : '-'}</span>
@@ -587,56 +634,7 @@ function Checkout() {
           </button>
         </div>
 
-        {/* Payment Modal */}
-        {showPaymentModal && (
-          <div className="payment-modal-overlay">
-            <div className="payment-modal">
-              <div className="payment-modal-header">
-                <h3>Complete Your Payment</h3>
-                <button 
-                  className="close-modal-btn"
-                  onClick={() => setShowPaymentModal(false)}
-                >
-                  ✕
-                </button>
-              </div>
-              <div className="payment-modal-content">
-                <div className="qr-code-container">
-                  {selectedPaymentMethod === 'momo' ? (
-                    <>
-                      <img 
-                        src="/assets/MomoQR.jpg" 
-                        alt="MoMo QR Code" 
-                        className="qr-code"
-                      />
-                      <p>Scan this QR code with your MoMo app to complete the payment</p>
-                    </>
-                  ) : (
-                    <>
-                      <img 
-                        src="/assets/VCBQR.jpg" 
-                        alt="Vietcombank QR Code" 
-                        className="qr-code"
-                      />
-                      <p>Scan this QR code with your Vietcombank app to complete the payment</p>
-                    </>
-                  )}
-                </div>
-                <div className="payment-amount">
-                  <p>Amount to pay:</p>
-                  <h4>{formatCurrency(calculateTotal())}</h4>
-                </div>
-                <button 
-                  className="confirm-payment-btn"
-                  onClick={processOrder}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? 'Processing...' : 'Confirm Payment'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Payment Modal - removed, now always show confirmation after placing order */}
 
         {/* Notification Display */}
         {notification && (
@@ -655,6 +653,9 @@ function Checkout() {
             </div>
             <div className="payment-modal-content">
               <p>Your order has been placed successfully.</p>
+              {lastOrderId && (
+                <p><strong>Order ID:</strong> {lastOrderId}</p>
+              )}
               <button 
                 className="payment-btn"
                 onClick={() => {

@@ -2,16 +2,18 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
-import AddressForm from './AddressForm';
+import { useAddress } from '../hooks/useAddress';
 import styles from '../styles/CreateAccountForm.module.css';
+import addressStyles from '../styles/AddressForm.module.css';
 
 function CreateAccountForm({ 
   setShowCreateAccountForm, 
   tempItemToAdd, 
   setTempItemToAdd,
-  onAuthSuccess = () => {}
+  onAuthSuccess = () => {},
+  showNotification
 }) {
-  const { handleCreateAccount } = useAuth();
+  const { handleCreateAccount, handleSignIn } = useAuth();
   const { addToCart } = useCart();
   const navigate = useNavigate();
   const [userInfo, setUserInfo] = useState({
@@ -23,106 +25,55 @@ function CreateAccountForm({
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [address, setAddress] = useState(null);
+  const [buildingNameBlurred, setBuildingNameBlurred] = useState(false);
+  const { address, updateAddressField, dropdownOpen, toggleDropdown, addressOptions } = useAddress();
 
   const updateUserInfo = (field, value) => {
-    setUserInfo(prev => {
-      const newState = { ...prev, [field]: value };
-      
-      if (field === 'password') {
-        console.log('Password field updated:', { 
-          valueReceived: value, 
-          currentStateAfterUpdate: {
-            ...newState,
-            password: newState.password // Show actual password
-          }
-        });
-      } else {
-        console.log('Form field updated:', { 
-          field, 
-          value: field === 'password' ? '***' : value, 
-          currentState: {
-            ...newState,
-            password: newState.password ? '***' : undefined
-          }
-        });
-      }
-      
-      return newState;
-    });
-  };
-
-  const handleAddressSubmit = (e, addressData) => {
-    e.preventDefault();
-    console.log('Address form submitted:', addressData);
-    setAddress(addressData);
+    setUserInfo(prev => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Add password logging
-    console.log('Password state at form submission:', {
-      passwordExists: !!userInfo.password,
-      passwordLength: userInfo.password ? userInfo.password.length : 0,
-      message: userInfo.password ? 'Password entered' : 'Password non-entered'
-    });
-    
-    console.log('Main form submitted with user info:', {
-      ...userInfo,
-      password: userInfo.password ? '***' : undefined // Hide actual password in logs
-    });
-    
-    if (!address) {
-      setError('Please fill in your address first');
+    // Validate all user info fields before proceeding
+    if (!userInfo.email) {
+      setError('Email is required');
       return;
     }
-
+    if (!/^\S+@\S+\.\S+$/.test(userInfo.email)) {
+      setError('Email must be a valid email address');
+      return;
+    }
+    if (!userInfo.password) {
+      setError('Password is required');
+      return;
+    }
+    if (!userInfo.firstName || !userInfo.lastName) {
+      setError('First name and last name are required');
+      return;
+    }
+    if (!/^[A-Za-z]+$/.test(userInfo.firstName)) {
+      setError('First name must contain letters only');
+      return;
+    }
+    if (!/^[A-Za-z]+$/.test(userInfo.lastName)) {
+      setError('Last name must contain letters only');
+      return;
+    }
+    if (!userInfo.contactMobile) {
+      setError('Contact mobile is required');
+      return;
+    }
+    if (!/^\d{10}$/.test(userInfo.contactMobile)) {
+      setError('Contact mobile must be exactly 10 digits');
+      return;
+    }
+    if (!address.ward || !address.district || !address.street || !address.houseNumber) {
+      setError('Ward, District, Street, and House/Street Number are required');
+      return;
+    }
     setLoading(true);
     setError('');
-    
     try {
-      // Validate required fields
-      if (!userInfo.password) {
-        console.error('CreateAccountForm: Password validation failed - password is empty');
-        throw new Error('Password is required');
-      }
-
-      if (!userInfo.email) {
-        console.error('CreateAccountForm: Email validation failed');
-        throw new Error('Email is required');
-      }
-
-      if (!userInfo.firstName || !userInfo.lastName) {
-        console.error('CreateAccountForm: Name validation failed');
-        throw new Error('First name and last name are required');
-      }
-
-      if (!userInfo.contactMobile) {
-        console.error('CreateAccountForm: Contact validation failed');
-        throw new Error('Contact mobile is required');
-      }
-      
-      console.log('CreateAccountForm: All validations passed, proceeding with account creation');
-      
-      // Create account with all user info including password
-      // const userData = {
-      //   ...userInfo,
-      //   password: userInfo.password // Ensure password is included
-      // };
-
-      console.log('Sending user data to handleCreateAccount:', {
-        // ...userData,
-        email: userInfo.email,
-        password: userInfo.password,
-        firstName: userInfo.firstName,
-        lastName: userInfo.lastName,
-        contactMobile: userInfo.contactMobile,
-        address: address
-        // password: '***' // Hide password in logs
-      });
-
-      // Pass individual user info fields including password explicitly
       await handleCreateAccount(address, {
         email: userInfo.email,
         password: userInfo.password,
@@ -130,31 +81,20 @@ function CreateAccountForm({
         lastName: userInfo.lastName,
         contactMobile: userInfo.contactMobile,
       });
-      
-      console.log('CreateAccountForm: Account creation successful');
-      
-      // Notify about successful authentication
+      // Automatically sign in the user after account creation
+      await handleSignIn(userInfo.email, userInfo.password);
+      if (showNotification) showNotification('Account created! You are now signed in.', 'success');
+      setTimeout(() => {
+        setShowCreateAccountForm(false);
+      }, 100); // slight delay to ensure notification is visible
       onAuthSuccess('signedIn');
-      
-      // Add item to cart if exists
       if (tempItemToAdd) {
-        console.log('CreateAccountForm: Adding item to cart after account creation', tempItemToAdd);
         addToCart(tempItemToAdd);
-        
-        // Emit event to notify other components
-        const event = new CustomEvent('cartUpdated', { 
-          detail: { action: 'add', item: tempItemToAdd } 
-        });
-        window.dispatchEvent(event);
-        
         setTempItemToAdd(null);
       }
-      
-      // Close form
-      setShowCreateAccountForm(false);
     } catch (err) {
       setError(err.message || 'Failed to create account. Please try again.');
-      console.error('CreateAccountForm: Account creation error', err);
+      if (showNotification) showNotification(err.message || 'Failed to create account. Please try again.', 'error');
     } finally {
       setLoading(false);
     }
@@ -170,9 +110,7 @@ function CreateAccountForm({
         >
           ✕
         </button>
-        
         {error && <div className={styles.errorMessage}>{error}</div>}
-        
         <form onSubmit={handleSubmit}>
           <div className={styles.formSection}>
             <div className={styles.formGroup}>
@@ -229,10 +167,145 @@ function CreateAccountForm({
               />
             </div>
           </div>
-          <AddressForm onSubmit={handleAddressSubmit} disabled={loading} showDeliveryInstructions={false} />
-          
-          <button type="submit" className={styles.submitBtn} disabled={loading}>
-            {loading ? 'Creating Account...' : 'Create Account'}
+          <div className={addressStyles.formSection}>
+            <h4>Your Address</h4>
+            <div className={addressStyles.deliveryRow}>
+              <div className={addressStyles.deliveryField}>
+                <label>*Ward:</label>
+                <div className={addressStyles.customSelect}>
+                  <div 
+                    className={addressStyles.selectHeader} 
+                    onClick={() => toggleDropdown('ward')}
+                  >
+                    {address.ward || "Select ward"}
+                    <span className={addressStyles.dropdownArrow}>▼</span>
+                  </div>
+                  {dropdownOpen.ward && (
+                    <div className={addressStyles.selectOptions}>
+                      {addressOptions.wards.map((item, index) => (
+                        <div 
+                          key={index} 
+                          className={addressStyles.selectOption} 
+                          onClick={() => {
+                            updateAddressField('ward', item);
+                            toggleDropdown('ward');
+                          }}
+                        >
+                          {item}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className={addressStyles.deliveryField}>
+                <label>*District:</label>
+                <div className={addressStyles.customSelect}>
+                  <div 
+                    className={addressStyles.selectHeader} 
+                    onClick={() => toggleDropdown('district')}
+                  >
+                    {address.district || "Select district"}
+                    <span className={addressStyles.dropdownArrow}>▼</span>
+                  </div>
+                  {dropdownOpen.district && (
+                    <div className={addressStyles.selectOptions}>
+                      {addressOptions.districts.map((item, index) => (
+                        <div 
+                          key={index} 
+                          className={addressStyles.selectOption} 
+                          onClick={() => {
+                            updateAddressField('district', item);
+                            toggleDropdown('district');
+                          }}
+                        >
+                          {item}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className={addressStyles.deliveryRow}>
+              <div className={addressStyles.deliveryField}>
+                <label>*Street:</label>
+                <div className={addressStyles.customSelect}>
+                  <div 
+                    className={addressStyles.selectHeader} 
+                    onClick={() => toggleDropdown('street')}
+                  >
+                    {address.street || "Select street"}
+                    <span className={addressStyles.dropdownArrow}>▼</span>
+                  </div>
+                  {dropdownOpen.street && (
+                    <div className={addressStyles.selectOptions}>
+                      {addressOptions.streets.map((item, index) => (
+                        <div 
+                          key={index} 
+                          className={addressStyles.selectOption} 
+                          onClick={() => {
+                            updateAddressField('street', item);
+                            toggleDropdown('street');
+                          }}
+                        >
+                          {item}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className={addressStyles.deliveryField}>
+                <label>*House/Street Number:</label>
+                <input 
+                  type="text" 
+                  value={address.houseNumber}
+                  onChange={(e) => updateAddressField('houseNumber', e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+            <div className={styles.formGroup}>
+              <label>Building Name:</label>
+              <input 
+                type="text" 
+                value={address.buildingName}
+                onChange={(e) => updateAddressField('buildingName', e.target.value)}
+                onBlur={() => setBuildingNameBlurred(true)}
+              />
+            </div>
+            {address.buildingName && buildingNameBlurred && (
+              <div className={addressStyles.deliveryRowThree}>
+                <div className={addressStyles.deliveryField}>
+                  <label>Block:</label>
+                  <input 
+                    type="text" 
+                    value={address.block}
+                    onChange={(e) => updateAddressField('block', e.target.value)}
+                  />
+                </div>
+                <div className={addressStyles.deliveryField}>
+                  <label>Floor / Level:</label>
+                  <input 
+                    type="text" 
+                    value={address.floor}
+                    onChange={(e) => updateAddressField('floor', e.target.value)}
+                  />
+                </div>
+                <div className={addressStyles.deliveryField}>
+                  <label>Room Number / Company Name:</label>
+                  <input 
+                    type="text" 
+                    value={address.roomNumber}
+                    onChange={(e) => updateAddressField('roomNumber', e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+          <button type="submit" className={addressStyles.submitBtn} disabled={loading}>
+            {loading ? 'Creating Account...' : 'Confirm'}
           </button>
         </form>
       </div>

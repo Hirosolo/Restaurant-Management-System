@@ -30,7 +30,7 @@ router.get('/week', auth.authenticateToken, async (req, res) => {
 
     console.log(`Fetching shifts for week starting from ${formattedStartDate} to ${formattedEndOfWeek}`);
 
-    // Fetch shifts and staff details for the week
+    // Fetch all schedule blocks (including those with NULL staff_id)
     const [shifts] = await db.query(`
       SELECT
         s.schedule_id,
@@ -40,47 +40,41 @@ router.get('/week', auth.authenticateToken, async (req, res) => {
         st.staff_name,
         st.role
       FROM schedule s
-      JOIN staff st ON s.staff_id = st.staff_id
+      LEFT JOIN staff st ON s.staff_id = st.staff_id
       WHERE DATE(s.shift_date) BETWEEN ? AND ?
-      ORDER BY s.shift_date, s.shift
+      ORDER BY s.shift_date, s.shift, s.schedule_id
     `, [formattedStartDate, formattedEndOfWeek]);
 
-    // Group shifts by date and then by shift type (Morning/Evening)
+    // Only include shift blocks that exist in the database (have shift_date and shift)
     const scheduleData = {};
     shifts.forEach(shift => {
-      const shiftDate = new Date(shift.shift_date).getDate(); // Get day of the month
-      const shiftTime = shift.shift; // Morning or Evening
-
-      if (!scheduleData[shiftDate]) {
-        scheduleData[shiftDate] = {};
-      }
-
+      if (!shift.shift_date || !shift.shift) return;
+      const shiftDate = new Date(shift.shift_date).getDate();
+      const shiftTime = shift.shift;
+      if (!scheduleData[shiftDate]) scheduleData[shiftDate] = {};
       if (!scheduleData[shiftDate][shiftTime]) {
         scheduleData[shiftDate][shiftTime] = {
-          id: `${shiftDate}-${shiftTime}`, // Unique ID for the shift block
-          time: shiftTime === 'Morning' ? '08:00 - 15:00' : '15:00 - 22:00', // Map to time string
-          shift: shiftTime, // Include the raw shift type
+          id: `${shiftDate}-${shiftTime}`,
+          time: shiftTime === 'Morning' ? '08:00 - 15:00' : '15:00 - 22:00',
+          shift: shiftTime,
           staff: []
         };
       }
-
-      // Add staff member to the shift block
-      scheduleData[shiftDate][shiftTime].staff.push({
-        id: shift.staff_id,
-        name: shift.staff_name,
-        role: shift.role,
-        schedule_id: shift.schedule_id, // Include schedule_id for removal operations
-        // You might add avatar/color logic here or in frontend
-        // For now, using a placeholder structure similar to the old data
-        avatar: '👤', // Placeholder avatar
-        color: '#CCCCCC' // Placeholder color
-      });
+      if (shift.staff_id) {
+        scheduleData[shiftDate][shiftTime].staff.push({
+          id: shift.staff_id,
+          name: shift.staff_name,
+          role: shift.role,
+          schedule_id: shift.schedule_id,
+          avatar: '👤',
+          color: '#CCCCCC'
+        });
+      }
     });
-
-    // Convert nested object to the desired array format for frontend
+    // Convert to frontend format
     const formattedSchedule = Object.keys(scheduleData).map(dateKey => ({
-        date: parseInt(dateKey, 10), // Day of the month
-        shifts: Object.values(scheduleData[dateKey]) // Array of shift blocks for the day
+      date: parseInt(dateKey, 10),
+      shifts: Object.values(scheduleData[dateKey])
     }));
 
     console.log('Shift data fetched and formatted.', formattedSchedule.length);
@@ -92,43 +86,79 @@ router.get('/week', auth.authenticateToken, async (req, res) => {
   }
 });
 
-// Add a new schedule entry (assign staff to a shift)
+// Add a new schedule entry (assign staff to a shift) or create a shift block (manager)
 router.post('/', auth.authenticateToken, async (req, res) => {
   try {
     const { shift_date, shift, staff_id } = req.body;
 
-    if (!shift_date || !shift || !staff_id) {
-      return res.status(400).json({ success: false, message: 'shift_date, shift, and staff_id are required' });
+    if (!shift_date || !shift) {
+      return res.status(400).json({ success: false, message: 'shift_date and shift are required' });
     }
 
     // Validate shift type
-    if (shift !== 'Morning' && shift !== 'Evening') {
+    if (shift !== 'Morning' && shift !== 'Evening' && shift !== 'morning' && shift !== 'evening') {
         return res.status(400).json({ success: false, message: 'Invalid shift type. Must be \'Morning\' or \'Evening\'' });
     }
 
-    console.log(`Adding staff ${staff_id} to ${shift} shift on ${shift_date}`);
-
-    // Check if this staff member is already assigned to a shift on this date and time
-    const [existingEntry] = await db.query(
-        'SELECT schedule_id FROM schedule WHERE DATE(shift_date) = DATE(?) AND shift = ? AND staff_id = ?',
+    // If staff_id is provided, assign staff to shift
+    if (staff_id) {
+      console.log(`Adding staff ${staff_id} to ${shift} shift on ${shift_date}`);
+      // Check if this staff member is already assigned to a shift on this date and time
+      const [existingEntry] = await db.query(
+          'SELECT schedule_id FROM schedule WHERE DATE(shift_date) = DATE(?) AND shift = ? AND staff_id = ?',
+          [shift_date, shift, staff_id]
+      );
+      if (existingEntry.length > 0) {
+          return res.status(409).json({ success: false, message: 'Staff member already assigned to this shift on this date.' });
+      }
+      // Insert into schedule table
+      const [result] = await db.query(
+        'INSERT INTO schedule (shift_date, shift, staff_id) VALUES (?, ?, ?)',
         [shift_date, shift, staff_id]
-    );
-
-    if (existingEntry.length > 0) {
-        return res.status(409).json({ success: false, message: 'Staff member already assigned to this shift on this date.' });
+      );
+      return res.status(201).json({ success: true, message: 'Staff assigned to shift successfully', scheduleId: result.insertId });
+    } else {
+      // Manager creating a shift block (no staff assigned yet)
+      // Check if a shift block already exists (any entry for this date+shift)
+      const [existingBlock] = await db.query(
+        'SELECT schedule_id FROM schedule WHERE DATE(shift_date) = DATE(?) AND shift = ?',
+        [shift_date, shift]
+      );
+      if (existingBlock.length > 0) {
+        return res.status(409).json({ success: false, message: 'Shift already exists for this date and type.' });
+      }
+      // Insert a placeholder row with NULL staff_id
+      const [result] = await db.query(
+        'INSERT INTO schedule (shift_date, shift, staff_id) VALUES (?, ?, NULL)',
+        [shift_date, shift]
+      );
+      return res.status(201).json({ success: true, message: 'Shift block created successfully', scheduleId: result.insertId });
     }
-
-    // Insert into schedule table
-    const [result] = await db.query(
-      'INSERT INTO schedule (shift_date, shift, staff_id) VALUES (?, ?, ?)',
-      [shift_date, shift, staff_id]
-    );
-
-    res.status(201).json({ success: true, message: 'Staff assigned to shift successfully', scheduleId: result.insertId });
-
   } catch (error) {
     console.error('Error adding staff to shift:', error);
     res.status(500).json({ success: false, message: 'Error assigning staff to shift' });
+  }
+});
+
+// Delete a shift block (all assignments for a date+shift)
+router.delete('/block', auth.authenticateToken, async (req, res) => {
+  try {
+    const { shift_date, shift } = req.body;
+    if (!shift_date || !shift) {
+      return res.status(400).json({ success: false, message: 'shift_date and shift are required' });
+    }
+    // Delete all schedule entries for this date and shift
+    const [result] = await db.query(
+      'DELETE FROM schedule WHERE DATE(shift_date) = DATE(?) AND shift = ?',
+      [shift_date, shift]
+    );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'No shift found for this date and type.' });
+    }
+    res.json({ success: true, message: 'Shift deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting shift block:', error);
+    res.status(500).json({ success: false, message: 'Error deleting shift block' });
   }
 });
 

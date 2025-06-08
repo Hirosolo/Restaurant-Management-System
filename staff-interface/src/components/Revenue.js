@@ -325,7 +325,7 @@ const Revenue = ({ onTabChange, dailySalesData, selectedMonth, selectedYear, dai
                     <tr>
                       <th>Name</th>
                       <th>Role</th>
-                      <th>Pay Rate</th>
+                      <th>Salaries</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -333,7 +333,7 @@ const Revenue = ({ onTabChange, dailySalesData, selectedMonth, selectedYear, dai
                       <tr key={index}> {/* Use a unique key if possible, like employee ID */}
                         <td>{employee.name}</td>
                         <td>{employee.role}</td>
-                        <td>{formatCurrency(employee.pay_rate)}</td>{/* Format pay rate as currency */}
+                        <td>{formatCurrency(employee.total_pay)}</td>{/* Show calculated salary */}
                       </tr>
                     ))}
                   </tbody>

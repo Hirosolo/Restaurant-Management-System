@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 // import DatePicker from 'react-datepicker'; // Import DatePicker component
 // import { setDate, startOfWeek } from 'date-fns'; // Import date-fns helpers
 // import 'react-datepicker/dist/react-datepicker.css'; // Import date picker CSS
 import '../styles/ShiftView.css';
 import ShiftDetail from './ShiftDetail'; // Make sure ShiftDetail is imported
+import { useAuth } from '../contexts/AuthContext';
 
 // Helper to format date as YYYY-MM-DD (consistent with backend expectation)
 const formatDate = (date) => {
@@ -14,6 +15,7 @@ const formatDate = (date) => {
 };
 
 const ShiftView = ({ onShiftClick, scheduleRefreshTrigger }) => {
+  const { user } = useAuth();
   const [currentWeek, setCurrentWeek] = useState(() => {
     // Initialize to the start of the current week (Sunday)
     const today = new Date();
@@ -30,6 +32,9 @@ const ShiftView = ({ onShiftClick, scheduleRefreshTrigger }) => {
   const [error, setError] = useState(null);
   const [showShiftDetailModal, setShowShiftDetailModal] = useState(false);
   const [selectedShiftForDetail, setSelectedShiftForDetail] = useState(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [newShiftDate, setNewShiftDate] = useState('');
+  const [newShiftType, setNewShiftType] = useState('morning');
 
   // Effect to fetch shift data when currentWeek or scheduleRefreshTrigger changes
   useEffect(() => {
@@ -114,8 +119,50 @@ const ShiftView = ({ onShiftClick, scheduleRefreshTrigger }) => {
   };
 
   const handleAddShiftClick = () => {
-    setSelectedShiftForDetail(null); // No specific shift data for a new shift
-    setShowShiftDetailModal(true); // Open modal in 'new shift' mode
+    setShowDatePicker(true); // Show date picker first
+  };
+
+  const handleDatePickerChange = (e) => {
+    setNewShiftDate(e.target.value);
+  };
+
+  const handleShiftTypeChange = (e) => {
+    setNewShiftType(e.target.value);
+  };
+
+  const handleDatePickerConfirm = async () => {
+    if (!newShiftDate || !newShiftType) return;
+    // Create a new shift for the selected date and type
+    try {
+      const token = localStorage.getItem('staffToken');
+      if (!token) throw new Error('No staff authentication token found');
+      const response = await fetch('http://localhost:3001/api/schedules', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ shift_date: newShiftDate, shift: newShiftType }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create shift');
+      }
+      // Refresh schedule after creation
+      if (scheduleRefreshTrigger) scheduleRefreshTrigger();
+    } catch (err) {
+      alert('Failed to create shift: ' + err.message);
+    } finally {
+      setShowDatePicker(false);
+      setNewShiftDate('');
+      setNewShiftType('morning');
+    }
+  };
+
+  const handleDatePickerCancel = () => {
+    setShowDatePicker(false);
+    setNewShiftDate('');
+    setNewShiftType('morning');
   };
 
   const handlePrevWeek = () => {
@@ -150,7 +197,9 @@ const ShiftView = ({ onShiftClick, scheduleRefreshTrigger }) => {
             {`${currentWeek.toLocaleString('default', { month: 'short' })} ${currentWeek.getDate()} - ${weekDates[6].fullDate.toLocaleString('default', { month: 'short' })} ${weekDates[6].fullDate.getDate()}, ${currentWeek.getFullYear()}`}
           </span>
           <button className="nav-btn" onClick={handleNextWeek}>›</button>
-          <button className="add-shift-btn" onClick={handleAddShiftClick}>Add Shift</button>
+          {user?.role === 'Manager' && (
+            <button className="add-shift-btn" onClick={handleAddShiftClick}>Add Shift</button>
+          )}
         </div>
       </div>
 
@@ -207,6 +256,39 @@ const ShiftView = ({ onShiftClick, scheduleRefreshTrigger }) => {
       </div>
 
       {/* Shift Detail Modal */}
+      {/* Date Picker Modal for Adding Shift */}
+      {showDatePicker && (
+        <div className="modal-overlay">
+          <div className="create-shift-modal">
+            <h3 className="create-shift-title">Create Shift</h3>
+            <label className="create-shift-label">
+              Date:
+              <input
+                type="date"
+                value={newShiftDate}
+                onChange={handleDatePickerChange}
+                className="create-shift-input"
+              />
+            </label>
+            <label className="create-shift-label">
+              Shift:
+              <select
+                value={newShiftType}
+                onChange={handleShiftTypeChange}
+                className="create-shift-input"
+              >
+                <option value="morning">Morning</option>
+                <option value="evening">Evening</option>
+              </select>
+            </label>
+            <div className="create-shift-actions">
+              <button className="create-shift-cancel" onClick={handleDatePickerCancel}>Cancel</button>
+              <button className="create-shift-confirm" onClick={handleDatePickerConfirm} disabled={!newShiftDate || !newShiftType}>Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showShiftDetailModal && (
         <div className="modal-overlay">
           <div className="shift-detail-modal">

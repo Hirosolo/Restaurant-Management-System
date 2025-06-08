@@ -38,8 +38,8 @@ const DeleteRecipe = ({ recipeId, onDeleteSuccess, onCancel }) => {
       <p>Are you sure you want to delete this recipe?</p>
       {error && <div className="error-message">{error}</div>}
       <div className="modal-actions">
-        <button onClick={onCancel} disabled={loading}>Cancel</button>
-        <button onClick={handleDelete} disabled={loading}>
+        <button className="modal-btn" onClick={onCancel} disabled={loading}>Cancel</button>
+        <button className="modal-btn delete-btn" onClick={handleDelete} disabled={loading}>
           {loading ? 'Deleting...' : 'Delete'}
         </button>
       </div>
