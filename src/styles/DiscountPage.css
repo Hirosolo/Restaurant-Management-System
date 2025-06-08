@@ -7,12 +7,15 @@
 }
 
 .discount-container {
-  max-width: 1100px;
+  margin-top: 140px; /* Space below two navbars (adjust if needed) */
+  max-width: 1400px;
+  min-height: 700px;
   margin: 40px auto 0 auto;
-  padding: 24px;
+  padding: 48px 40px;
   background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  border-radius: 16px;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.10);
+  flex: 1 0 auto;
 }
 
 .discount-images {
@@ -20,15 +23,17 @@
   flex-wrap: wrap;
   gap: 24px;
   justify-content: center;
+  align-items: center;
+  margin-top: 120px;
 }
 
 .image-item {
-  flex: 1 1 300px;
-  max-width: 340px;
-  min-width: 220px;
-  background: #f3f4f6;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  flex: 1 1 480px;
+  max-width: 520px;
+  min-width: 320px;
+  background: transparent;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
   overflow: hidden;
   cursor: pointer;
   transition: box-shadow 0.2s, transform 0.2s;
@@ -38,10 +43,11 @@
   justify-content: center;
 }
 .image-item img {
-  width: 100%;
-  height: auto;
+  width: 480px;
+  height: 320px;
+  object-fit: contain;
   display: block;
-  border-radius: 10px;
+  border-radius: 16px;
   transition: transform 0.2s;
 }
 .image-expanded-overlay {
@@ -53,24 +59,6 @@
   align-items: center;
   justify-content: center;
   cursor: zoom-out;
-}
-
-.discount-page {
-  min-height: 100vh;
-  background: #f5f8f9;
-  display: flex;
-  flex-direction: column;
-}
-
-.discount-container {
-  margin-top: 500px;
-  max-width: 1100px;
-  margin: 40px auto 0 auto;
-  padding: 24px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-  flex: 1 0 auto;
 }
 
 .footer {
