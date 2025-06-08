@@ -76,14 +76,12 @@ function Checkout() {
     const formattedAddr = formatAddress(userAddress);
     console.log('Formatted address:', formattedAddr);
     setTempAddress(formattedAddr);
-    // Initialize tempContact based on user login status
-    // Only auto-fill contact for signed-in users
-      const authStatus = localStorage.getItem('authStatus');
-      if (authStatus === 'signedIn') {
-        setTempContact(userData?.contactMobile || userContact || '');
-      } else {
-        setTempContact('');
-      }
+    // Only auto-fill contact for signed-in users, and only if not already set by user
+    const authStatus = localStorage.getItem('authStatus');
+    if (authStatus === 'signedIn') {
+      setTempContact(userData?.contactMobile || userContact || '');
+    }
+    // For guests, do not overwrite tempContact (let user input persist)
   }, [userAddress, userContact, userData]);
 
   // Load auth data from localStorage when component mounts

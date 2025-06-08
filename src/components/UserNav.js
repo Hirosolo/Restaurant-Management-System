@@ -228,30 +228,7 @@ const UserNav = () => {
                           <span>{formatCurrency(calculateTotalAmountTrack(trackOrderResult.items))}</span>
                         </div>
                         {/* No address shown in Track Your Order popup */}
-                        {trackOrderResult.status === 'Pending' && (
-                          <button
-                            className="received-order-btn"
-                            onClick={async () => {
-                              try {
-                                const response = await fetch(`http://localhost:3001/api/orders/guest/complete/${trackOrderResult.sale_id}`, {
-                                  method: 'PUT',
-                                  headers: { 'Content-Type': 'application/json' },
-                                });
-                                const data = await response.json();
-                                if (response.ok && data.success) {
-                                  setTrackOrderResult({ ...trackOrderResult, status: 'Completed' });
-                                  alert('Order marked as completed!');
-                                } else {
-                                  alert(data.message || 'Failed to mark order as completed');
-                                }
-                              } catch (error) {
-                                alert('Failed to mark order as completed. Please try again.');
-                              }
-                            }}
-                          >
-                            Received the order
-                          </button>
-                        )}
+                        {/* Received the order button removed */}
                       </div>
                     </div>
                   </div>
