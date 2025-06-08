@@ -35,6 +35,7 @@ const ShiftView = ({ onShiftClick, scheduleRefreshTrigger }) => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [newShiftDate, setNewShiftDate] = useState('');
   const [newShiftType, setNewShiftType] = useState('morning');
+  const [notificationMessage, setNotificationMessage] = useState('');
 
   // Effect to fetch shift data when currentWeek or scheduleRefreshTrigger changes
   useEffect(() => {
@@ -151,7 +152,8 @@ const ShiftView = ({ onShiftClick, scheduleRefreshTrigger }) => {
       // Refresh schedule after creation
       if (scheduleRefreshTrigger) scheduleRefreshTrigger();
     } catch (err) {
-      alert('Failed to create shift: ' + err.message);
+      setNotificationMessage('Failed to create shift: ' + err.message);
+      setTimeout(() => setNotificationMessage(''), 4000);
     } finally {
       setShowDatePicker(false);
       setNewShiftDate('');
@@ -187,6 +189,9 @@ const ShiftView = ({ onShiftClick, scheduleRefreshTrigger }) => {
 
   return (
     <div className="shift-view">
+      {notificationMessage && (
+        <div className="error-message" style={{marginBottom: '16px'}}>{notificationMessage}</div>
+      )}
       <div className="shift-header">
         <h2 className="shift-title">Shift View</h2>
         <div className="week-navigation">
