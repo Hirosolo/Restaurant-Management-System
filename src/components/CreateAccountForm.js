@@ -28,6 +28,11 @@ function CreateAccountForm({
   const [buildingNameBlurred, setBuildingNameBlurred] = useState(false);
   const { address, updateAddressField, dropdownOpen, toggleDropdown, addressOptions } = useAddress();
 
+  // Override addressOptions to match Delivery page
+  addressOptions.wards = ['Ward 1', 'Ward 2', 'Ward 3', 'Ward 4', 'Ward 5'];
+  addressOptions.districts = ['District 1', 'District 2', 'District 3', 'District 4', 'District 5'];
+  addressOptions.streets = ['Street 1', 'Street 2', 'Street 3', 'Street 4', 'Street 5'];
+
   const updateUserInfo = (field, value) => {
     setUserInfo(prev => ({ ...prev, [field]: value }));
   };
@@ -63,8 +68,8 @@ function CreateAccountForm({
       setError('Contact mobile is required');
       return;
     }
-    if (!/^\d{10}$/.test(userInfo.contactMobile)) {
-      setError('Contact mobile must be exactly 10 digits');
+    if (!/^0\d{9}$/.test(userInfo.contactMobile)) {
+      setError('Contact mobile must start with 0 and be exactly 10 digits');
       return;
     }
     if (!address.ward || !address.district || !address.street || !address.houseNumber) {
@@ -163,6 +168,8 @@ function CreateAccountForm({
                 value={userInfo.contactMobile} 
                 onChange={(e) => updateUserInfo('contactMobile', e.target.value)} 
                 required 
+                pattern="^0\d{9}$"
+                title="Contact number must start with 0 and be exactly 10 digits"
                 disabled={loading}
               />
             </div>

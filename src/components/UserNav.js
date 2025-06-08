@@ -56,8 +56,7 @@ const UserNav = () => {
       setIsLoadingTrackOrders(false);
     }
   };
-  const calculateTotalAmountTrack = (items) => items.reduce((total, item) => total + item.price * item.quantity, 0);
-  const formatCurrency = (amount) => {
+  const calculateTotalAmountTrack = (items) => items.reduce((total, item) => total + item.price * item.quantity, 0);  const formatCurrency = (amount) => {
     const amountStr = Math.floor(amount).toString();
     const formattedAmount = amountStr.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     return `${formattedAmount} vnd`;
@@ -217,7 +216,7 @@ const UserNav = () => {
                               <span className="item-quantity">x{item.quantity}</span>
                             </div>
                             <div className="order-item-details">
-                              <p>{formatCurrency(item.price * item.quantity)}</p>
+                              <p>{item.price * item.quantity}</p>
                             </div>
                           </div>
                         ))}
