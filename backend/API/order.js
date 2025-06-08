@@ -449,6 +449,7 @@ router.get('/all', auth.authenticateToken, async (req, res) => {
         s.sale_time as time,
         s.status,
         s.delivery_address,
+        s.total_amount as total_price,
         c.customer_name,
         c.phone,
         GROUP_CONCAT(
@@ -461,7 +462,7 @@ router.get('/all', auth.authenticateToken, async (req, res) => {
       JOIN customer c ON s.customer_id = c.customer_id
       JOIN order_detail od ON s.sale_id = od.sale_id
       JOIN recipe r ON od.recipe_id = r.recipe_id
-      GROUP BY s.sale_id, s.sale_time, s.status, s.delivery_address, c.customer_name
+      GROUP BY s.sale_id, s.sale_time, s.status, s.delivery_address, s.total_amount, c.customer_name
       ORDER BY s.sale_time DESC
     `);
     console.log('All orders fetched.', orders.length);

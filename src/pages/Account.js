@@ -4,14 +4,21 @@ import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import AccountSidebar from '../components/AccountSidebar';
 import './Account.css';
+import { useLocation } from 'react-router-dom';
 
 function Account() {
   const navigate = useNavigate();
   const { authStatus, userData, userAddress, handleSignOut, setUserData } = useAuth();
   const { addToCart } = useCart();
   
-  // States
-  const [activeTab, setActiveTab] = useState('account');
+  // Tab state synced with ?tab=... in URL
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const initialTab = params.get('tab') || 'account';
+  const [activeTab, setActiveTab] = useState(initialTab);
+  useEffect(() => {
+  setActiveTab(new URLSearchParams(location.search).get('tab') || 'account');
+  }, [location.search]);
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -368,6 +375,10 @@ function Account() {
                       ))}
                     </div>
                     <div className="order-footer">
+                      <div className="order-fee">
+                        <span>Delivery Fee:</span>
+                        <span>{formatCurrency(order.delivery_charge || 0)}</span>
+                      </div>
                       <div className="order-total">
                         <span>Total:</span>
                         <span>{formatCurrency(calculateTotalAmount(order.items, order.delivery_charge))}</span>
