@@ -442,7 +442,18 @@ router.get('/user/favorite-meals', auth.authenticateCustomerToken, async (req, r
 // Get all orders for staff dashboard
 router.get('/all', auth.authenticateToken, async (req, res) => {
   try {
-    console.log('Fetching all orders for staff dashboard...'); // Add log
+    console.log('Fetching all orders for staff dashboard...');
+    // Get sortBy and sortOrder from query params
+    let { sortBy, sortOrder } = req.query;
+    // Validate and sanitize input
+    const validSortBy = ['time', 'total_price'];
+    const validSortOrder = ['asc', 'desc'];
+    if (!validSortBy.includes(sortBy)) sortBy = 'time';
+    if (!validSortOrder.includes((sortOrder || '').toLowerCase())) sortOrder = 'desc';
+    sortOrder = sortOrder.toUpperCase();
+    // Map sortBy to SQL column
+    const sortColumn = sortBy === 'total_price' ? 's.total_amount' : 's.sale_time';
+
     const [orders] = await db.query(`
       SELECT 
         s.sale_id as order_id,
@@ -463,7 +474,7 @@ router.get('/all', auth.authenticateToken, async (req, res) => {
       JOIN order_detail od ON s.sale_id = od.sale_id
       JOIN recipe r ON od.recipe_id = r.recipe_id
       GROUP BY s.sale_id, s.sale_time, s.status, s.delivery_address, s.total_amount, c.customer_name
-      ORDER BY s.sale_time DESC
+      ORDER BY ${sortColumn} ${sortOrder}
     `);
     console.log('All orders fetched.', orders.length);
 
