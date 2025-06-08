@@ -146,15 +146,15 @@ function Checkout() {
       return;
     }
 
-    // Basic validation for 10 digits (assuming phone number format)
-    const phoneRegex = /^\d{10}$/;
+    // Basic validation for 10 digits starting with 0
+    const phoneRegex = /^0\d{9}$/;
     
     console.log('Validating tempContact:', tempContact);
     console.log('Regex test result:', phoneRegex.test(tempContact));
 
     // For guest users or logged-in users changing the number, validate 10 digits
     if (!phoneRegex.test(tempContact)) {
-      showNotification('Contact number must be exactly 10 digits.', 'error');
+      showNotification('Contact number must start with 0 and be exactly 10 digits.', 'error');
       return;
     }
 
@@ -491,6 +491,8 @@ function Checkout() {
                 onBlur={handleContactEdit}
                 onFocus={() => setNotification(null)}
                 placeholder="Enter your contact number"
+                pattern="^0\d{9}$"
+                title="Contact number must start with 0 and be exactly 10 digits"
               />
             </div>
           </div>
