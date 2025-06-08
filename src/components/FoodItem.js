@@ -41,12 +41,14 @@ function FoodItem({ product, onAddToCart, showDetails, formattedPrice }) {
           <span className={styles.price}>{formattedPrice}</span>
           <button 
             className={styles.addButton}
+            disabled={product.is_available === false}
+            title={product.is_available === false ? 'Out of stock' : 'Add to cart'}
             onClick={(e) => {
               e.stopPropagation();
               handleAddToCart();
             }}
           >
-            Add to cart
+            {product.is_available === false ? 'Out of stock' : 'Add to cart'}
           </button>
         </div>
         
