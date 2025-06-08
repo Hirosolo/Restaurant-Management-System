@@ -61,7 +61,7 @@ CREATE TABLE recipe_detail(
     FOREIGN KEY (ingredient_id) REFERENCES ingredient(ingredient_id)
 );
 
-CREATE TABLE sale(
+CREATE TABLE sale (
     sale_id INT AUTO_INCREMENT PRIMARY KEY,
     sale_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     total_amount FLOAT,
@@ -72,6 +72,8 @@ CREATE TABLE sale(
     delivery_address TEXT,
     delivery_distance FLOAT,
     delivery_charge FLOAT,
+    payment_status ENUM('Pending', 'Paid', 'Failed') DEFAULT 'Pending',
+    payment_transaction_id VARCHAR(255),
     FOREIGN KEY (customer_id) REFERENCES customer(customer_id)
 );
 
