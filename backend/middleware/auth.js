@@ -97,7 +97,7 @@ const authenticateStaffLogin = async (req, res, next) => {
         
         // Get staff from database
         const [staff] = await db.query(
-            'SELECT staff_id, staff_email, password, role FROM staff WHERE staff_email = ?',
+            'SELECT staff_id, staff_name, staff_email, password, role FROM staff WHERE staff_email = ?',
             [email]
         );
 

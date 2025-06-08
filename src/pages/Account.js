@@ -424,7 +424,6 @@ function Account() {
                               }
                             } catch (error) {
                               console.error('Error marking order as completed:', error);
-                              alert('Failed to mark order as completed. Please try again.');
                             }
                           }}
                         >

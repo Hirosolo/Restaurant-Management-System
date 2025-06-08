@@ -9,7 +9,6 @@ const Sidebar = ({ onMenuClick, activeMenu: propActiveMenu }) => {
     { id: 'Recipe', label: 'Recipe', icon: '👨‍🍳' },
     { id: 'Inventory', label: 'Inventory', icon: '📦' },
     { id: 'Staff', label: 'Staff', icon: '👥' },
-    { id: 'User', label: 'User', icon: '⚙️' }
   ];
 
   // Update internal state when prop changes
