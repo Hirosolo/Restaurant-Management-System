@@ -4,6 +4,115 @@
   min-height: calc(100vh - 60px - 20px - 20px); /* Adjust based on header/padding */
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+} 
+
+/* Modal Overlay for Edit Staff */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 12px;
+  padding: 32px 28px 24px 28px;
+  min-width: 320px;
+  max-width: 95vw;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.modal-content h3 {
+  margin-top: 0;
+  margin-bottom: 18px;
+  color: #374151;
+  font-size: 20px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.edit-form label {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  color: #374151;
+  font-weight: 500;
+  gap: 4px;
+}
+
+.edit-form input {
+  padding: 8px 10px;
+  border: 1px solid #E5E7EB;
+  border-radius: 6px;
+  font-size: 14px;
+  background: #F9FAFB;
+  margin-top: 2px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.save-btn {
+  background-color: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.save-btn:disabled {
+  background: #a5b4fc;
+  cursor: not-allowed;
+}
+.save-btn:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.cancel-btn {
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.cancel-btn:hover {
+  background: #e5e7eb;
+}
+
+.error-message {
+  color: #dc2626;
+  background: #fef2f2;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  text-align: center;
 }
 
 .staff-management-container h2 {

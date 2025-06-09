@@ -54,6 +54,9 @@ console.log('Order routes registered');
 app.use('/api/staff', staffAuthRoutes);
 console.log('Staff authentication routes registered');
 
+app.use('/api/staff', require('./API/staff'));
+console.log('Staff management routes registered');
+
 app.use('/api', ingredientRoutes);
 console.log('Ingredient routes registered');
 
