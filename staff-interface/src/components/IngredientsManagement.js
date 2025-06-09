@@ -4,6 +4,13 @@ import EditIngredientModal from './EditIngredientModal'; // Import the new modal
 import '../styles/IngredientsManagement.css';
 
 const IngredientsManagement = ({ onAddIngredientClick }) => {
+  // Create Ingredient Modal State (must be at the very top)
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createForm, setCreateForm] = useState({ ingredient_name: '', unit: '', minimum_threshold: '' });
+  const [createError, setCreateError] = useState(null);
+  const [creating, setCreating] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+
   const [searchTerm, setSearchTerm] = useState('');
   const [ingredients, setIngredients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -218,10 +225,71 @@ const IngredientsManagement = ({ onAddIngredientClick }) => {
    };
 
 
+  // (Removed duplicate create ingredient modal state hooks)
+
+  // Validation helper
+  const validateIngredientForm = (form) => {
+    if (!form.ingredient_name || !form.unit || !form.minimum_threshold) {
+      return 'All fields must be filled.';
+    }
+    if (!/^[A-Za-z\s]+$/.test(form.ingredient_name)) {
+      return 'Name must only contain letters and spaces.';
+    }
+    if (isNaN(form.minimum_threshold) || Number(form.minimum_threshold) < 0) {
+      return 'Minimum threshold must be a number and >= 0.';
+    }
+    return null;
+  };
+
+  // Create ingredient handler
+  const handleCreateIngredient = async () => {
+    const validationError = validateIngredientForm(createForm);
+    if (validationError) {
+      setCreateError(validationError);
+      return;
+    }
+    setCreating(true);
+    setCreateError(null);
+    try {
+      const token = localStorage.getItem('staffToken');
+      if (!token) throw new Error('No staff authentication token found');
+      const response = await fetch('http://localhost:3001/api/ingredients', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ingredient_name: createForm.ingredient_name,
+          unit: createForm.unit,
+          minimum_threshold: createForm.minimum_threshold,
+          // supplier_id removed
+          quantity: 0
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || data.error || 'Failed to create ingredient');
+      setSuccessMessage('Ingredient created successfully!');
+      setTimeout(() => setSuccessMessage(''), 3000);
+      setShowCreateModal(false);
+      setCreateForm({ ingredient_name: '', unit: '', minimum_threshold: '' });
+      loadIngredients();
+    } catch (err) {
+      setSuccessMessage(err.message || 'Failed to create ingredient');
+      setTimeout(() => setSuccessMessage(''), 3000);
+      setCreateError(err.message || 'Failed to create ingredient');
+    } finally {
+      setCreating(false);
+    }
+  };
+
   return (
     <div className="ingredients-management">
       <div className="ingredients-header">
         <h2>Ingredients Management</h2>
+        <button className="create-ingredient-btn" style={{marginBottom: '16px'}} onClick={() => setShowCreateModal(true)}>
+          + Create Ingredient
+        </button>
       </div>
 
       <div className="search-container">
@@ -236,6 +304,62 @@ const IngredientsManagement = ({ onAddIngredientClick }) => {
           />
         </div>
       </div>
+
+      {successMessage && (
+        <div className={successMessage.toLowerCase().includes('success') ? 'success-message' : 'error-message'}>{successMessage}</div>
+      )}
+
+      {/* Create Ingredient Modal */}
+      {showCreateModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Create New Ingredient</h3>
+            <div className="edit-form">
+              <label>ID:
+                <input type="text" value={
+                  ingredients.length > 0
+                    ? Math.max(...ingredients.map(i => Number(i.ingredient_id) || 0)) + 1
+                    : 1
+                } readOnly style={{ background: '#f3f4f6' }} />
+              </label>
+              <label>Name:
+                <input
+                  type="text"
+                  name="ingredient_name"
+                  value={createForm.ingredient_name}
+                  onChange={e => setCreateForm({ ...createForm, ingredient_name: e.target.value })}
+                />
+              </label>
+              <label>Unit:
+                <input
+                  type="text"
+                  name="unit"
+                  value={createForm.unit}
+                  onChange={e => setCreateForm({ ...createForm, unit: e.target.value })}
+                />
+              </label>
+              <label>Minimum Threshold:
+                <input
+                  type="number"
+                  name="minimum_threshold"
+                  value={createForm.minimum_threshold}
+                  onChange={e => setCreateForm({ ...createForm, minimum_threshold: e.target.value })}
+                />
+              </label>
+              {/* Supplier field removed */}
+            </div>
+            {createError && <div className="error-message">{createError}</div>}
+            <div className="modal-actions">
+              <button className="save-btn" onClick={handleCreateIngredient} disabled={creating}>
+                {creating ? 'Creating...' : 'Create'}
+              </button>
+              <button className="cancel-btn" onClick={() => setShowCreateModal(false)} disabled={creating}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="ingredients-table">
         <table>

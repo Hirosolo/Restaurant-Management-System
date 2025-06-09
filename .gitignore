@@ -47,3 +47,5 @@ Thumbs.db
 config.json
 package-lock.json
 yarn.lock
+
+.qodo
