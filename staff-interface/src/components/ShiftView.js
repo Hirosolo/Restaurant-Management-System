@@ -65,9 +65,10 @@ const ShiftView = ({ onShiftClick, scheduleRefreshTrigger }) => {
         console.log('Schedule data fetched:', data);
 
         if (data.success && data.schedule) {
-            // Transform the fetched array data into an object grouped by date for easier rendering
+            // Transform the fetched array data into an object grouped by full date string for easier rendering
             const groupedSchedule = data.schedule.reduce((acc, dayData) => {
-                acc[dayData.date] = dayData.shifts;
+                const dateString = new Date(dayData.date).toISOString().slice(0, 10);
+                acc[dateString] = dayData.shifts;
                 return acc;
             }, {});
             setScheduleData(groupedSchedule);
@@ -89,26 +90,21 @@ const ShiftView = ({ onShiftClick, scheduleRefreshTrigger }) => {
 
   // Calculate dates for the current week dynamically
   const weekDates = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date(currentWeek);
+    const date = new Date(currentWeek.getTime()); // clone the date to avoid mutation
     date.setDate(currentWeek.getDate() + i);
     return {
-        date: date.getDate(), // Day of the month (e.g., 23)
-        dayOfWeek: date.getDay(), // 0-6 (Sun-Sat)
-        fullDate: date // Full Date object for potential use
+        date: date.getDate(),
+        dayOfWeek: date.getDay(),
+        fullDate: new Date(date.getTime()), // ensure a new object
+        dateString: date.toISOString().slice(0, 10) // 'YYYY-MM-DD'
     };
   });
 
   const weekDayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  const handleShiftClickInternal = (date, shift) => {
-    // Calculate the full date for the shift
-    const shiftFullDate = new Date(currentWeek);
-    const dayIndex = weekDates.findIndex(d => d.date === date);
-    shiftFullDate.setDate(currentWeek.getDate() + dayIndex);
-    
+  const handleShiftClickInternal = (fullDate, shift) => {
     setSelectedShiftForDetail({ 
-      date: date, 
-      fullDate: shiftFullDate, // Add full date object
+      fullDate, // Use the correct full date object
       ...shift 
     });
     setShowShiftDetailModal(true);
@@ -133,7 +129,8 @@ const ShiftView = ({ onShiftClick, scheduleRefreshTrigger }) => {
 
   const handleDatePickerConfirm = async () => {
     if (!newShiftDate || !newShiftType) return;
-    // Create a new shift for the selected date and type
+    // Always use only the date part (YYYY-MM-DD)
+    const dateOnly = newShiftDate.slice(0, 10);
     try {
       const token = localStorage.getItem('staffToken');
       if (!token) throw new Error('No staff authentication token found');
@@ -143,7 +140,7 @@ const ShiftView = ({ onShiftClick, scheduleRefreshTrigger }) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ shift_date: newShiftDate, shift: newShiftType }),
+        body: JSON.stringify({ shift_date: dateOnly, shift: newShiftType }),
       });
       if (!response.ok) {
         const error = await response.json();
@@ -216,17 +213,17 @@ const ShiftView = ({ onShiftClick, scheduleRefreshTrigger }) => {
           ))}
 
           {/* Date and Shifts Row */}
-          {weekDates.map(({ date, dayOfWeek, fullDate }) => (
-            <div key={date} className="day-cell">
+          {weekDates.map(({ dateString, fullDate }) => (
+            <div key={dateString} className="day-cell">
               {/* Display the full date in the existing day-number div */}
               <div className="day-number">{`${fullDate.getDate()}/${fullDate.getMonth() + 1}/${fullDate.getFullYear()}`}</div>
               
               {/* Shifts for this day from fetched data */}
-              {scheduleData[date] && scheduleData[date].map((shift) => (
+              {scheduleData[dateString] && scheduleData[dateString].map((shift) => (
                 <div 
                   key={shift.id} // Using the unique shift block ID from backend
                   className="shift-block"
-                  onClick={() => handleShiftClickInternal(date, shift)} // Pass day of month and shift data
+                  onClick={() => handleShiftClickInternal(fullDate, shift)} // Pass fullDate
                 >
                   <div className="shift-time">{shift.time}</div>
                   <div className="shift-count">{shift.staff.length} staff</div>
@@ -253,7 +250,7 @@ const ShiftView = ({ onShiftClick, scheduleRefreshTrigger }) => {
               ))}
 
                {/* Display message if no shifts for the day */}
-               {!scheduleData[date] && !loading && <div className="no-shifts">No shifts</div>}
+               {!scheduleData[dateString] && !loading && <div className="no-shifts">No shifts</div>}
 
             </div>
           ))}

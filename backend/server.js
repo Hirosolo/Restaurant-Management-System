@@ -19,7 +19,8 @@ const app = express();
 app.use(cors({
     origin: ['http://localhost:3000', 'http://localhost:3002'], // Allow requests from React app and staff interface
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    credentials: true
+    credentials: true,
+    allowedHeaders: ['Authorization', 'Content-Type']
 }));
 app.use(express.json());
 
@@ -69,8 +70,11 @@ console.log('Supplier routes registered');
 app.use('/api', salesRoutes); // Use the new sales routes
 console.log('Sales routes registered');
 
-app.use('/api/schedules', scheduleRoutes); // Use the new schedule routes
-console.log('Schedule routes registered');
+// app.use('/api/schedules', scheduleRoutes); // Use the new schedule routes
+// console.log('Schedule routes registered');
+
+app.use('/api/schedules', require('./API/schedule'));
+console.log('Schedule API loaded');
 
 // Error handling middleware
 app.use((err, req, res, next) => {

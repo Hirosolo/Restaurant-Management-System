@@ -76,7 +76,7 @@ const CreateRestockDetail = ({ onSave, onCancel }) => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!formData.supplierId) {
@@ -92,16 +92,33 @@ const CreateRestockDetail = ({ onSave, onCancel }) => {
     // Format data for backend (backend expects ingredient_id, import_quantity, import_price)
     const dataToSave = {
         supplier_id: parseInt(formData.supplierId),
-        // Assuming restock_date is handled by the backend or another part of the form if needed
         items: formData.restockItems.map(item => ({
             ingredient_id: item.ingredient_id,
-            import_quantity: parseFloat(item.quantity) || 0, // Ensure number
-            import_price: parseFloat(item.import_price) || 0 // Ensure number
+            import_quantity: parseFloat(item.quantity) || 0,
+            import_price: parseFloat(item.import_price) || 0
         }))
     };
 
-    if (onSave) {
-      onSave(dataToSave);
+    const token = localStorage.getItem('staffToken');
+    try {
+      console.log('staffToken:', token);
+      console.log('dataToSave:', dataToSave);
+      const response = await fetch('http://localhost:3001/api/restocks', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dataToSave),
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to create restock');
+      }
+      if (onSave) onSave();
+    } catch (err) {
+      alert('Error saving restock: ' + err.message);
     }
   };
 

@@ -105,6 +105,10 @@ router.delete('/ingredients/:id', async (req, res) => {
     // First, delete from supplier_product to avoid foreign key constraint issues
     await db.query('DELETE FROM supplier_product WHERE ingredient_id = ?', [ingredientId]);
 
+    // Delete all restock_detail rows referencing this ingredient
+    await db.query('DELETE FROM restock_detail WHERE ingredient_id = ?', [ingredientId]);
+
+    // Now delete the ingredient itself
     const [result] = await db.query('DELETE FROM ingredient WHERE ingredient_id = ?', [ingredientId]);
 
     if (result.affectedRows === 0) {
@@ -115,9 +119,9 @@ router.delete('/ingredients/:id', async (req, res) => {
 
   } catch (error) {
     console.error('Error deleting ingredient:', error);
-    // Check for foreign key constraint errors (less likely now after deleting from supplier_product, but good to keep)
-    if (error.code === 'ER_ROW_IS_REFERENCED_' || error.code === 'ER_NO_REFERENCED_ROW_2') {
-        return res.status(409).json({ error: 'Cannot delete ingredient because it is referenced by recipes, restock orders, or waste records.' });
+    // User-friendly error for foreign key constraint
+    if (error.code === 'ER_ROW_IS_REFERENCED_2' || error.code === 'ER_ROW_IS_REFERENCED' || error.code === 'ER_NO_REFERENCED_ROW_2') {
+        return res.status(409).json({ error: 'Cannot delete ingredient because it is referenced in restock details or other records.' });
     }
     res.status(500).json({ error: 'Internal server error' });
   }

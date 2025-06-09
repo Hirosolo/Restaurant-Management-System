@@ -72,12 +72,12 @@ router.get('/restocks/:id', auth.authenticateToken, async (req, res) => { // Add
 });
 
 // Create a new restock order with details
-router.post('/restocks', auth.authenticateToken, async (req, res) => { // Add auth middleware
+router.post('/restocks', async (req, res) => { // Public endpoint, no auth middleware
   let connection;
   try {
     const { supplier_id, restock_date, items } = req.body;
 
-    if (!supplier_id || !items || !Array.isArray(items) || items.length === 0) {
+    if (supplier_id == null || !items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ success: false, message: 'Invalid restock data provided' }); // Wrap response
     }
 

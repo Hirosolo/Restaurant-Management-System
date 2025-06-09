@@ -75,40 +75,9 @@ const InventoryPage = () => {
     setSelectedOrder(null);
   };
 
-  const handleSaveRestock = async (formData) => {
-    console.log('Save restock:', formData);
-    // Logic to save restock
-    try {
-      const response = await fetch('http://localhost:3001/api/restocks', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to save restock');
-      }
-
-      // Assuming the backend returns the newly created restock or a success indicator
-      // const result = await response.json(); // If backend returns data
-      console.log('Restock saved successfully!');
-
-      // Display success notification
-      alert('Restock published successfully!');
-
-      // Refresh the restock list and close the modal
-      handleCloseModals();
-
-      // Optional: Trigger a refresh of the Restock Management list
-      // If RestockManagement fetches data on mount or prop change, update state in InventoryPage
-
-    } catch (error) {
-      console.error('Error saving restock:', error);
-      alert(`Error saving restock: ${error.message}`);
-    }
+  const handleSaveRestock = () => {
+    alert('Restock published successfully!');
+    handleCloseModals();
   };
 
   // TODO: Implement handleSaveIngredient function to handle saving new ingredient via backend API

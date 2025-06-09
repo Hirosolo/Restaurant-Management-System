@@ -158,9 +158,12 @@ const IngredientsManagement = ({ onAddIngredientClick }) => {
         await deleteIngredient(ingredientId);
         // Remove the deleted ingredient from the state
         setIngredients(ingredients.filter(ingredient => ingredient.ingredient_id !== ingredientId));
+        setSuccessMessage('Ingredient deleted successfully!');
+        setTimeout(() => setSuccessMessage(''), 3000);
       } catch (err) {
         console.error('Failed to delete ingredient:', err);
-        alert('Failed to delete ingredient.'); // TODO: More user-friendly error handling
+        setSuccessMessage('Failed to delete ingredient.');
+        setTimeout(() => setSuccessMessage(''), 3000);
       }
     }
   };

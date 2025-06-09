@@ -198,20 +198,32 @@ const ShiftDetail = ({ shift, onClose, onShiftUpdate, isNewShift }) => {
     }
     try {
       // For manager: delete all assignments for this shift (date+type)
-      const shiftDate = shift?.fullDate ? (typeof shift.fullDate === 'string' ? shift.fullDate : shift.fullDate.toISOString().slice(0, 10)) : null;
-      const shiftType = shift?.shift || shift?.time || 'Morning';
-      if (!shiftDate || !shiftType) {
+      let shiftDate = shift?.fullDate
+        ? (typeof shift.fullDate === 'string'
+            ? shift.fullDate.slice(0, 10)
+            : shift.fullDate.toISOString().slice(0, 10))
+        : null;
+      // Add 1 day to the date for deletion
+      if (shiftDate) {
+        const d = new Date(shiftDate);
+        d.setDate(d.getDate() + 1);
+        shiftDate = d.toISOString().slice(0, 10);
+      }
+      // Always use only the date part (YYYY-MM-DD)
+      // If fullDate is a Date object, set time to 00:00:00
+      // (already handled by toISOString().slice(0, 10))
+      const shiftTypeRaw = shift?.shift || shift?.time || 'Morning';
+      const normalizedShiftType = shiftTypeRaw.charAt(0).toUpperCase() + shiftTypeRaw.slice(1).toLowerCase();
+      if (!shiftDate || !normalizedShiftType) {
         setSaveError('No shift date or type found for this shift.');
         setIsSaving(false);
         return;
       }
-      const response = await fetch('http://localhost:3001/api/schedules/block', {
+      const response = await fetch(`http://localhost:3001/api/schedules/block?shift_date=${encodeURIComponent(shiftDate)}&shift=${encodeURIComponent(normalizedShiftType)}`, {
         method: 'DELETE',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ shift_date: shiftDate, shift: shiftType }),
+        }
       });
       if (!response.ok) {
         const error = await response.json();

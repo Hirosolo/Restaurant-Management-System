@@ -1,5 +1,12 @@
+console.log('Schedule API loaded');
 const express = require('express');
 const router = express.Router();
+
+// Debug: log every request to this API
+router.use((req, res, next) => {
+  console.log('Schedule API received:', req.method, req.url);
+  next();
+});
 const db = require('../config/db');
 const auth = require('../middleware/auth');
 
@@ -49,19 +56,19 @@ router.get('/week', auth.authenticateToken, async (req, res) => {
     const scheduleData = {};
     shifts.forEach(shift => {
       if (!shift.shift_date || !shift.shift) return;
-      const shiftDate = new Date(shift.shift_date).getDate();
+      const shiftDateString = new Date(shift.shift_date).toISOString().slice(0, 10);
       const shiftTime = shift.shift;
-      if (!scheduleData[shiftDate]) scheduleData[shiftDate] = {};
-      if (!scheduleData[shiftDate][shiftTime]) {
-        scheduleData[shiftDate][shiftTime] = {
-          id: `${shiftDate}-${shiftTime}`,
+      if (!scheduleData[shiftDateString]) scheduleData[shiftDateString] = {};
+      if (!scheduleData[shiftDateString][shiftTime]) {
+        scheduleData[shiftDateString][shiftTime] = {
+          id: `${shiftDateString}-${shiftTime}`,
           time: shiftTime === 'Morning' ? '08:00 - 15:00' : '15:00 - 22:00',
           shift: shiftTime,
           staff: []
         };
       }
       if (shift.staff_id) {
-        scheduleData[shiftDate][shiftTime].staff.push({
+        scheduleData[shiftDateString][shiftTime].staff.push({
           id: shift.staff_id,
           name: shift.staff_name,
           role: shift.role,
@@ -73,7 +80,7 @@ router.get('/week', auth.authenticateToken, async (req, res) => {
     });
     // Convert to frontend format
     const formattedSchedule = Object.keys(scheduleData).map(dateKey => ({
-      date: parseInt(dateKey, 10),
+      date: dateKey, // Use the full date string as the key
       shifts: Object.values(scheduleData[dateKey])
     }));
 
@@ -152,14 +159,18 @@ router.post('/', auth.authenticateToken, async (req, res) => {
 // Delete a shift block (all assignments for a date+shift)
 router.delete('/block', auth.authenticateToken, async (req, res) => {
   try {
-    const { shift_date, shift } = req.body;
+    console.log('DELETE /block handler entered', req.query);
+    const { shift_date, shift } = req.query;
     if (!shift_date || !shift) {
       return res.status(400).json({ success: false, message: 'shift_date and shift are required' });
     }
+    // Ensure only the date part is used for comparison
+    const dateOnly = shift_date.slice(0, 10); // 'YYYY-MM-DD'
     // Delete all schedule entries for this date and shift
+    console.log('DELETE query:', dateOnly, shift);
     const [result] = await db.query(
-      'DELETE FROM schedule WHERE DATE(shift_date) = DATE(?) AND shift = ?',
-      [shift_date, shift]
+      'DELETE FROM schedule WHERE DATE(shift_date) = ? AND shift = ?',
+      [dateOnly, shift]
     );
     if (result.affectedRows === 0) {
       return res.status(404).json({ success: false, message: 'No shift found for this date and type.' });
