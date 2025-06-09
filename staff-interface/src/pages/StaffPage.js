@@ -7,6 +7,7 @@ import Sidebar from '../components/Sidebar';
 import ShiftView from '../components/ShiftView';
 import ShiftDetail from '../components/ShiftDetail';
 import StaffManagement from '../components/StaffManagement';
+import Profile from '../components/Profile';
 import '../styles/StaffPage.css';
 
 const StaffPage = () => {
@@ -95,12 +96,23 @@ const StaffPage = () => {
               >
                 Shift View
               </button>
-              <button 
-                className={`tab-button ${activeTab === 'staff' ? 'active' : ''}`}
-                onClick={() => handleTabClick('staff')}
-              >
-                {user?.role === 'Manager' ? 'Staff Management' : 'Salaries'}
-              </button>
+              {user?.role === 'Manager' && (
+                <button 
+                  className={`tab-button ${activeTab === 'staff' ? 'active' : ''}`}
+                  onClick={() => handleTabClick('staff')}
+                >
+                  Staff Management
+                </button>
+              )}
+              {/* Profile tab for non-managers */}
+              {user?.role !== 'Manager' && (
+                <button
+                  className={`tab-button ${activeTab === 'profile' ? 'active' : ''}`}
+                  onClick={() => handleTabClick('profile')}
+                >
+                  Profile
+                </button>
+              )}
             </div>
 
             <div className="tab-content">
@@ -116,9 +128,14 @@ const StaffPage = () => {
                     <h2>All Staff Members</h2>
                     <StaffManagement />
                   </div>
-                ) : (
-                  <Salaries />
-                )
+                ) : null
+              )}
+              {/* Profile tab content for non-managers */}
+              {activeTab === 'profile' && user?.role !== 'Manager' && (
+                <div className="profile-section" style={{ marginTop: '30px' }}>
+                  <h2>My Profile</h2>
+                  <Profile />
+                </div>
               )}
             </div>
 

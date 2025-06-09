@@ -70,4 +70,21 @@ router.delete('/:id', auth.authenticateToken, async (req, res) => {
   }
 });
 
+// Get staff by email
+router.get('/by-email/:email', auth.authenticateToken, async (req, res) => {
+  const { email } = req.params;
+  try {
+    const [rows] = await db.query(
+      'SELECT staff_id, staff_name, staff_email, role, phone FROM staff WHERE staff_email = ?',
+      [email]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Staff not found' });
+    }
+    res.json({ success: true, staff: rows[0] });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch staff' });
+  }
+});
+
 module.exports = router;
