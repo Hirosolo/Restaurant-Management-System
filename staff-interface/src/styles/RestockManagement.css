@@ -116,6 +116,13 @@
   background-color: #F9FAFB;
 }
 
+.ingredient-filter-container select {
+  border: none;
+  outline: none;
+  background: #fff;
+  font-size: 14px;
+}
+
 .no-results {
   text-align: center;
   padding: 40px;

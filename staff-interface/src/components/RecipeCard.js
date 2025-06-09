@@ -50,7 +50,7 @@ const RecipeCard = ({
       {/* Recipe Info */}
       <div className="recipe-info">
         {/* Remove recipe name, stars, and price */}
-        <h3 className="recipe-name">{recipe.name}</h3>
+        <h3 className="recipe-name">{recipe.id}: {recipe.name}</h3>
         
         {/* Price */}
         {/* <div className="recipe-price">

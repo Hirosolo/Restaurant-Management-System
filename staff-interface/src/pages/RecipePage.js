@@ -193,7 +193,8 @@ const RecipePage = () => {
   };
 
   const filteredRecipes = recipes.filter(recipe =>
-    recipe.name && recipe.name.toLowerCase().includes(searchTerm.toLowerCase())
+    (recipe.name && recipe.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (searchTerm && recipe.id && recipe.id.toString() === searchTerm.trim())
   );
 
   if (loading) {

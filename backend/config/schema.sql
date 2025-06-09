@@ -72,8 +72,6 @@ CREATE TABLE sale (
     delivery_address TEXT,
     delivery_distance FLOAT,
     delivery_charge FLOAT,
-    payment_status ENUM('Pending', 'Paid', 'Failed') DEFAULT 'Pending',
-    payment_transaction_id VARCHAR(255),
     FOREIGN KEY (customer_id) REFERENCES customer(customer_id)
 );
 
