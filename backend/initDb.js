@@ -70,99 +70,71 @@ async function initializeDatabase() {
       throw dbConnError;
     }
 
-    // Check if recipe table has data
+    // Always run schema.sql to ensure tables exist
+    try {
+      const schemaPath = path.join(__dirname, 'config', 'schema.sql');
+      const schemaSql = await fs.readFile(schemaPath, 'utf8');
+      const schemaStatements = schemaSql
+        .split(';')
+        .map(stmt => stmt.trim())
+        .filter(stmt => stmt.length > 0 &&
+          !stmt.toLowerCase().includes('create database') &&
+          !stmt.toLowerCase().includes('use') &&
+          !stmt.toLowerCase().includes('restaurant_db'));
+      for (const statement of schemaStatements) {
+        try {
+          await connection.execute(statement);
+        } catch (err) {
+          // Skip if table already exists
+          if (err.code === 'ER_TABLE_EXISTS_ERROR') {
+            console.log('Table already exists, skipping...');
+            continue;
+          }
+          console.error('Error executing schema statement:', err);
+          console.error('Problematic statement:', statement);
+          // Continue with next statement even if one fails
+          continue;
+        }
+      }
+      console.log('Schema created or verified successfully');
+    } catch (schemaError) {
+      console.error('Error running schema.sql:', schemaError);
+      throw schemaError;
+    }
+
+    // Always run seedData.sql to ensure seed data is present
+    try {
+      const seedPath = path.join(__dirname, 'config', 'seedData.sql');
+      const seedSql = await fs.readFile(seedPath, 'utf8');
+      const seedStatements = seedSql
+        .split(';')
+        .map(stmt => stmt.trim())
+        .filter(stmt => stmt.length > 0 &&
+          !stmt.toLowerCase().includes('use') &&
+          !stmt.toLowerCase().includes('restaurant_db'));
+      for (const statement of seedStatements) {
+        try {
+          await connection.execute(statement);
+        } catch (err) {
+          console.error('Error executing seed statement:', err);
+          console.error('Problematic statement:', statement);
+          // Continue with next statement even if one fails
+          continue;
+        }
+      }
+      console.log('Seed data inserted (or already present) successfully');
+    } catch (seedError) {
+      console.error('Error running seedData.sql:', seedError);
+      throw seedError;
+    }
+
+    // Now check if recipe table has data
     try {
       const [rows] = await connection.execute('SELECT COUNT(*) as count FROM recipe');
       const count = rows[0].count;
       console.log(`Found ${count} recipes in the database`);
-
-      if (count === 0) {
-        console.log('Database is empty. Seeding data...');
-        
-        // Read and execute schema.sql
-        const schemaPath = path.join(__dirname, 'config', 'schema.sql');
-        const schemaSql = await fs.readFile(schemaPath, 'utf8');
-        
-        // Split into individual statements and filter out empty ones
-        const schemaStatements = schemaSql
-          .split(';')
-          .map(stmt => stmt.trim())
-          .filter(stmt => {
-            // Filter out empty statements and database-related statements
-            return stmt.length > 0 && 
-                   !stmt.toLowerCase().includes('create database') && 
-                   !stmt.toLowerCase().includes('use') &&
-                   !stmt.toLowerCase().includes('restaurant_db');
-          });
-        
-        // Execute each statement
-        for (const statement of schemaStatements) {
-          try {
-            await connection.execute(statement);
-          } catch (err) {
-            // Skip if table already exists
-            if (err.code === 'ER_TABLE_EXISTS_ERROR') {
-              console.log('Table already exists, skipping...');
-              continue;
-            }
-            console.error('Error executing schema statement:', err);
-            console.error('Problematic statement:', statement);
-            throw err;
-          }
-        }
-        console.log('Schema created successfully');
-
-        // Create password_reset_tokens table if it doesn't exist
-        const createPasswordResetTokensTableSql = `
-          CREATE TABLE IF NOT EXISTS password_reset_tokens (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            customer_id INT NOT NULL,
-            token VARCHAR(255) NOT NULL UNIQUE,
-            expires_at DATETIME NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (customer_id) REFERENCES customer(customer_id) ON DELETE CASCADE
-          );
-        `;
-        try {
-          await connection.execute(createPasswordResetTokensTableSql);
-          console.log('password_reset_tokens table created or already exists');
-        } catch (err) {
-            console.error('Error creating password_reset_tokens table:', err);
-            throw err;
-        }
-
-        // Read and execute seedData.sql
-        const seedPath = path.join(__dirname, 'config', 'seedData.sql');
-        const seedSql = await fs.readFile(seedPath, 'utf8');
-        
-        // Split into individual statements and filter out empty ones
-        const seedStatements = seedSql
-          .split(';')
-          .map(stmt => stmt.trim())
-          .filter(stmt => {
-            // Filter out empty statements and database-related statements
-            return stmt.length > 0 && 
-                   !stmt.toLowerCase().includes('use') &&
-                   !stmt.toLowerCase().includes('restaurant_db');
-          });
-        
-        // Execute each statement
-        for (const statement of seedStatements) {
-          try {
-            await connection.execute(statement);
-          } catch (err) {
-            console.error('Error executing seed statement:', err);
-            console.error('Problematic statement:', statement);
-            // Continue with next statement even if one fails
-            continue;
-          }
-        }
-        console.log('Seed data inserted successfully');
-      } else {
-        console.log('Database already contains data. Skipping seeding.');
-      }
     } catch (queryError) {
-      console.error('Error checking/creating tables:', {
+      console.error('Error checking recipe table:', {
         code: queryError.code,
         errno: queryError.errno,
         sqlState: queryError.sqlState,
