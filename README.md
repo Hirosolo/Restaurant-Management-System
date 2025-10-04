@@ -39,24 +39,58 @@ cd Restaurant-Management-System
 ```
 
 ### 2. Setup the Backend
-1. Configure your MySQL database and update credentials in `backend/.env`.
-2. Install dependencies:
+
+1. **Install MySQL**  
+   Make sure MySQL server is installed and running on your machine.  
+
+   - [Download MySQL](https://dev.mysql.com/downloads/installer/)  
+
+2. **Login as root**  
+   ```bash
+   mysql -u root -p
    ```
+
+3. **Create a new database and user**  
+   Inside the MySQL shell, run:
+   ```sql
+   CREATE DATABASE restaurant_db;
+   CREATE USER 'restaurant_user'@'localhost' IDENTIFIED BY 'your_password';
+   GRANT ALL PRIVILEGES ON restaurant_db.* TO 'restaurant_user'@'localhost';
+   FLUSH PRIVILEGES;
+   EXIT;
+   ```
+
+4. **Configure environment variables**  
+   In `backend/.env`, add your database info:
+   ```
+   DB_HOST=localhost
+   DB_USER=restaurant_user
+   DB_PASSWORD=your_password
+   DB_NAME=restaurant_db
+   DB_PORT=3306
+   JWT_SECRET=your_secret_key
+   PORT=3001
+   FRONTEND_URL=http://localhost:3000
+   ```
+
+5. **Install dependencies**  
+   ```bash
    cd backend
    npm install
    ```
-3. Initialize the database (run migrations and seed data as needed):
-   ```
+
+6. **Initialize the database (migrations + seed)**  
+   ```bash
    npm run init-db
    # (Optional) npm run seed-db
    ```
-4. Start the backend server:
-   ```
+
+7. **Start the backend server**  
+   ```bash
    npm run dev
-   # or
-   npm start
    ```
    The backend runs on [http://localhost:3001](http://localhost:3001)
+
 
 ### 3. Setup the User Interface (Customer)
 1. Go to the project root:
